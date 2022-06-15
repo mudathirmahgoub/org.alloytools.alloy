@@ -147,6 +147,10 @@ public final class CompModule extends Browsable implements Module {
      */
     private final Set<Sig>                      exactSigs;
 
+    public Set<Sig> getExactSigs() {
+        return exactSigs;
+    }
+
     /**
      * This stores a set of global values; given a unresolved name, we query this
      * map first before all else.

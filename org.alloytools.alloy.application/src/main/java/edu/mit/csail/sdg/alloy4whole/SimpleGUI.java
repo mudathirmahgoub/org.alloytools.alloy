@@ -23,11 +23,16 @@ import static edu.mit.csail.sdg.alloy4.A4Preferences.AntiAlias;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.AutoVisualize;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.CoreGranularity;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.CoreMinimization;
+import static edu.mit.csail.sdg.alloy4.A4Preferences.Cvc4FiniteModelFind;
+import static edu.mit.csail.sdg.alloy4.A4Preferences.Cvc4IncludeCommandScope;
+import static edu.mit.csail.sdg.alloy4.A4Preferences.Cvc4ProduceUnsatCores;
+import static edu.mit.csail.sdg.alloy4.A4Preferences.Cvc4Timeout;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.DecomposePref;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.FontName;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.FontSize;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.ImplicitThis;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.InferPartialInstance;
+import static edu.mit.csail.sdg.alloy4.A4Preferences.KODKOD;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.LAF;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.LineNumbers;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.Model0;
@@ -36,6 +41,7 @@ import static edu.mit.csail.sdg.alloy4.A4Preferences.Model2;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.Model3;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.NoOverflow;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.RecordKodkod;
+import static edu.mit.csail.sdg.alloy4.A4Preferences.RelationalSolver;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.SkolemDepth;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.Solver;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.SubMemory;
@@ -72,6 +78,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -1187,7 +1195,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
         if (i >= commands.size())
             i = commands.size() - 1;
         SimpleCallback1 cb = new SimpleCallback1(this, null, log, VerbosityPref.get().ordinal(), latestAlloyVersionName, latestAlloyVersion);
-        SimpleTask1 task = new SimpleTask1();
+
         A4Options opt = new A4Options();
         opt.tempDirectory = alloyHome(frame) + fs + "tmp";
         opt.solverDirectory = alloyHome(frame) + fs + "binary";
@@ -1201,12 +1209,23 @@ public final class SimpleGUI implements ComponentListener, Listener {
         opt.decompose_mode = DecomposePref.get().ordinal();
         opt.originalFilename = Util.canon(text.get().getFilename());
         opt.solver = Solver.get();
-        task.bundleIndex = i;
-        task.bundleWarningNonFatal = WarningNonfatal.get();
-        task.map = text.takeSnapshot();
-        task.options = opt.dup();
-        task.resolutionMode = (Version.experimental && ImplicitThis.get()) ? 2 : 1;
-        task.tempdir = maketemp(frame);
+
+        WorkerEngine.WorkerTask task;
+        Map<String,String> alloyFiles = text.takeSnapshot();
+        int resolutionMode = (Version.experimental && ImplicitThis.get()) ? 2 : 1;
+        if (RelationalSolver.get().equals(KODKOD)){
+            SimpleTask1 kodkodTask = new SimpleTask1();
+            kodkodTask.bundleIndex = i;
+            kodkodTask.bundleWarningNonFatal = WarningNonfatal.get();
+            kodkodTask.map = alloyFiles;
+            kodkodTask.options = opt.dup();
+            kodkodTask.resolutionMode = resolutionMode;
+            kodkodTask.tempdir = maketemp(frame);
+            task = kodkodTask;
+        }
+        else{
+            task = new Cvc4Task(alloyFiles, opt.originalFilename, resolutionMode, i);
+        }
         try {
             runmenu.setEnabled(false);
             runbutton.setVisible(false);
@@ -1444,6 +1463,25 @@ public final class SimpleGUI implements ComponentListener, Listener {
                 addToMenu(optmenu, AntiAlias);
             addToMenu(optmenu, A4Preferences.LAF);
             addToMenu(optmenu, LineNumbers);
+
+            optmenu.addSeparator();
+            // CVC4 options
+            JMenu relationalSolverMenu = addToMenu(optmenu, RelationalSolver);
+            JMenu cvc4TimeoutMenu = addToMenu(optmenu, Cvc4Timeout);
+            List<JMenuItem> cvc4BooleanPreferences = addToMenu(optmenu, Cvc4IncludeCommandScope, Cvc4ProduceUnsatCores, Cvc4FiniteModelFind);
+            //, Cvc4IntegerSingletonsOnly
+
+            if (RelationalSolver.get().equals(KODKOD)) {
+                cvc4TimeoutMenu.setEnabled(false);
+                for (JMenuItem item : cvc4BooleanPreferences) {
+                    item.setEnabled(false);
+                }
+            } else {
+                cvc4TimeoutMenu.setEnabled(true);
+                for (JMenuItem item : cvc4BooleanPreferences) {
+                    item.setEnabled(true);
+                }
+            }
 
             optmenu.addSeparator();
 
@@ -1808,9 +1846,27 @@ public final class SimpleGUI implements ComponentListener, Listener {
             if (WorkerEngine.isBusy())
                 throw new RuntimeException("Alloy4 is currently executing a SAT solver command. Please wait until that command has finished.");
             SimpleCallback1 cb = new SimpleCallback1(SimpleGUI.this, viz, log, VerbosityPref.get().ordinal(), latestAlloyVersionName, latestAlloyVersion);
-            SimpleTask2 task = new SimpleTask2();
-            task.filename = arg[0];
-            task.index = Integer.valueOf(arg[1]);
+            WorkerEngine.WorkerTask task;
+            if (RelationalSolver.get().equals(KODKOD)) {
+                SimpleTask2 task2 = new SimpleTask2();
+                task2.filename = arg[0];
+                task2.index = Integer.valueOf(arg[1]);
+                subrunningTask = task2.index < 1 ? 2 : 3; // [electrum] whether global iteration
+                task = task2;
+            }
+            else{
+                try {
+                    task = new Cvc4EnumerationTask(arg[1]);
+                    subrunningTask = 2;
+                } catch (Exception exception) {
+                    StringWriter stringWriter = new StringWriter();
+                    exception.printStackTrace(new PrintWriter(stringWriter));
+                    log.logBold(stringWriter.toString());
+                    log.logDivider();
+                    log.flush();
+                    return arg[1];
+                }
+            }
             try {
                 if (AlloyCore.isDebug())
                     WorkerEngine.runLocally(task, cb);
@@ -1825,7 +1881,6 @@ public final class SimpleGUI implements ComponentListener, Listener {
                 doStop(2);
                 return arg[0];
             }
-            subrunningTask = task.index < 1 ? 2 : 3; // [electrum] whether global iteration
             runmenu.setEnabled(false);
             runbutton.setVisible(false);
             showbutton.setEnabled(false);
@@ -2406,12 +2461,15 @@ public final class SimpleGUI implements ComponentListener, Listener {
      * Creates menu items from boolean preferences (<code>prefs</code>) and adds
      * them to a given parent menu (<code>parent</code>).
      */
-    private void addToMenu(JMenu parent, BooleanPref... prefs) {
+    private List<JMenuItem> addToMenu(JMenu parent, BooleanPref... prefs) {
+        List<JMenuItem> menuItems = new ArrayList<>();
         for (BooleanPref pref : prefs) {
             Action action = pref.getTitleAction();
             Object name = action.getValue(Action.NAME);
-            menuItem(parent, name + ": " + (pref.get() ? "Yes" : "No"), action);
+            JMenuItem item = menuItem(parent, name + ": " + (pref.get() ? "Yes" : "No"), action);
+            menuItems.add(item);
         }
+        return menuItems;
     }
 
     /**

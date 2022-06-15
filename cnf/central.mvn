@@ -2,7 +2,7 @@ biz.aQute.bnd:aQute.libg:6.0.0
 biz.aQute:biz.aQute.wrapper.hamcrest:1.3
 biz.aQute:biz.aQute.wrapper.junit:4.13.1
 com.google.code.gson:gson:2.8.9
-com.google.code.gson:gson:2.8.9 
+com.google.code.gson:gson:2.8.9
 commons-io:commons-io:jar:2.6
 commons-io:commons-io:jar:2.6
 de.jflex:jflex:1.6.1
@@ -27,3 +27,10 @@ biz.aQute:biz.aQute.wrapper.junit:4.13.1
 biz.aQute.bnd:aQute.libg:6.1.0
 org.osgi:org.osgi.annotation.bundle:1.1.1
 org.osgi:osgi.annotation:8.0.1
+org.antlr:antlr4-runtime:4.7.2
+com.fasterxml.jackson.core:jackson-annotations:2.13.3
+com.fasterxml.jackson.core:jackson-databind:2.13.3
+com.fasterxml.jackson.core:jackson-core:2.13.3
+commons-cli:commons-cli:1.5.0
+javax.xml.bind:jaxb-api:2.3.1
+org.glassfish.jaxb:jaxb-runtime:4.0.0

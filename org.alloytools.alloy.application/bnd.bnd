@@ -6,7 +6,14 @@
 	org.alloytools:pardinus.core;version='1.3.0',\
 	org.alloytools.alloy.core;version=latest,\
 	aQute.libg,\
-	org.alloytools.api
+	org.alloytools.api,\
+    SMT-Extension;version=latest,\
+    org.antlr.antlr4-runtime;version='4.7.2',\
+    com.fasterxml.jackson.core.jackson-annotations,\
+    com.fasterxml.jackson.core.jackson-databind,\
+    jaxb-api,\
+    com.fasterxml.jackson.core.jackson-core
+
 -testpath: \
 	biz.aQute.wrapper.junit, \
 	biz.aQute.wrapper.hamcrest, \
@@ -16,3 +23,4 @@ Private-Package: \
 	edu.mit.csail.sdg.alloy4graph,\
 	edu.mit.csail.sdg.alloy4viz,\
 	edu.mit.csail.sdg.alloy4whole,\
+	edu.mit.csail.sdg.alloy4whole.instances,\

@@ -22,6 +22,7 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.Serializable;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -50,6 +51,7 @@ import edu.mit.csail.sdg.alloy4.WorkerEngine.WorkerTask;
 import edu.mit.csail.sdg.alloy4.XMLNode;
 import edu.mit.csail.sdg.alloy4viz.StaticInstanceReader;
 import edu.mit.csail.sdg.alloy4viz.VizGUI;
+import edu.mit.csail.sdg.alloy4whole.instances.AlloySolution;
 import edu.mit.csail.sdg.ast.Command;
 import edu.mit.csail.sdg.ast.Module;
 import edu.mit.csail.sdg.ast.Sig;
@@ -265,7 +267,32 @@ public final class SimpleReporter extends A4Reporter {
                 results.add(filename);
                 (new File(filename)).deleteOnExit();
                 gui.doSetLatest(filename);
-                span.setLength(len3);
+
+                // generate model constraints
+                try {
+                    AlloySolution alloySolution = AlloySolution.readFromXml(filename);
+
+                    span.log("\nGenerated xml instance file: ");
+
+                    span.logLink(filename, "CNF: " + filename);
+
+                    span.log("\n");
+
+                    String constraints = alloySolution.instances.get(0).generateAlloyCode();
+                    span.log("Generated " + (chk ? "counterexample" : "instance"));
+
+                    span.logLink(" constraints", "MSG: " + constraints);
+                    span.log("\n");
+
+                } catch (Exception e) {
+                    StringWriter sw = new StringWriter();
+                    PrintWriter pw = new PrintWriter(sw);
+                    e.printStackTrace(pw);
+                    OurDialog.showtext("Error", sw.toString());
+                }
+
+                //span.setLength(len3);
+                span.log("\n   ");
                 span.log("   ");
                 span.logLink(chk ? "Counterexample" : "Instance", "XML: " + filename);
                 span.log(" found. ");
