@@ -6,9 +6,9 @@ import org.junit.Ignore;
 import org.junit.Before;
 
 import edu.mit.csail.sdg.ast.*;
+import edu.mit.csail.sdg.alloy4.*;
 import edu.uiowa.alloy2smt.utils.AlloyUtils;
 import edu.uiowa.smt.TranslatorUtils;
-
 import java.util.Collections;
 
 public class AlloyUtilsTests
@@ -23,7 +23,7 @@ public class AlloyUtilsTests
   @Test
   public void substitute1()
   {
-    Sig A = new Sig.PrimSig("A", Sig.UNIV);
+    Sig A = new Sig.PrimSig(null,"A", Pos.UNKNOWN , Sig.UNIV);
     ExprVar x = ExprVar.make(null, "x", A.type());
     Expr intersect = ExprBinary.Op.INTERSECT.make(null, null, x, x);
     ExprVar y = ExprVar.make(null, "y", A.type());
@@ -35,7 +35,7 @@ public class AlloyUtilsTests
   @Test
   public void substitute2()
   {
-    Sig A = new Sig.PrimSig("A", Sig.UNIV);
+    Sig A = new Sig.PrimSig(null,"A", Pos.UNKNOWN , Sig.UNIV);
     ExprVar x = ExprVar.make(null, "x", A.type());
     Expr no = ExprUnary.Op.NO.make(null, x);
     ExprVar y = ExprVar.make(null, "y", A.type());
@@ -47,7 +47,7 @@ public class AlloyUtilsTests
   @Test
   public void substitute3()
   {
-    Sig A = new Sig.PrimSig("A", Sig.UNIV);
+    Sig A = new Sig.PrimSig(null,"A", Pos.UNKNOWN , Sig.UNIV);
     ExprVar x = ExprVar.make(null, "x", A.type());
     Expr no = ExprUnary.Op.NO.make(null, x);
     Decl decl = new Decl(null, null, null, null,Collections.singletonList(x), A);
@@ -61,7 +61,7 @@ public class AlloyUtilsTests
   @Test
   public void substitute4()
   {
-    Sig A = new Sig.PrimSig("A", Sig.UNIV);
+    Sig A = new Sig.PrimSig(null,"A", Pos.UNKNOWN , Sig.UNIV);
     ExprVar x = ExprVar.make(null, "x", A.type());
     ExprVar y = ExprVar.make(null, "y", A.type());
     Expr no = ExprUnary.Op.NO.make(null, x);
@@ -75,7 +75,7 @@ public class AlloyUtilsTests
   @Test
   public void substitute5()
   {
-    Sig A = new Sig.PrimSig("A", Sig.UNIV);
+    Sig A = new Sig.PrimSig(null,"A", Pos.UNKNOWN , Sig.UNIV);
     ExprVar x = ExprVar.make(null, "x", A.type());
     ExprVar y = ExprVar.make(null, "y", A.type());
     Expr product = ExprBinary.Op.ARROW.make(null, null, y, y);
@@ -90,7 +90,7 @@ public class AlloyUtilsTests
   @Test
   public void substitute6()
   {
-    Sig A = new Sig.PrimSig("A", Sig.UNIV);
+    Sig A = new Sig.PrimSig(null,"A", Pos.UNKNOWN , Sig.UNIV);
     ExprVar x = ExprVar.make(null, "x", A.type());
     ExprVar y = ExprVar.make(null, "y", A.type());
     ExprVar z = ExprVar.make(null, "z", A.type());
@@ -110,7 +110,7 @@ public class AlloyUtilsTests
   @Test
   public void substitute7()
   {
-    Sig A = new Sig.PrimSig("A", Sig.UNIV);
+    Sig A = new Sig.PrimSig(null,"A", Pos.UNKNOWN , Sig.UNIV);
     ExprVar x = ExprVar.make(null, "x", A.type());
     ExprVar y = ExprVar.make(null, "y", A.type());
     ExprVar z = ExprVar.make(null, "z", A.type());
@@ -129,7 +129,7 @@ public class AlloyUtilsTests
   @Test
   public void substitute8()
   {
-    Sig A = new Sig.PrimSig("A", Sig.UNIV);
+    Sig A = new Sig.PrimSig(null,"A", Pos.UNKNOWN , Sig.UNIV);
     ExprVar x = ExprVar.make(null, "x", A.type());
     ExprVar y = ExprVar.make(null, "y", A.type());
     ExprVar z = ExprVar.make(null, "z", A.type());
@@ -143,7 +143,7 @@ public class AlloyUtilsTests
   @Test
   public void substitute9()
   {
-    Sig A = new Sig.PrimSig("A", Sig.UNIV);
+    Sig A = new Sig.PrimSig(null,"A", Pos.UNKNOWN , Sig.UNIV);
     Expr none = ExprConstant.EMPTYNESS;
     ExprVar x = ExprVar.make(null, "x", A.type());
     ExprVar y = ExprVar.make(null, "y", A.type());
@@ -158,7 +158,7 @@ public class AlloyUtilsTests
   @Test
   public void substitute10()
   {
-    Sig A = new Sig.PrimSig("A", Sig.UNIV);
+    Sig A = new Sig.PrimSig(null,"A", Pos.UNKNOWN , Sig.UNIV);
     ExprVar x = ExprVar.make(null, "x", A.type());
     ExprVar y = ExprVar.make(null, "y", A.type());
     ExprVar z = ExprVar.make(null, "z", A.type());
