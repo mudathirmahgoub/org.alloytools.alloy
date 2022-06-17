@@ -33,4 +33,15 @@ com.fasterxml.jackson.core:jackson-databind:2.13.3
 com.fasterxml.jackson.core:jackson-core:2.13.3
 commons-cli:commons-cli:1.5.0
 javax.xml.bind:jaxb-api:2.3.1
+javax.activation:activation:1.1.1
+com.sun.xml.bind:jaxb-impl:2.3.1
+org.glassfish.jaxb:jaxb-core:2.3.0.1
 org.glassfish.jaxb:jaxb-runtime:4.0.0
+jakarta.xml.bind:jakarta.xml.bind-api:4.0.0
+com.sun.xml.bind:jaxb-impl:4.0.0
+commons-cli:commons-cli:1.4
+javax.activation:activation:1.1.1
+javax.xml.bind:jaxb-api:2.3.1
+com.sun.xml.bind:jaxb-impl:2.3.1
+org.glassfish.jaxb:jaxb-core:2.3.0.1
+com.fasterxml.jackson.core:jackson-databind:2.9.8
