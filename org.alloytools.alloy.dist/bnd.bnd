@@ -41,6 +41,7 @@ JPM-Command: alloy
     @${repo;org.apache.commons.io}, \
     @${repo;org.antlr.antlr4-runtime}, \
     @${repo;com.fasterxml.jackson.core.jackson-annotations},\
+    @${repo;com.fasterxml.jackson.core.jackson-databind},\
     @${repo;SMT-Extension}, \
 	LICENSES
 

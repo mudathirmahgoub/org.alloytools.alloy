@@ -28,9 +28,9 @@ biz.aQute.bnd:aQute.libg:6.1.0
 org.osgi:org.osgi.annotation.bundle:1.1.1
 org.osgi:osgi.annotation:8.0.1
 org.antlr:antlr4-runtime:4.7.2
-com.fasterxml.jackson.core:jackson-annotations:2.13.3
-com.fasterxml.jackson.core:jackson-databind:2.13.3
-com.fasterxml.jackson.core:jackson-core:2.13.3
+com.fasterxml.jackson.core:jackson-annotations:2.9.8
+com.fasterxml.jackson.core:jackson-databind:2.9.8
+com.fasterxml.jackson.core:jackson-core:2.9.8
 commons-cli:commons-cli:1.5.0
 javax.xml.bind:jaxb-api:2.3.1
 javax.activation:activation:1.1.1
@@ -44,4 +44,4 @@ javax.activation:activation:1.1.1
 javax.xml.bind:jaxb-api:2.3.1
 com.sun.xml.bind:jaxb-impl:2.3.1
 org.glassfish.jaxb:jaxb-core:2.3.0.1
-com.fasterxml.jackson.core:jackson-databind:2.9.8
+
