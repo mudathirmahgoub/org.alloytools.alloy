@@ -39,6 +39,9 @@ JPM-Command: alloy
     @${repo;com.google.gson}, \
     @${repo;org.eclipse.equinox.common}, \
     @${repo;org.apache.commons.io}, \
+    @${repo;org.antlr.antlr4-runtime}, \
+    @${repo;com.fasterxml.jackson.core.jackson-annotations},\
+    @${repo;SMT-Extension}, \
 	LICENSES
 
 -dependson: *
