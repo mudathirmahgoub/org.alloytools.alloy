@@ -10,7 +10,13 @@ JPM-Command: alloy
 	aQute.libg, \
     slf4j.api, \
     slf4j.simple,\
-	org.alloytools.alloy.lsp
+	org.alloytools.alloy.lsp,\
+	SMT-Extension;version=latest,\
+    org.antlr.antlr4-runtime;version='4.7.2',\
+    com.fasterxml.jackson.core.jackson-annotations,\
+    com.fasterxml.jackson.core.jackson-databind,\
+    jaxb-api,\
+    com.fasterxml.jackson.core.jackson-core
 
 -sources: false
 -conditionalpackage: aQute.*, org.apache.commmons.cli, slf4j*

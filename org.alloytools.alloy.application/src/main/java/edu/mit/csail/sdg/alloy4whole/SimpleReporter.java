@@ -270,7 +270,7 @@ public final class SimpleReporter extends A4Reporter {
 
                 // generate model constraints
                 try {
-                    AlloySolution alloySolution = AlloySolution.readFromXml(filename);
+                    // AlloySolution alloySolution = AlloySolution.readFromXml(filename);
 
                     span.log("\nGenerated xml instance file: ");
 
@@ -278,11 +278,12 @@ public final class SimpleReporter extends A4Reporter {
 
                     span.log("\n");
 
-                    String constraints = alloySolution.instances.get(0).generateAlloyCode();
                     span.log("Generated " + (chk ? "counterexample" : "instance"));
 
-                    span.logLink(" constraints", "MSG: " + constraints);
-                    span.log("\n");
+                    // String constraints = alloySolution.instances.get(0).generateAlloyCode();
+
+                    // span.logLink(" constraints", "MSG: " + constraints);
+                    // span.log("\n");
 
                 } catch (Exception e) {
                     StringWriter sw = new StringWriter();

@@ -29,7 +29,7 @@ public class Signature
 
     @XmlAttribute(name = "parentID")
     @JsonProperty("parents")
-    public int parentId;
+    public int parentId = -1;
 
     @XmlAttribute(name = "builtin")
     @JsonProperty("builtIn")
