@@ -34,6 +34,8 @@ public class TermPrinter extends AbstractSmtAstVisitor
     return stringBuilder.toString();
   }
 
+  protected Solver solver = new Solver();
+
   protected void initializeProgram()
   {
     visit(smtSettings);
@@ -41,35 +43,43 @@ public class TermPrinter extends AbstractSmtAstVisitor
 
   public void visit(SmtScript script)
   {
-    if (script.getParent() == null)
+    try
     {
-      initializeProgram();
-    }
+      if (script.getParent() == null)
+      {
+        initializeProgram();
+      }
 
-    for (edu.uiowa.smt.smtAst.Sort sort : script.getSorts())
-    {
-      if (sort instanceof UninterpretedSort)
+      for (edu.uiowa.smt.smtAst.Sort sort : script.getSorts())
       {
-        stringBuilder.append("(declare-sort ");
-        stringBuilder.append(sort.getName());
-        stringBuilder.append(" 0)\n");
+        if (sort instanceof UninterpretedSort)
+        {
+          stringBuilder.append("(declare-sort ");
+          stringBuilder.append(sort.getName());
+          stringBuilder.append(" 0)\n");
+          solver.declareSort(sort.getName(), 0);
+        }
       }
-    }
-    for (FunctionDeclaration declaration : script.getFunctions())
-    {
-      if (declaration instanceof FunctionDefinition)
+      for (FunctionDeclaration declaration : script.getFunctions())
       {
-        this.visit((FunctionDefinition) declaration);
+        if (declaration instanceof FunctionDefinition)
+        {
+          this.visit((FunctionDefinition) declaration);
+        }
+        else
+        {
+          this.visit(declaration);
+        }
       }
-      else
-      {
-        this.visit(declaration);
-      }
-    }
 
-    for (Assertion assertion : script.getAssertions())
+      for (Assertion assertion : script.getAssertions())
+      {
+        this.visit(assertion);
+      }
+    }
+    catch (CVC5ApiException e)
     {
-      this.visit(assertion);
+      e.printStackTrace();
     }
   }
 
@@ -345,16 +355,25 @@ public class TermPrinter extends AbstractSmtAstVisitor
   @Override
   public void visit(SmtSettings smtSettings)
   {
-    for (String logic : smtSettings.getLogic())
+    try
     {
-      stringBuilder.append("(set-logic " + logic + ")\n");
+      for (String logic : smtSettings.getLogic())
+      {
+        stringBuilder.append("(set-logic " + logic + ")\n");
+        solver.setLogic(logic);
+      }
+      Map<String, String> options = smtSettings.getSolverOptions();
+      for (Map.Entry<String, String> entry : options.entrySet())
+      {
+        stringBuilder.append("(set-option ");
+        stringBuilder.append(":" + entry.getKey() + " ");
+        stringBuilder.append(entry.getValue() + ")\n");
+        solver.setOption(entry.getKey(), entry.getValue());
+      }
     }
-    Map<String, String> options = smtSettings.getSolverOptions();
-    for (Map.Entry<String, String> entry : options.entrySet())
+    catch (CVC5ApiException e)
     {
-      stringBuilder.append("(set-option ");
-      stringBuilder.append(":" + entry.getKey() + " ");
-      stringBuilder.append(entry.getValue() + ")\n");
+      e.printStackTrace();
     }
   }
 
