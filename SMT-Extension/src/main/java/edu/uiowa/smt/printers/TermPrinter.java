@@ -5,6 +5,7 @@ import static io.github.cvc5.Kind.*;
 import edu.uiowa.smt.TranslatorUtils;
 import edu.uiowa.smt.smtAst.*;
 import io.github.cvc5.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -35,6 +36,18 @@ public class TermPrinter extends AbstractSmtAstVisitor
   }
 
   protected Solver solver = new Solver();
+  private List<String> symbols = new ArrayList<>();
+  private List<io.github.cvc5.Sort> sorts = new ArrayList<>();
+  private List<Term> terms = new ArrayList<>();
+  private List<Term> vars = new ArrayList<>();
+
+  private void reset()
+  {
+    symbols.clear();
+    sorts.clear();
+    terms.clear();
+    vars.clear();
+  }
 
   protected void initializeProgram()
   {
@@ -223,6 +236,7 @@ public class TermPrinter extends AbstractSmtAstVisitor
     this.visit(definition.smtExpr);
     stringBuilder.append(")");
     stringBuilder.append("\n");
+    solver.defineFun(symbols.get(0), vars.toArray(new Term[0]), sorts.get(0), terms.get(0));
   }
 
   @Override
