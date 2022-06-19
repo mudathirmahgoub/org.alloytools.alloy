@@ -1,9 +1,13 @@
 package edu.uiowa.smt.smtAst;
 
+import static io.github.cvc5.Kind.*;
+
+import io.github.cvc5.*;
 import java.util.Map;
 
 abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
 {
+  protected Solver solver = new Solver();
   @Override
   public void visit(SmtAst smtAst)
   {
@@ -211,7 +215,6 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
   @Override
   public void visit(RealSort realSort)
   {
-
   }
 
   @Override
@@ -349,18 +352,15 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
   @Override
   public void visit(SmtValues smtValues)
   {
-
   }
 
   @Override
   public void visit(ExpressionValue expressionValue)
   {
-
   }
 
   @Override
   public void visit(SmtUnsatCore smtUnsatCore)
   {
-
   }
 }
