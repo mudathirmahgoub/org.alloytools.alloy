@@ -8,8 +8,9 @@
 
 package edu.uiowa.smt.smtAst;
 
-public interface SmtAstVisitor
-{
+import io.github.cvc5.*;
+
+public interface SmtAstVisitor {
   void visit(SmtAst smtAst);
 
   void visit(Declaration declaration);
@@ -18,51 +19,51 @@ public interface SmtAstVisitor
 
   void visit(SmtScript script);
 
-  void visit(SmtBinaryExpr expr);
+  Term visit(SmtBinaryExpr expr);
 
-  void visit(SmtSort sort);
+  Sort visit(SmtSort sort);
 
-  void visit(IntSort intSort);
+  Sort visit(IntSort intSort);
 
-  void visit(SmtQtExpr quantifiedExpression);
+  Term visit(SmtQtExpr quantifiedExpression);
 
-  void visit(RealSort realSort);
+  Sort visit(RealSort realSort);
 
-  void visit(SetSort setSort);
+  Sort visit(SetSort setSort);
 
-  void visit(StringSort stringSort);
+  Sort visit(StringSort stringSort);
 
-  void visit(TupleSort tupleSort);
+  Sort visit(TupleSort tupleSort);
 
-  void visit(SmtExpr smtExpr);
+  Term visit(SmtExpr smtExpr);
 
-  void visit(SmtUnaryExpr unaryExpression);
+  Term visit(SmtUnaryExpr unaryExpression);
 
   void visit(UninterpretedSort uninterpretedSort);
 
-  void visit(IntConstant intConstant);
+  Term visit(IntConstant intConstant);
 
-  void visit(Variable variable);
+  Term visit(Variable variable);
 
-  void visit(FunctionDeclaration functionDeclaration);
+  Term visit(FunctionDeclaration functionDeclaration);
 
-  void visit(FunctionDefinition functionDefinition);
+  Term visit(FunctionDefinition functionDefinition);
 
-  void visit(BoolConstant booleanConstant);
+  Term visit(BoolConstant booleanConstant);
 
   void visit(Assertion assertion);
 
-  void visit(SmtMultiArityExpr expression);
+  Term visit(SmtMultiArityExpr expression);
 
-  void visit(SmtCallExpr smtCallExpr);
+  Term visit(SmtCallExpr smtCallExpr);
 
-  void visit(SmtVariable smtVariable);
+  Term visit(SmtVariable smtVariable);
 
-  void visit(BoolSort boolSort);
+  Sort visit(BoolSort boolSort);
 
-  void visit(SmtLetExpr letExpression);
+  Term visit(SmtLetExpr letExpression);
 
-  void visit(SmtIteExpr iteExpression);
+  Term visit(SmtIteExpr iteExpression);
 
   void visit(UninterpretedConstant uninterpretedConstant);
 

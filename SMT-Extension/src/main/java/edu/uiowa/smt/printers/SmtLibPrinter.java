@@ -8,9 +8,12 @@
 
 package edu.uiowa.smt.printers;
 
+import static io.github.cvc5.Kind.*;
+
 import edu.uiowa.smt.TranslatorUtils;
 import edu.uiowa.smt.smtAst.*;
-
+import io.github.cvc5.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -35,12 +38,10 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
     this.smtSettings = SmtSettings.Default;
   }
 
-
   public String getSmtLib()
   {
     return stringBuilder.toString();
   }
-
 
   protected void initializeProgram()
   {
@@ -82,84 +83,103 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
   }
 
   @Override
-  public void visit(SmtBinaryExpr expr)
+  public Term visit(SmtBinaryExpr expr)
   {
     if (expr.getOp() != SmtBinaryExpr.Op.TUPSEL)
     {
+      Kind k = getKind(expr.getOp());
       stringBuilder.append("(" + expr.getOp() + " ");
-      this.visit(expr.getA());
+      Term A = visit(expr.getA());
       stringBuilder.append(" ");
-      this.visit(expr.getB());
+      Term B = visit(expr.getB());
       stringBuilder.append(")");
+      return solver.mkTerm(k, A, B);
     }
     else
     {
       stringBuilder.append("((_ " + expr.getOp() + " ");
-      stringBuilder.append(((IntConstant) expr.getA()).getValue());
+      int index = Integer.parseInt(((IntConstant) expr.getA()).getValue());
+      stringBuilder.append(index);
       stringBuilder.append(") ");
-      this.visit(expr.getB());
+      Term tuple = visit(expr.getB());
       stringBuilder.append(")");
+      return tupleSelect(tuple, index);
     }
   }
 
   @Override
-  public void visit(IntSort intSort)
+  public Sort visit(IntSort intSort)
   {
     stringBuilder.append(intSort.getName());
+    return solver.getIntegerSort();
   }
 
   @Override
-  public void visit(SmtQtExpr smtQtExpr)
+  public Term visit(SmtQtExpr smtQtExpr)
   {
     stringBuilder.append("(" + smtQtExpr.getOp() + " (");
-    for (SmtVariable boundVariable : smtQtExpr.getVariables())
+    Kind k = getKind(smtQtExpr.getOp());
+    Term[] boundVars = new Term[smtQtExpr.getVariables().size()];
+    List<SmtVariable> smtVariables = smtQtExpr.getVariables();
+    for (int i = 0; i < smtVariables.size(); i++)
     {
-      this.visit(boundVariable);
+      visit(smtVariables.get(i));
+      Sort sort = visit(smtVariables.get(i).getSort());
+      boundVars[i] = solver.mkVar(sort, smtVariables.get(i).getName());
     }
     stringBuilder.append(") ");
-    this.visit(smtQtExpr.getExpr());
+    Term body = visit(smtQtExpr.getExpr());
     stringBuilder.append(")");
+    Term bvl = solver.mkTerm(VARIABLE_LIST, boundVars);
+    return solver.mkTerm(k, new Term[] {bvl, body});
   }
 
   @Override
-  public void visit(RealSort realSort)
+  public Sort visit(RealSort realSort)
   {
-    throw new UnsupportedOperationException("Not supported yet.");
+    stringBuilder.append("Real");
+    return solver.getRealSort();
   }
 
   @Override
-  public void visit(SetSort setSort)
+  public Sort visit(SetSort setSort)
   {
     stringBuilder.append("(Set ");
-    this.visit(setSort.elementSort);
+    Sort sort = visit(setSort.elementSort);
     stringBuilder.append(")");
+    return solver.mkSetSort(sort);
   }
 
   @Override
-  public void visit(StringSort stringSort)
+  public Sort visit(StringSort stringSort)
   {
-    throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    stringBuilder.append("String");
+    return solver.getStringSort();
   }
 
   @Override
-  public void visit(TupleSort tupleSort)
+  public Sort visit(TupleSort tupleSort)
   {
     stringBuilder.append("(Tuple ");
+    Sort[] sorts = new Sort[tupleSort.elementSorts.size()];
     for (int i = 0; i < tupleSort.elementSorts.size() - 1; ++i)
     {
-      this.visit(tupleSort.elementSorts.get(i));
+      sorts[i] = visit(tupleSort.elementSorts.get(i));
       stringBuilder.append(" ");
     }
-    this.visit(tupleSort.elementSorts.get(tupleSort.elementSorts.size() - 1));
+    int index = tupleSort.elementSorts.size() - 1;
+    sorts[index] = visit(tupleSort.elementSorts.get(index));
     stringBuilder.append(")");
+    return solver.mkTupleSort(sorts);
   }
 
   @Override
-  public void visit(SmtUnaryExpr unaryExpression)
+  public Term visit(SmtUnaryExpr unaryExpression)
   {
     stringBuilder.append("(" + unaryExpression.getOp() + " ");
-    this.visit(unaryExpression.getExpr());
+    Term term = visit(unaryExpression.getExpr());
     stringBuilder.append(")");
+    return term;
   }
 
   @Override
@@ -169,7 +189,7 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
   }
 
   @Override
-  public void visit(IntConstant intConstant)
+  public Term visit(IntConstant intConstant)
   {
     int value = Integer.parseInt(intConstant.getValue());
     if (value >= 0)
@@ -180,16 +200,20 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
     {
       stringBuilder.append("(- " + -value + ")");
     }
+    return solver.mkInteger(value);
   }
 
   @Override
-  public void visit(Variable variable)
+  public Term visit(Variable variable)
   {
-    stringBuilder.append(TranslatorUtils.sanitizeWithBars(variable.getDeclaration()));
+    String symbol = TranslatorUtils.sanitizeWithBars(variable.getDeclaration());
+    stringBuilder.append(symbol);
+    // ToDo: figure what to do here
+    return null;
   }
 
   @Override
-  public void visit(FunctionDeclaration functionDeclaration)
+  public Term visit(FunctionDeclaration functionDeclaration)
   {
     stringBuilder.append("(declare-fun ");
     stringBuilder.append(TranslatorUtils.sanitizeWithBars(functionDeclaration) + " (");
@@ -202,28 +226,34 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
     stringBuilder.append(") ");
     this.visit(functionDeclaration.getSort());
     stringBuilder.append(")\n");
+    // ToDo: figure out what to return here
+    return null;
   }
 
   @Override
-  public void visit(FunctionDefinition definition)
+  public Term visit(FunctionDefinition definition)
   {
-    stringBuilder.append("(define-fun ").append(TranslatorUtils.sanitizeWithBars(definition)).append(" (");
-    for (SmtVariable bdVar : definition.inputVariables)
+    String symbol = TranslatorUtils.sanitizeWithBars(definition);
+    stringBuilder.append("(define-fun ").append(symbol).append(" (");
+    Term[] terms = new Term[definition.inputVariables.size()];
+    for (int i = 0; i < definition.inputVariables.size(); i++)
     {
-      this.visit(bdVar);
+      terms[i] = visit(definition.inputVariables.get(i));
     }
     stringBuilder.append(") ");
-    this.visit(definition.getSort());
+    Sort sort = visit(definition.getSort());
     stringBuilder.append(" ").append("\n");
-    this.visit(definition.smtExpr);
+    Term term = visit(definition.smtExpr);
     stringBuilder.append(")");
     stringBuilder.append("\n");
+    return solver.defineFun(symbol, terms, sort, term);
   }
 
   @Override
-  public void visit(BoolConstant aThis)
+  public Term visit(BoolConstant boolConstant)
   {
-    stringBuilder.append(aThis.getValue());
+    stringBuilder.append(boolConstant.getValue());
+    return solver.mkBoolean(boolConstant.getBooleanValue());
   }
 
   @Override
@@ -244,9 +274,8 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
     this.visit(assertion.getSmtExpr());
     if (smtSettings.produceUnsatCore && !assertion.getSymbolicName().isEmpty())
     {
-      stringBuilder.append("\n :named |" +
-          assertion.getSymbolicName().replace("\\", "/")
-          + "|))\n");
+      stringBuilder.append(
+          "\n :named |" + assertion.getSymbolicName().replace("\\", "/") + "|))\n");
     }
     else
     {
@@ -255,67 +284,82 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
   }
 
   @Override
-  public void visit(SmtMultiArityExpr multiArityExpression)
+  public Term visit(SmtMultiArityExpr multiArityExpression)
   {
     stringBuilder.append("(" + multiArityExpression.getOp() + " ");
+    Kind k = getKind(multiArityExpression.getOp());
+    Term[] terms = new Term[multiArityExpression.getExprs().size()];
     if (multiArityExpression.getExprs().size() == 1)
     {
-      this.visit(multiArityExpression.getExprs().get(0));
+      terms[0] = visit(multiArityExpression.getExprs().get(0));
     }
     else if (multiArityExpression.getExprs().size() > 1)
     {
       for (int i = 0; i < multiArityExpression.getExprs().size() - 1; ++i)
       {
-        this.visit(multiArityExpression.getExprs().get(i));
+        terms[i] = visit(multiArityExpression.getExprs().get(i));
         stringBuilder.append(" ");
       }
-      this.visit(multiArityExpression.getExprs().get(multiArityExpression.getExprs().size() - 1));
+      int index = multiArityExpression.getExprs().size() - 1;
+      terms[index] = visit(multiArityExpression.getExprs().get(index));
     }
     else
     {
       throw new RuntimeException("");
     }
     stringBuilder.append(")");
+    return solver.mkTerm(k, terms);
   }
 
   @Override
-  public void visit(SmtCallExpr smtCallExpr)
+  public Term visit(SmtCallExpr smtCallExpr)
   {
     if (smtCallExpr.getArguments().size() > 0)
     {
       stringBuilder.append("(");
-      stringBuilder.append(TranslatorUtils.sanitizeWithBars(smtCallExpr.getFunction()));
+      String symbol = TranslatorUtils.sanitizeWithBars(smtCallExpr.getFunction());
+      stringBuilder.append(symbol);
       stringBuilder.append(" ");
+      Term[] args = new Term[smtCallExpr.getArguments().size()];
       for (int i = 0; i < smtCallExpr.getArguments().size() - 1; ++i)
       {
-        this.visit(smtCallExpr.getArguments().get(i));
+        Term term = visit(smtCallExpr.getArguments().get(i));
         stringBuilder.append(" ");
+        args[i] = term;
       }
-      this.visit(smtCallExpr.getArguments().get(smtCallExpr.getArguments().size() - 1));
+      Term term = visit(smtCallExpr.getArguments().get(smtCallExpr.getArguments().size() - 1));
+      args[smtCallExpr.getArguments().size() - 1] = term;
       stringBuilder.append(")");
+      // ToDo: figure out what to do with fucntion terms
+      return null;
     }
     else
     {
       stringBuilder.append(TranslatorUtils.sanitizeWithBars(smtCallExpr.getFunction()));
     }
+    // ToDo: figure out what to do with fucntion terms
+    return null;
   }
 
   @Override
-  public void visit(SmtVariable variable)
+  public Term visit(SmtVariable variable)
   {
-    stringBuilder.append("(" + TranslatorUtils.sanitizeWithBars(variable) + " ");
-    this.visit(variable.getSort());
+    String symbol = TranslatorUtils.sanitizeWithBars(variable);
+    stringBuilder.append("(" + symbol + " ");
+    Sort sort = visit(variable.getSort());
     stringBuilder.append(")");
+    return solver.mkVar(sort, symbol);
   }
 
   @Override
-  public void visit(BoolSort aThis)
+  public Sort visit(BoolSort boolSort)
   {
-    stringBuilder.append(aThis.getName());
+    stringBuilder.append(boolSort.getName());
+    return solver.getBooleanSort();
   }
 
   @Override
-  public void visit(SmtLetExpr let)
+  public Term visit(SmtLetExpr let)
   {
     stringBuilder.append("(let (");
     for (Map.Entry<SmtVariable, SmtExpr> letVar : let.getLetVariables().entrySet())
@@ -328,19 +372,21 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
     stringBuilder.append(") ");
     this.visit(let.getSmtExpr());
     stringBuilder.append(")");
+    // ToDo: figure this out
+    return null;
   }
 
   @Override
-  public void visit(SmtIteExpr ite)
+  public Term visit(SmtIteExpr ite)
   {
     stringBuilder.append("(ite ");
-    this.visit(ite.getCondExpr());
+    Term condition = visit(ite.getCondExpr());
     stringBuilder.append(" ");
-    this.visit(ite.getThenExpr());
+    Term thenTerm = visit(ite.getThenExpr());
     stringBuilder.append(" ");
-    this.visit(ite.getElseExpr());
+    Term elseTerm = visit(ite.getElseExpr());
     stringBuilder.append(")");
-
+    return solver.mkTerm(ITE, condition, thenTerm, elseTerm);
   }
 
   @Override

@@ -75,55 +75,57 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
   }
 
   @Override
-  public void visit(SmtExpr smtExpr)
+  public Term visit(SmtExpr smtExpr)
   {
     if (smtExpr instanceof Variable)
     {
-      this.visit((Variable) smtExpr);
+      return visit((Variable) smtExpr);
     }
-    else if (smtExpr instanceof SmtUnaryExpr)
+    if (smtExpr instanceof SmtUnaryExpr)
     {
-      this.visit((SmtUnaryExpr) smtExpr);
+      return visit((SmtUnaryExpr) smtExpr);
     }
-    else if (smtExpr instanceof SmtBinaryExpr)
+    if (smtExpr instanceof SmtBinaryExpr)
     {
-      this.visit((SmtBinaryExpr) smtExpr);
+      return visit((SmtBinaryExpr) smtExpr);
     }
-    else if (smtExpr instanceof SmtMultiArityExpr)
+    if (smtExpr instanceof SmtMultiArityExpr)
     {
-      this.visit((SmtMultiArityExpr) smtExpr);
+      return visit((SmtMultiArityExpr) smtExpr);
     }
-    else if (smtExpr instanceof SmtQtExpr)
+    if (smtExpr instanceof SmtQtExpr)
     {
-      this.visit((SmtQtExpr) smtExpr);
+      return visit((SmtQtExpr) smtExpr);
     }
-    else if (smtExpr instanceof SmtSort)
+    if (smtExpr instanceof SmtSort)
     {
-      this.visit((SmtSort) smtExpr);
+      visit((SmtSort) smtExpr);
+      return null;
     }
-    else if (smtExpr instanceof IntConstant)
+    if (smtExpr instanceof IntConstant)
     {
-      this.visit((IntConstant) smtExpr);
+      return visit((IntConstant) smtExpr);
     }
-    else if (smtExpr instanceof SmtCallExpr)
+    if (smtExpr instanceof SmtCallExpr)
     {
-      this.visit((SmtCallExpr) smtExpr);
+      return visit((SmtCallExpr) smtExpr);
     }
-    else if (smtExpr instanceof BoolConstant)
+    if (smtExpr instanceof BoolConstant)
     {
-      this.visit((BoolConstant) smtExpr);
+      return visit((BoolConstant) smtExpr);
     }
-    else if (smtExpr instanceof SmtLetExpr)
+    if (smtExpr instanceof SmtLetExpr)
     {
-      this.visit((SmtLetExpr) smtExpr);
+      return visit((SmtLetExpr) smtExpr);
     }
-    else if (smtExpr instanceof SmtIteExpr)
+    if (smtExpr instanceof SmtIteExpr)
     {
-      this.visit((SmtIteExpr) smtExpr);
+      return visit((SmtIteExpr) smtExpr);
     }
-    else if (smtExpr instanceof UninterpretedConstant)
+    if (smtExpr instanceof UninterpretedConstant)
     {
       this.visit((UninterpretedConstant) smtExpr);
+      return null;
     }
     else
     {
@@ -132,11 +134,11 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
   }
 
   @Override
-  public void visit(SmtSort sort)
+  public Sort visit(SmtSort sort)
   {
     if (sort instanceof UninterpretedSort)
     {
-      this.visit((UninterpretedSort) sort);
+      visit((UninterpretedSort) sort);
     }
     else if (sort instanceof SetSort)
     {
@@ -166,6 +168,7 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
     {
       throw new UnsupportedOperationException();
     }
+    return null;
   }
 
   @Override
@@ -191,56 +194,105 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
   }
 
   @Override
-  public void visit(SmtBinaryExpr expr)
+  public Term visit(SmtBinaryExpr expr)
   {
     visit(expr.getA());
     visit(expr.getB());
+    return null;
   }
-
-  @Override
-  public void visit(IntSort intSort)
+  public Kind getKind(SmtBinaryExpr.Op op)
   {
+    switch (op)
+    {
+      case IMPLIES: return IMPLIES;
+      case PLUS: return ADD;
+      case MINUS: return SUB;
+      case MULTIPLY: return MULT;
+      case DIVIDE: return INTS_DIVISION;
+      case MOD: return INTS_MODULUS;
+      case EQ: return EQUAL;
+      case GTE: return GEQ;
+      case LTE: return LEQ;
+      case GT: return GT;
+      case LT: return LT;
+      case UNION: return SET_UNION;
+      case INTERSECTION: return SET_INTER;
+      case SETMINUS: return SET_MINUS;
+      case MEMBER: return SET_MEMBER;
+      case SUBSET: return SET_SUBSET;
+      case JOIN: return RELATION_JOIN;
+      case PRODUCT: return RELATION_PRODUCT;
+      default: throw new UnsupportedOperationException(op.toString());
+    }
+  }
+
+  public Term tupleSelect(Term tuple, int index)
+  {
+    Term projection = tuple.getSort().getDatatype().getConstructor(0).getSelector(index).getTerm();
+    Term select = solver.mkTerm(APPLY_SELECTOR, projection, tuple);
+    return select;
   }
 
   @Override
-  public void visit(SmtQtExpr quantifiedExpression)
+  public Sort visit(IntSort intSort)
+  {
+    return null;
+  }
+
+  @Override
+  public Term visit(SmtQtExpr quantifiedExpression)
   {
     for (SmtVariable boundVariable : quantifiedExpression.getVariables())
     {
       this.visit(boundVariable);
     }
     this.visit(quantifiedExpression.getExpr());
+    return null;
   }
-
-  @Override
-  public void visit(RealSort realSort)
+  public Kind getKind(SmtQtExpr.Op op)
   {
+    switch (op)
+    {
+      case FORALL: return FORALL;
+      case EXISTS: return EXISTS;
+      default: throw new UnsupportedOperationException();
+    }
   }
 
   @Override
-  public void visit(SetSort setSort)
+  public Sort visit(RealSort realSort)
   {
-    visit(setSort.elementSort);
+    return null;
   }
 
   @Override
-  public void visit(StringSort stringSort)
+  public Sort visit(SetSort setSort)
   {
+    Sort sort = visit(setSort.elementSort);
+    return solver.mkSetSort(sort);
   }
 
   @Override
-  public void visit(TupleSort tupleSort)
+  public Sort visit(StringSort stringSort)
+  {
+    return null;
+  }
+
+  @Override
+  public Sort visit(TupleSort tupleSort)
   {
     for (SmtSort sort : tupleSort.elementSorts)
     {
       visit(sort);
     }
+    return null;
   }
 
   @Override
-  public void visit(SmtUnaryExpr unaryExpression)
+  public Term visit(SmtUnaryExpr unaryExpression)
   {
     visit(unaryExpression.getExpr());
+    return null;
   }
 
   @Override
@@ -249,27 +301,30 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
   }
 
   @Override
-  public void visit(IntConstant intConstant)
+  public Term visit(IntConstant intConstant)
   {
+    return null;
   }
 
   @Override
-  public void visit(Variable variable)
+  public Term visit(Variable variable)
   {
+    return null;
   }
 
   @Override
-  public void visit(FunctionDeclaration functionDeclaration)
+  public Term visit(FunctionDeclaration functionDeclaration)
   {
     for (SmtSort sort : functionDeclaration.getInputSorts())
     {
       visit(sort);
     }
     visit(functionDeclaration.getSort());
+    return null;
   }
 
   @Override
-  public void visit(FunctionDefinition functionDefinition)
+  public Term visit(FunctionDefinition functionDefinition)
   {
     for (SmtVariable variable : functionDefinition.getInputVariables())
     {
@@ -277,11 +332,13 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
     }
     visit(functionDefinition.getBody());
     visit(functionDefinition.getSort());
+    return null;
   }
 
   @Override
-  public void visit(BoolConstant booleanConstant)
+  public Term visit(BoolConstant booleanConstant)
   {
+    return null;
   }
 
   @Override
@@ -291,36 +348,53 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
   }
 
   @Override
-  public void visit(SmtMultiArityExpr expression)
+  public Term visit(SmtMultiArityExpr expression)
   {
     for (SmtExpr expr : expression.getExprs())
     {
       visit(expr);
     }
+    return null;
+  }
+
+  protected Kind getKind(SmtMultiArityExpr.Op op)
+  {
+    switch (op)
+    {
+      case MKTUPLE: throw new UnsupportedOperationException(op.toString());
+      case INSERT: return SET_INSERT;
+      case DISTINCT: return DISTINCT;
+      case OR: return OR;
+      case AND: return AND;
+      default: throw new UnsupportedOperationException();
+    }
   }
 
   @Override
-  public void visit(SmtCallExpr callExpression)
+  public Term visit(SmtCallExpr callExpression)
   {
     for (SmtExpr expr : callExpression.getArguments())
     {
       visit(expr);
     }
+    return null;
   }
 
   @Override
-  public void visit(SmtVariable smtVariable)
+  public Term visit(SmtVariable smtVariable)
   {
     visit(smtVariable.getSort());
+    return null;
   }
 
   @Override
-  public void visit(BoolSort boolSort)
+  public Sort visit(BoolSort boolSort)
   {
+    return solver.getBooleanSort();
   }
 
   @Override
-  public void visit(SmtLetExpr letExpression)
+  public Term visit(SmtLetExpr letExpression)
   {
     for (Map.Entry<SmtVariable, SmtExpr> entry : letExpression.getLetVariables().entrySet())
     {
@@ -328,14 +402,17 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
       visit(entry.getValue());
     }
     visit(letExpression.getSmtExpr());
+    // ToDo: find a way for terms
+    return null;
   }
 
   @Override
-  public void visit(SmtIteExpr iteExpression)
+  public Term visit(SmtIteExpr iteExpression)
   {
-    visit(iteExpression.getCondExpr());
-    visit(iteExpression.getThenExpr());
-    visit(iteExpression.getElseExpr());
+    Term condition = visit(iteExpression.getCondExpr());
+    Term thenTerm = visit(iteExpression.getThenExpr());
+    Term elseTerm = visit(iteExpression.getElseExpr());
+    return solver.mkTerm(ITE, condition, thenTerm, elseTerm);
   }
 
   @Override
