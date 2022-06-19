@@ -64,7 +64,7 @@ public class DeclTranslator
     SmtEnv newEnv = new SmtEnv(smtEnv);
     SmtExpr set = exprTranslator.translateExpr(expr, newEnv);
     SetSort setSort = (SetSort) set.getSort();
-    Sort sort = setSort;
+    SmtSort sort = setSort;
 
     // for singletons quantifiers has the same sort of the elements
     if (expr instanceof ExprUnary)

@@ -8,7 +8,7 @@
 
 package edu.uiowa.smt.smtAst;
 
-public class RealSort extends Sort
+public class RealSort extends SmtSort
 {
   public RealSort()
   {

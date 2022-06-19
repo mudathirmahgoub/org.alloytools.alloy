@@ -239,7 +239,7 @@ public class ExprTranslator
    * Auxiliary functions
    */
 
-  List<SmtVariable> getBdVars(Sort sort, int num)
+  List<SmtVariable> getBdVars(SmtSort sort, int num)
   {
     List<SmtVariable> bdVars = new ArrayList<>();
 
@@ -250,9 +250,9 @@ public class ExprTranslator
     return bdVars;
   }
 
-  List<SmtVariable> getBdTupleVars(List<Sort> sorts, int arity, int num)
+  List<SmtVariable> getBdTupleVars(List<SmtSort> sorts, int arity, int num)
   {
-    List<Sort> elementSorts = new ArrayList<>();
+    List<SmtSort> elementSorts = new ArrayList<>();
     List<SmtVariable> bdVars = new ArrayList<>();
 
     for (int i = 0; i < arity; i++)
@@ -261,13 +261,13 @@ public class ExprTranslator
     }
     for (int i = 0; i < num; i++)
     {
-      Sort sort = new TupleSort(elementSorts);
+      SmtSort sort = new TupleSort(elementSorts);
       bdVars.add(new SmtVariable(TranslatorUtils.getFreshName(sort), sort, false));
     }
     return bdVars;
   }
 
-  SmtExpr mkEmptyRelationOfSort(List<Sort> sorts)
+  SmtExpr mkEmptyRelationOfSort(List<SmtSort> sorts)
   {
     if (sorts.isEmpty())
     {

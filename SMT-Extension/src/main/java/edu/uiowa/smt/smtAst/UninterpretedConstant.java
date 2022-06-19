@@ -30,7 +30,7 @@ public class UninterpretedConstant extends Constant
   }
 
   @Override
-  public Sort getSort()
+  public SmtSort getSort()
   {
     return sort;
   }

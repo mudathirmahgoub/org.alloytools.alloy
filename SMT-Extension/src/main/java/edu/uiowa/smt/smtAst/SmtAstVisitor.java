@@ -20,7 +20,7 @@ public interface SmtAstVisitor
 
   void visit(SmtBinaryExpr expr);
 
-  void visit(Sort sort);
+  void visit(SmtSort sort);
 
   void visit(IntSort intSort);
 

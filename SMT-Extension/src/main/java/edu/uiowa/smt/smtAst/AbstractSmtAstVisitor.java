@@ -97,9 +97,9 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
     {
       this.visit((SmtQtExpr) smtExpr);
     }
-    else if (smtExpr instanceof Sort)
+    else if (smtExpr instanceof SmtSort)
     {
-      this.visit((Sort) smtExpr);
+      this.visit((SmtSort) smtExpr);
     }
     else if (smtExpr instanceof IntConstant)
     {
@@ -132,7 +132,7 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
   }
 
   @Override
-  public void visit(Sort sort)
+  public void visit(SmtSort sort)
   {
     if (sort instanceof UninterpretedSort)
     {
@@ -176,7 +176,7 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
   @Override
   public void visit(SmtScript script)
   {
-    for (Sort sort : script.getSorts())
+    for (SmtSort sort : script.getSorts())
     {
       visit(sort);
     }
@@ -231,7 +231,7 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
   @Override
   public void visit(TupleSort tupleSort)
   {
-    for (Sort sort : tupleSort.elementSorts)
+    for (SmtSort sort : tupleSort.elementSorts)
     {
       visit(sort);
     }
@@ -261,7 +261,7 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
   @Override
   public void visit(FunctionDeclaration functionDeclaration)
   {
-    for (Sort sort : functionDeclaration.getInputSorts())
+    for (SmtSort sort : functionDeclaration.getInputSorts())
     {
       visit(sort);
     }

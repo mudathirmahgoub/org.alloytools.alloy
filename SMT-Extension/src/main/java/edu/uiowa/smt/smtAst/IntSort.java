@@ -8,7 +8,7 @@
 
 package edu.uiowa.smt.smtAst;
 
-public class IntSort extends Sort
+public class IntSort extends SmtSort
 {
   private static IntSort instance = new IntSort();
 

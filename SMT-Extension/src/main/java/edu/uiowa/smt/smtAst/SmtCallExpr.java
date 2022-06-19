@@ -39,8 +39,8 @@ public class SmtCallExpr extends SmtExpr
 
     for (int i = 0; i < arguments.size(); i++)
     {
-      Sort actualSort = arguments.get(i).getSort();
-      Sort expectedSort = function.getInputSorts().get(i);
+      SmtSort actualSort = arguments.get(i).getSort();
+      SmtSort expectedSort = function.getInputSorts().get(i);
       if (!actualSort.equals(expectedSort))
       {
         throw new RuntimeException(String.format("Function '%1$s' expects argument %2$d to have sort '%3$s', but it has sort '%4$s'", function.getName(), i, expectedSort, actualSort));
@@ -65,7 +65,7 @@ public class SmtCallExpr extends SmtExpr
   }
 
   @Override
-  public Sort getSort()
+  public SmtSort getSort()
   {
     return function.getSort();
   }

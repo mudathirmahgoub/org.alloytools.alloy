@@ -11,8 +11,6 @@ package edu.uiowa.smt.printers;
 import edu.uiowa.smt.TranslatorUtils;
 import edu.uiowa.smt.smtAst.*;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -56,7 +54,7 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
       initializeProgram();
     }
 
-    for (Sort sort : script.getSorts())
+    for (SmtSort sort : script.getSorts())
     {
       if (sort instanceof UninterpretedSort)
       {
@@ -196,7 +194,7 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
     stringBuilder.append("(declare-fun ");
     stringBuilder.append(TranslatorUtils.sanitizeWithBars(functionDeclaration) + " (");
 
-    List<Sort> inputSorts = functionDeclaration.getInputSorts();
+    List<SmtSort> inputSorts = functionDeclaration.getInputSorts();
     for (int i = 0; i < inputSorts.size(); i++)
     {
       this.visit(inputSorts.get(i));

@@ -38,7 +38,7 @@ public class Variable extends SmtExpr
   }
 
   @Override
-  public Sort getSort()
+  public SmtSort getSort()
   {
     return declaration.getSort();
   }

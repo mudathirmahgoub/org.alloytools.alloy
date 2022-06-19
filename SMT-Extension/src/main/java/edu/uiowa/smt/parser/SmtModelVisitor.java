@@ -30,7 +30,7 @@ public class SmtModelVisitor extends SmtBaseVisitor<SmtAst>
 
     for (SmtParser.SortDeclarationContext context : ctx.sortDeclaration())
     {
-      model.addSort((Sort) this.visitSortDeclaration(context));
+      model.addSort((SmtSort) this.visitSortDeclaration(context));
     }
 
     for (SmtParser.FunctionDefinitionContext context : ctx.functionDefinition())
@@ -58,7 +58,7 @@ public class SmtModelVisitor extends SmtBaseVisitor<SmtAst>
   {
     String sortName = ctx.sortName().getText();
     int arity = Integer.parseInt(ctx.arity().getText());
-    Sort sort = new Sort(sortName, arity);
+    SmtSort sort = new SmtSort(sortName, arity);
     return sort;
   }
 
@@ -97,11 +97,11 @@ public class SmtModelVisitor extends SmtBaseVisitor<SmtAst>
   @Override
   public SmtAst visitTupleSort(SmtParser.TupleSortContext ctx)
   {
-    List<Sort> sorts = new ArrayList<>(ctx.sort().size());
+    List<SmtSort> sorts = new ArrayList<>(ctx.sort().size());
 
     for (SmtParser.SortContext sortContext : ctx.sort())
     {
-      Sort sort = (Sort) this.visitSort(sortContext);
+      SmtSort sort = (SmtSort) this.visitSort(sortContext);
       sorts.add(sort);
     }
 
@@ -111,7 +111,7 @@ public class SmtModelVisitor extends SmtBaseVisitor<SmtAst>
   @Override
   public SmtAst visitSetSort(SmtParser.SetSortContext ctx)
   {
-    Sort elementSort = (Sort) this.visitSort(ctx.sort());
+    SmtSort elementSort = (SmtSort) this.visitSort(ctx.sort());
     return new SetSort(elementSort);
   }
 
@@ -129,7 +129,7 @@ public class SmtModelVisitor extends SmtBaseVisitor<SmtAst>
             .toMap(v -> v.getName(), v -> v.getVariable()));
     SmtEnv smtEnv = new SmtEnv(root);
     smtEnv.putAll(arguments);
-    Sort returnSort = (Sort) visitSort(ctx.sort());
+    SmtSort returnSort = (SmtSort) visitSort(ctx.sort());
 
     SmtExpr smtExpr = (SmtExpr) this.visitExpression(ctx.expression(), smtEnv);
 
@@ -147,7 +147,7 @@ public class SmtModelVisitor extends SmtBaseVisitor<SmtAst>
   public SmtAst visitVariableDeclaration(SmtParser.VariableDeclarationContext ctx)
   {
     String name = processName(ctx.variableName().getText());
-    Sort sort = (Sort) this.visitSort(ctx.sort());
+    SmtSort sort = (SmtSort) this.visitSort(ctx.sort());
     return new SmtVariable(name, sort, true);
   }
 
@@ -313,8 +313,8 @@ public class SmtModelVisitor extends SmtBaseVisitor<SmtAst>
   @Override
   public SmtAst visitEmptySet(SmtParser.EmptySetContext ctx)
   {
-    Sort elementSort = (Sort) this.visitSort(ctx.sort());
-    Sort setSort = new SetSort(elementSort);
+    SmtSort elementSort = (SmtSort) this.visitSort(ctx.sort());
+    SmtSort setSort = new SetSort(elementSort);
     return SmtUnaryExpr.Op.EMPTYSET.make(setSort);
   }
 

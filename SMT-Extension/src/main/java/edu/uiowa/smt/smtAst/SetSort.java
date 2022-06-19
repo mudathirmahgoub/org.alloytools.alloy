@@ -8,11 +8,11 @@
 
 package edu.uiowa.smt.smtAst;
 
-public class SetSort extends Sort
+public class SetSort extends SmtSort
 {
-  public Sort elementSort;
+  public SmtSort elementSort;
 
-  public SetSort(Sort elementSort)
+  public SetSort(SmtSort elementSort)
   {
     super("Set", 0);
     this.elementSort = elementSort;

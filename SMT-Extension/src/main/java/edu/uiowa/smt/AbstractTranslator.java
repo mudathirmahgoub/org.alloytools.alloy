@@ -158,7 +158,7 @@ public abstract class AbstractTranslator
     return new Assertion("", uninterpretedIntValueName + " is injective", forAll);
   }
 
-  private static Assertion getIdentityRelation(Sort sort, FunctionDeclaration identity)
+  private static Assertion getIdentityRelation(SmtSort sort, FunctionDeclaration identity)
   {
     // Axiom for identity relation
     SmtVariable a = new SmtVariable(TranslatorUtils.getFreshName(sort), sort, false);

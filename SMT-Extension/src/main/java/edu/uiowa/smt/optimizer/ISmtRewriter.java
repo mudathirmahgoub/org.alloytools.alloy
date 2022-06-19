@@ -22,7 +22,7 @@ public interface ISmtRewriter
 
   SmtRewriteResult visit(SmtBinaryExpr expr);
 
-  SmtRewriteResult visit(Sort sort);
+  SmtRewriteResult visit(SmtSort sort);
 
   SmtRewriteResult visit(IntSort intSort);
 

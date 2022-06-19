@@ -279,7 +279,7 @@ public class SmtBinaryExpr extends SmtExpr
   }
 
   @Override
-  public Sort getSort()
+  public SmtSort getSort()
   {
     switch (op)
     {
@@ -326,7 +326,7 @@ public class SmtBinaryExpr extends SmtExpr
         assert (leftSort.elementSorts.get(leftSort.elementSorts.size() - 1) ==
             rightSort.elementSorts.get(0));
 
-        List<Sort> newSorts = new ArrayList<>();
+        List<SmtSort> newSorts = new ArrayList<>();
         for (int i = 0; i < leftSort.elementSorts.size() - 1; i++)
         {
           newSorts.add(leftSort.elementSorts.get(i));
@@ -337,7 +337,7 @@ public class SmtBinaryExpr extends SmtExpr
           newSorts.add(rightSort.elementSorts.get(i));
         }
 
-        Sort sort = new SetSort(new TupleSort(newSorts));
+        SmtSort sort = new SetSort(new TupleSort(newSorts));
 
         return sort;
       }
@@ -348,11 +348,11 @@ public class SmtBinaryExpr extends SmtExpr
         TupleSort leftSort = (TupleSort) ((SetSort) A.getSort()).elementSort;
         TupleSort rightSort = (TupleSort) ((SetSort) B.getSort()).elementSort;
 
-        List<Sort> newSorts = new ArrayList<>();
+        List<SmtSort> newSorts = new ArrayList<>();
         newSorts.addAll(leftSort.elementSorts);
         newSorts.addAll(rightSort.elementSorts);
 
-        Sort sort = new SetSort(new TupleSort(newSorts));
+        SmtSort sort = new SetSort(new TupleSort(newSorts));
         return sort;
       }
       case TUPSEL:

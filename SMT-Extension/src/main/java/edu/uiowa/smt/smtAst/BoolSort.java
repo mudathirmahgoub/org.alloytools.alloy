@@ -8,7 +8,7 @@ package edu.uiowa.smt.smtAst;
 /**
  * @author Paul Meng, Mudathir Mahgoub
  */
-public class BoolSort extends Sort
+public class BoolSort extends SmtSort
 {
 
   private static BoolSort instance = new BoolSort();

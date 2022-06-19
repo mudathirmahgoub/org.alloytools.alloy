@@ -157,7 +157,7 @@ public class FieldTranslator
       return;
     }
 
-    List<Sort> fieldSorts = new ArrayList<>();
+    List<SmtSort> fieldSorts = new ArrayList<>();
 
     for (Sig sig : field.type().fold().get(0))
     {
@@ -171,7 +171,7 @@ public class FieldTranslator
       }
     }
 
-    Sort sort = new SetSort(new TupleSort(fieldSorts));
+    SmtSort sort = new SetSort(new TupleSort(fieldSorts));
     FunctionDeclaration fieldDeclaration = new FunctionDeclaration(fieldName, sort, true);
     // declare a variable for the field
     translator.smtScript.addFunction(fieldDeclaration);

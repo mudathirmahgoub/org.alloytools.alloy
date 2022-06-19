@@ -281,7 +281,7 @@ public class SmtRewriter implements ISmtRewriter
   }
 
   @Override
-  public SmtRewriteResult visit(Sort sort)
+  public SmtRewriteResult visit(SmtSort sort)
   {
     if (sort instanceof UninterpretedSort)
     {
@@ -347,7 +347,7 @@ public class SmtRewriter implements ISmtRewriter
         List<SmtExpr> tupleSmtExprs = new ArrayList<>();
         // convert tuple quantifiers to uninterpreted quantifiers
         TupleSort tupleSort = (TupleSort) variable.getSort();
-        for (Sort sort : tupleSort.elementSorts)
+        for (SmtSort sort : tupleSort.elementSorts)
         {
           SmtVariable declaration = new SmtVariable(TranslatorUtils.getFreshName(sort), sort, false);
           declarations.add(declaration);
@@ -421,9 +421,9 @@ public class SmtRewriter implements ISmtRewriter
     {
       rewriteResult = visit((SmtQtExpr) smtExpr);
     }
-    else if (smtExpr instanceof Sort)
+    else if (smtExpr instanceof SmtSort)
     {
-      rewriteResult = visit((Sort) smtExpr);
+      rewriteResult = visit((SmtSort) smtExpr);
     }
     else if (smtExpr instanceof IntConstant)
     {
@@ -656,8 +656,8 @@ public class SmtRewriter implements ISmtRewriter
     {
       return expr;
     }
-    Sort elementSortA = tupleSortA.elementSorts.get(0);
-    Sort elementSortB = tupleSortB.elementSorts.get(0);
+    SmtSort elementSortA = tupleSortA.elementSorts.get(0);
+    SmtSort elementSortB = tupleSortB.elementSorts.get(0);
 
     SmtVariable x = new SmtVariable("x", elementSortA, false);
     SmtVariable y = new SmtVariable("y", elementSortB, false);

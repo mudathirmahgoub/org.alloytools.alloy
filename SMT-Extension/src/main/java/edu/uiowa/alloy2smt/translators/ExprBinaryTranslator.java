@@ -1404,7 +1404,7 @@ public class ExprBinaryTranslator
     SmtEnv newSmtEnv = new SmtEnv(smtEnv);
     SmtExpr setExpr = exprTranslator.translateExpr(expr.sub, newSmtEnv);
     SetSort setSort = (SetSort) setExpr.getSort();
-    Sort elementSort = setSort.elementSort;
+    SmtSort elementSort = setSort.elementSort;
 
     // shared code
     SmtExpr emptySet = SmtUnaryExpr.Op.EMPTYSET.make(setSort);
@@ -1561,7 +1561,7 @@ public class ExprBinaryTranslator
     return set;
   }
 
-  private List<SmtVariable> generateVariables(int n, Sort elementSort)
+  private List<SmtVariable> generateVariables(int n, SmtSort elementSort)
   {
     if (n <= 0)
     {

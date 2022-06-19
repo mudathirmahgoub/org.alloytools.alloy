@@ -9,8 +9,6 @@ import edu.uiowa.smt.TranslatorUtils;
 import edu.uiowa.smt.smtAst.*;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
 
 public class AlloyUtils
@@ -72,9 +70,9 @@ public class AlloyUtils
     return TranslatorUtils.getFunctionDefinition(commandResult.smtModel, name);
   }
 
-  public static List<Sort> getExprSorts(Expr expr)
+  public static List<SmtSort> getExprSorts(Expr expr)
   {
-    List<Sort> sorts = new ArrayList<>();
+    List<SmtSort> sorts = new ArrayList<>();
     // get the first list of types from the fold function
     for (Sig.PrimSig sig : expr.type().fold().get(0))
     {

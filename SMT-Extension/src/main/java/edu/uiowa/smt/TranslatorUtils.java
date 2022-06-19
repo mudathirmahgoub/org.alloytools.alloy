@@ -28,14 +28,14 @@ public class TranslatorUtils
     return declaration.getName();
   }
 
-  public static String getFreshName(Sort sort)
+  public static String getFreshName(SmtSort sort)
   {
     freshNameIndex++;
     if (sort != null)
     {
       if (sort instanceof SetSort)
       {
-        Sort elementSort = ((SetSort) sort).elementSort;
+        SmtSort elementSort = ((SetSort) sort).elementSort;
         if (elementSort instanceof TupleSort)
         {
           int arity = ((TupleSort) elementSort).elementSorts.size();
@@ -54,7 +54,7 @@ public class TranslatorUtils
         {
           return "t" + arity + "." + freshNameIndex;
         }
-        Sort tupleSort = ((TupleSort) sort).elementSorts.get(0);
+        SmtSort tupleSort = ((TupleSort) sort).elementSorts.get(0);
         if (tupleSort instanceof UninterpretedSort)
         {
           UninterpretedSort uninterpretedSort = (UninterpretedSort) tupleSort;
@@ -95,9 +95,9 @@ public class TranslatorUtils
     freshNameIndex = 0;
   }
 
-  public static Sort getSetSortOfAtomWithArity(int n)
+  public static SmtSort getSetSortOfAtomWithArity(int n)
   {
-    List<Sort> elementSorts = new ArrayList<>();
+    List<SmtSort> elementSorts = new ArrayList<>();
     for (int i = 0; i < n; ++i)
     {
       elementSorts.add(AbstractTranslator.atomSort);

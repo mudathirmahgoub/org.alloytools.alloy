@@ -74,9 +74,9 @@ public class SmtMultiArityExpr extends SmtExpr
           throw new RuntimeException("distinct operation requires at least two expressions");
         }
 
-        List<Sort> sorts = this.exprs.stream()
+        List<SmtSort> sorts = this.exprs.stream()
                                      .map(SmtExpr::getSort).collect(Collectors.toList());
-        Sort firstSort = sorts.get(0);
+        SmtSort firstSort = sorts.get(0);
         for (int i = 1; i < sorts.size(); i++)
         {
           if (!sorts.get(i).equals(firstSort))
@@ -198,14 +198,14 @@ public class SmtMultiArityExpr extends SmtExpr
   }
 
   @Override
-  public Sort getSort()
+  public SmtSort getSort()
   {
     switch (op)
     {
       case MKTUPLE:
       {
 
-        List<Sort> sorts = new ArrayList<>();
+        List<SmtSort> sorts = new ArrayList<>();
         for (SmtExpr expr : exprs)
         {
           sorts.add(expr.getSort());

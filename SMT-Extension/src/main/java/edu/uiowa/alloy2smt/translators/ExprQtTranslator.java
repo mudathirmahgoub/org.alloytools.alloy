@@ -62,7 +62,7 @@ public class ExprQtTranslator
     // (x, y, ...) in comprehension(freeVariables))
 
     // determine the sort of the alloy comprehension
-    List<Sort> elementSorts = new ArrayList<>();
+    List<SmtSort> elementSorts = new ArrayList<>();
     for (SmtVariable smtVariable : smtVariables)
     {
       // all variables should be unary
@@ -70,12 +70,12 @@ public class ExprQtTranslator
       TupleSort tupleSort = (TupleSort) smtVariable.getSort();
       elementSorts.add(tupleSort.elementSorts.get(0));
     }
-    Sort returnSort = new SetSort(new TupleSort(elementSorts));
+    SmtSort returnSort = new SetSort(new TupleSort(elementSorts));
 
     // determine the free variables for the set comprehension from the environment, and
     // add theme as arguments to the comprehension function
     LinkedHashMap<String, SmtExpr> argumentsMap = smtEnv.getParent().getVariables();
-    List<Sort> argumentSorts = new ArrayList<>();
+    List<SmtSort> argumentSorts = new ArrayList<>();
     List<SmtExpr> arguments = new ArrayList<>();
     List<SmtVariable> quantifiedArguments = new ArrayList<>();
     for (Map.Entry<String, SmtExpr> argument : argumentsMap.entrySet())
@@ -83,7 +83,7 @@ public class ExprQtTranslator
       Variable variable = (Variable) argument.getValue();
       // add the variable as an argument to the call expression
       arguments.add(variable);
-      Sort sort = variable.getSort();
+      SmtSort sort = variable.getSort();
       // add the sort of the variable to the declaration of the comprehension function
       argumentSorts.add(sort);
       quantifiedArguments.add((SmtVariable) variable.getDeclaration());

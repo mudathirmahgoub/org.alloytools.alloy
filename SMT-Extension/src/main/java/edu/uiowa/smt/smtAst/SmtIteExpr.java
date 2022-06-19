@@ -76,7 +76,7 @@ public class SmtIteExpr extends SmtExpr
   }
 
   @Override
-  public Sort getSort()
+  public SmtSort getSort()
   {
     return this.thenExpr.getSort();
   }

@@ -12,12 +12,12 @@ package edu.uiowa.smt.smtAst;
 abstract public class Declaration extends SmtAst
 {
   private final String name;
-  private final Sort sort;
+  private final SmtSort sort;
   private final boolean isOriginal;
 
   protected Variable variable;
 
-  protected Declaration(String name, Sort sort, boolean isOriginal)
+  protected Declaration(String name, SmtSort sort, boolean isOriginal)
   {
     this.name = name;
     this.sort = sort;
@@ -30,7 +30,7 @@ abstract public class Declaration extends SmtAst
     return this.name;
   }
 
-  public Sort getSort()
+  public SmtSort getSort()
   {
     return this.sort;
   }

@@ -14,12 +14,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class Sort extends SmtExpr
+public class SmtSort extends SmtExpr
 {
   private final String name;
   private final int arity;
 
-  public Sort(String name, int arity)
+  public SmtSort(String name, int arity)
   {
     this.name = name;
     this.arity = arity;
@@ -45,7 +45,7 @@ public class Sort extends SmtExpr
   }
 
   @Override
-  public Sort getSort()
+  public SmtSort getSort()
   {
     return this;
   }

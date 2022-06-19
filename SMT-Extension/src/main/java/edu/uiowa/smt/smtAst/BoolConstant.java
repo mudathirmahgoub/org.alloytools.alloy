@@ -43,7 +43,7 @@ public class BoolConstant extends Constant
   }
 
   @Override
-  public Sort getSort()
+  public SmtSort getSort()
   {
     return AbstractTranslator.boolSort;
   }

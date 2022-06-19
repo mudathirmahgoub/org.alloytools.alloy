@@ -8,7 +8,7 @@
 
 package edu.uiowa.smt.smtAst;
 
-public class StringSort extends Sort
+public class StringSort extends SmtSort
 {
   public StringSort()
   {

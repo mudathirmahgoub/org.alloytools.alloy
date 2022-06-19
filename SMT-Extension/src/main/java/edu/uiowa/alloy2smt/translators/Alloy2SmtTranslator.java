@@ -426,7 +426,7 @@ public class Alloy2SmtTranslator extends AbstractTranslator
         if (scope >= 1)
         {
           List<SmtVariable> declarations = new ArrayList<>();
-          Sort sort = signature.type().is_int() ? AbstractTranslator.uninterpretedInt : AbstractTranslator.atomSort;
+          SmtSort sort = signature.type().is_int() ? AbstractTranslator.uninterpretedInt : AbstractTranslator.atomSort;
           SmtVariable firstAtom = new SmtVariable(TranslatorUtils.getFreshName(sort), sort, false);
           declarations.add(firstAtom);
           SmtExpr firstTuple = new SmtMultiArityExpr(SmtMultiArityExpr.Op.MKTUPLE, firstAtom.getVariable());
@@ -588,7 +588,7 @@ public class Alloy2SmtTranslator extends AbstractTranslator
     {
       if (variable.getSort() instanceof TupleSort)
       {
-        Sort sort = new SetSort(variable.getSort());
+        SmtSort sort = new SetSort(variable.getSort());
         SmtVariable newVariable = new SmtVariable(variable.getName(), sort, variable.isOriginal());
         setVariables.add(newVariable);
       }

@@ -12,7 +12,7 @@ import java.util.*;
 
 public class SmtModel extends SmtAst
 {
-  protected final List<Sort> sorts = new ArrayList<>();
+  protected final List<SmtSort> sorts = new ArrayList<>();
   protected List<FunctionDeclaration> functions = new ArrayList<>();
 
   public SmtModel()
@@ -26,7 +26,7 @@ public class SmtModel extends SmtAst
   }
 
 
-  public void addSort(Sort sort)
+  public void addSort(SmtSort sort)
   {
     if (sort != null)
     {
@@ -34,7 +34,7 @@ public class SmtModel extends SmtAst
     }
   }
 
-  public void removeSort(Sort sort)
+  public void removeSort(SmtSort sort)
   {
     if (sort != null)
     {
@@ -72,7 +72,7 @@ public class SmtModel extends SmtAst
     this.functions.removeAll(functions);
   }
 
-  public List<Sort> getSorts()
+  public List<SmtSort> getSorts()
   {
     return this.sorts;
   }

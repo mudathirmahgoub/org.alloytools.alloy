@@ -12,7 +12,7 @@ public class SmtVariable extends Declaration
 {
   private SmtExpr constraint;
 
-  public SmtVariable(String name, Sort sort, boolean isOriginal)
+  public SmtVariable(String name, SmtSort sort, boolean isOriginal)
   {
     super(name, sort, isOriginal);
   }

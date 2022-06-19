@@ -17,7 +17,7 @@ public abstract class SmtExpr extends SmtAst
 {
   private String comment = "";
 
-  public abstract Sort getSort();
+  public abstract SmtSort getSort();
 
   public String getComment()
   {

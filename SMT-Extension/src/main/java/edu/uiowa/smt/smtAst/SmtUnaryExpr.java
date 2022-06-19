@@ -109,7 +109,7 @@ public class SmtUnaryExpr extends SmtExpr
   }
 
   @Override
-  public Sort getSort()
+  public SmtSort getSort()
   {
     switch (op)
     {
@@ -121,7 +121,7 @@ public class SmtUnaryExpr extends SmtExpr
       {
         // type checking is handled during construction
         TupleSort oldSort = (TupleSort) ((SetSort) expr.getSort()).elementSort;
-        List<Sort> reverse = new ArrayList<>();
+        List<SmtSort> reverse = new ArrayList<>();
         for (int i = oldSort.elementSorts.size() - 1; i >= 0; i--)
         {
           reverse.add(oldSort.elementSorts.get(i));

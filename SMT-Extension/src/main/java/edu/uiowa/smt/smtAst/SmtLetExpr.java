@@ -63,7 +63,7 @@ public class SmtLetExpr extends SmtExpr
   }
 
   @Override
-  public Sort getSort()
+  public SmtSort getSort()
   {
     return expr.getSort();
   }

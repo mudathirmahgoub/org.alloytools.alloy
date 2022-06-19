@@ -8,7 +8,7 @@
 
 package edu.uiowa.smt.smtAst;
 
-public class UninterpretedSort extends Sort
+public class UninterpretedSort extends SmtSort
 {
   public UninterpretedSort(String sortName)
   {

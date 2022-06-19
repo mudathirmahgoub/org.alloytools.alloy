@@ -14,9 +14,9 @@ import java.util.List;
 
 public class FunctionDeclaration extends Declaration
 {
-  private final List<Sort> inputSorts;
+  private final List<SmtSort> inputSorts;
 
-  public FunctionDeclaration(String name, List<Sort> inputSort, Sort outputSort, boolean isOriginal)
+  public FunctionDeclaration(String name, List<SmtSort> inputSort, SmtSort outputSort, boolean isOriginal)
   {
     super(name, outputSort, isOriginal);
 
@@ -32,7 +32,7 @@ public class FunctionDeclaration extends Declaration
     }
   }
 
-  public FunctionDeclaration(String name, Sort inputSort, Sort outputSort, boolean isOriginal)
+  public FunctionDeclaration(String name, SmtSort inputSort, SmtSort outputSort, boolean isOriginal)
   {
     super(name, outputSort, isOriginal);
     this.inputSorts = Arrays.asList(inputSort);
@@ -47,14 +47,14 @@ public class FunctionDeclaration extends Declaration
     }
   }
 
-  public FunctionDeclaration(String name, Sort outputSort, boolean isOriginal)
+  public FunctionDeclaration(String name, SmtSort outputSort, boolean isOriginal)
   {
     super(name, outputSort, isOriginal);
     this.inputSorts = new ArrayList<>();
     this.variable = new Variable(this);
   }
 
-  public FunctionDeclaration(String name, boolean isOriginal, Sort outputSort, Sort... inputSorts)
+  public FunctionDeclaration(String name, boolean isOriginal, SmtSort outputSort, SmtSort... inputSorts)
   {
     super(name, outputSort, isOriginal);
     this.inputSorts = Arrays.asList(inputSorts);
@@ -69,7 +69,7 @@ public class FunctionDeclaration extends Declaration
     }
   }
 
-  public List<Sort> getInputSorts()
+  public List<SmtSort> getInputSorts()
   {
     return this.inputSorts;
   }
@@ -91,7 +91,7 @@ public class FunctionDeclaration extends Declaration
     visitor.visit(this);
   }
 
-  public Sort getSort(int index)
+  public SmtSort getSort(int index)
   {
     if (index >= this.inputSorts.size())
     {

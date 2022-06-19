@@ -492,7 +492,7 @@ public class SignatureTranslator
     translator.addFunction(min);
   }
 
-  private FunctionDeclaration defineInjectiveMapping(String mappingName, Sort inputSort, Sort outputSort)
+  private FunctionDeclaration defineInjectiveMapping(String mappingName, SmtSort inputSort, SmtSort outputSort)
   {
     FunctionDeclaration mapping = new FunctionDeclaration(mappingName, inputSort, outputSort, true);
     translator.addFunction(mapping);

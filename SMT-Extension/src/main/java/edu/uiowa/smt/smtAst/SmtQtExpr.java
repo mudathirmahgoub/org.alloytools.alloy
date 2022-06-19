@@ -119,7 +119,7 @@ public class SmtQtExpr extends SmtExpr
   }
 
   @Override
-  public Sort getSort()
+  public SmtSort getSort()
   {
     switch (op)
     {

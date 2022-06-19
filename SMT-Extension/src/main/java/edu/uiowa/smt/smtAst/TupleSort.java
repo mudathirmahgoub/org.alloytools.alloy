@@ -11,17 +11,17 @@ package edu.uiowa.smt.smtAst;
 import java.util.Arrays;
 import java.util.List;
 
-public class TupleSort extends Sort
+public class TupleSort extends SmtSort
 {
-  public List<Sort> elementSorts;
+  public List<SmtSort> elementSorts;
 
-  public TupleSort(List<Sort> elementSorts)
+  public TupleSort(List<SmtSort> elementSorts)
   {
     super("Tuple", 0);
     this.elementSorts = elementSorts;
   }
 
-  public TupleSort(Sort... elementSorts)
+  public TupleSort(SmtSort... elementSorts)
   {
     this(Arrays.asList(elementSorts));
   }

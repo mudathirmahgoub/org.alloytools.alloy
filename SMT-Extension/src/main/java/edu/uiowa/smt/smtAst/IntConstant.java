@@ -62,7 +62,7 @@ public class IntConstant extends Constant
   }
 
   @Override
-  public Sort getSort()
+  public SmtSort getSort()
   {
     return AbstractTranslator.intSort;
   }

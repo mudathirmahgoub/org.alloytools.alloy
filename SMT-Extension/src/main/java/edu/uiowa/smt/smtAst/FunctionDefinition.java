@@ -20,21 +20,21 @@ public class FunctionDefinition extends FunctionDeclaration
   public SmtExpr smtExpr;
   public final List<SmtVariable> inputVariables;
 
-  public FunctionDefinition(String name, List<SmtVariable> inputVariables, Sort outputSort, SmtExpr smtExpr, boolean isOriginal)
+  public FunctionDefinition(String name, List<SmtVariable> inputVariables, SmtSort outputSort, SmtExpr smtExpr, boolean isOriginal)
   {
     super(name, inputVariables.stream().map(v -> v.getSort()).collect(Collectors.toList()), outputSort, isOriginal);
     this.inputVariables = inputVariables;
     this.smtExpr = smtExpr;
   }
 
-  public FunctionDefinition(String name, SmtVariable inputVariable, Sort outputSort, SmtExpr smtExpr, boolean isOriginal)
+  public FunctionDefinition(String name, SmtVariable inputVariable, SmtSort outputSort, SmtExpr smtExpr, boolean isOriginal)
   {
     super(name, inputVariable.getSort(), outputSort, isOriginal);
     this.inputVariables = Collections.singletonList(inputVariable);
     this.smtExpr = smtExpr;
   }
 
-  public FunctionDefinition(String name, Sort outputSort, SmtExpr smtExpr, boolean isOriginal, SmtVariable... inputVariables)
+  public FunctionDefinition(String name, SmtSort outputSort, SmtExpr smtExpr, boolean isOriginal, SmtVariable... inputVariables)
   {
     super(name, Arrays.stream(inputVariables).map(v -> v.getSort()).collect(Collectors.toList()), outputSort, isOriginal);
     this.inputVariables = Arrays.asList(inputVariables);
