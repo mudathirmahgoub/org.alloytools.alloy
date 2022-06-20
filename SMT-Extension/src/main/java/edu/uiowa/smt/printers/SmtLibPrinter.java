@@ -229,8 +229,7 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
   {
     String symbol = TranslatorUtils.sanitizeWithBars(variable.getDeclaration());
     stringBuilder.append(symbol);
-    // ToDo: figure what to do here
-    return null;
+    return getTerm(variable);
   }
 
   @Override

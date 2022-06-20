@@ -389,7 +389,22 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
   @Override
   public Term visit(Variable variable)
   {
-    return null;
+    return getTerm(variable);
+  }
+
+  public Term getTerm(Variable variable)
+  {
+    String symbol = TranslatorUtils.sanitizeWithBars(variable.getDeclaration());
+    for(int i = termSymbols.size() - 1; i >=0; i--)
+    {
+      if(termSymbols.get(i).first.equals(symbol))
+      {
+        return termSymbols.get(i).second;
+      }
+    }
+    throw new RuntimeException("Didn't find term symbol: " + symbol  + "\n" + termSymbols + "\n" +
+            this.getClass()
+            );
   }
 
   @Override
