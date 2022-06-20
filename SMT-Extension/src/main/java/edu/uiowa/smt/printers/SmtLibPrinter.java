@@ -191,13 +191,17 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
     Kind k = getKind(expr.getOp());
     if (k == SET_EMPTY)
     {
-      Sort sort = this.visit(expr.getSort());
+      Sort sort = super.visit(expr.getSort());
       term = solver.mkEmptySet(sort);
     }
     else if (k == SET_UNIVERSE)
     {
-      Sort sort = this.visit(expr.getSort());
+      Sort sort = super.visit(expr.getSort());
       term = solver.mkUniverseSet(sort);
+    }
+    else
+    {
+      term = solver.mkTerm(k, term);
     }
     return term;
   }

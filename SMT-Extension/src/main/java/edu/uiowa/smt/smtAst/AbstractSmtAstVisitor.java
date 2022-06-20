@@ -110,8 +110,7 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
     if (smtExpr instanceof SmtSort)
     {
       visit((SmtSort) smtExpr);
-      // todo: handle this
-      throw new UnsupportedOperationException(((SmtSort) smtExpr).getName());
+      return null;
     }
     if (smtExpr instanceof IntConstant)
     {
@@ -317,23 +316,22 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
   public Term visit(SmtUnaryExpr expr)
   {
     Kind k = getKind(expr.getOp());
-    Term term;
+    Term term = visit(expr.getExpr());
     if (k == SET_EMPTY)
     {
-      Sort sort = this.visit(expr.getSort());
+      Sort sort = visit(expr.getSort());
       term = solver.mkEmptySet(sort);
     }
     else if (k == SET_UNIVERSE)
     {
-      Sort sort = this.visit(expr.getSort());
+      Sort sort = visit(expr.getSort());
       term = solver.mkUniverseSet(sort);
     }
     else
     {
-      term = visit(expr.getExpr());
+      term = solver.mkTerm(k, term);
     }
-    // todo: handle universe set and empty set cases
-    return solver.mkTerm(k, term);
+    return term;
   }
 
   public Kind getKind(SmtUnaryExpr.Op op)
