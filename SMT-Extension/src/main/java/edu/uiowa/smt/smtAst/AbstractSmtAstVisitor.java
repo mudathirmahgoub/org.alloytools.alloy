@@ -3,7 +3,6 @@ package edu.uiowa.smt.smtAst;
 import static io.github.cvc5.Kind.*;
 
 import io.github.cvc5.*;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -141,37 +140,36 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
   {
     if (sort instanceof UninterpretedSort)
     {
-      visit((UninterpretedSort) sort);
+      return visit((UninterpretedSort) sort);
     }
     else if (sort instanceof SetSort)
     {
-      this.visit((SetSort) sort);
+      return visit((SetSort) sort);
     }
     else if (sort instanceof TupleSort)
     {
-      this.visit((TupleSort) sort);
+      return visit((TupleSort) sort);
     }
     else if (sort instanceof IntSort)
     {
-      this.visit((IntSort) sort);
+      return visit((IntSort) sort);
     }
     else if (sort instanceof RealSort)
     {
-      this.visit((RealSort) sort);
+      return visit((RealSort) sort);
     }
     else if (sort instanceof StringSort)
     {
-      this.visit((StringSort) sort);
+      return visit((StringSort) sort);
     }
     else if (sort instanceof BoolSort)
     {
-      this.visit((BoolSort) sort);
+      return visit((BoolSort) sort);
     }
     else
     {
       throw new UnsupportedOperationException();
     }
-    return null;
   }
 
   @Override
@@ -199,9 +197,10 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
   @Override
   public Term visit(SmtBinaryExpr expr)
   {
-    visit(expr.getA());
-    visit(expr.getB());
-    return null;
+    Kind k = getKind(expr.getOp());
+    Term A = visit(expr.getA());
+    Term B = visit(expr.getB());
+    return solver.mkTerm(k, A, B);
   }
   public Kind getKind(SmtBinaryExpr.Op op)
   {
@@ -239,7 +238,7 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
   @Override
   public Sort visit(IntSort intSort)
   {
-    return null;
+    return solver.getIntegerSort();
   }
 
   @Override
@@ -265,7 +264,7 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
   @Override
   public Sort visit(RealSort realSort)
   {
-    return null;
+    return solver.getRealSort();
   }
 
   @Override
@@ -278,24 +277,43 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
   @Override
   public Sort visit(StringSort stringSort)
   {
-    return null;
+    return solver.getStringSort();
   }
 
   @Override
   public Sort visit(TupleSort tupleSort)
   {
-    for (SmtSort sort : tupleSort.elementSorts)
+    Sort[] sorts = new Sort[tupleSort.elementSorts.size()];
+    for (int i = 0; i < tupleSort.elementSorts.size(); i++)
     {
-      visit(sort);
+      sorts[i] = visit(tupleSort.elementSorts.get(i));
     }
-    return null;
+    return solver.mkTupleSort(sorts);
   }
 
   @Override
   public Term visit(SmtUnaryExpr unaryExpression)
   {
-    visit(unaryExpression.getExpr());
-    return null;
+    Kind k = getKind(unaryExpression.getOp());
+    Term term = visit(unaryExpression.getExpr());
+    //todo: handle universe set and empty set cases
+    return solver.mkTerm(k, term);
+  }
+
+  public Kind getKind(SmtUnaryExpr.Op op)
+  {
+    switch (op)
+    {
+      case NOT: return NOT;
+      case COMPLEMENT: return SET_COMPLEMENT;
+      case TRANSPOSE: return RELATION_TRANSPOSE;
+      case TCLOSURE: return RELATION_TCLOSURE;
+      case SINGLETON: return SET_SINGLETON;
+      case CHOOSE: return SET_CHOOSE;
+      case UNIVSET: return SET_UNIVERSE;
+      case EMPTYSET: return SET_EMPTY;
+      default: throw new UnsupportedOperationException(op.toString());
+    }
   }
 
   @Override
