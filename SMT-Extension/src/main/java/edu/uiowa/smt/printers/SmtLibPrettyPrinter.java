@@ -90,37 +90,50 @@ public class SmtLibPrettyPrinter extends SmtLibPrinter
   }
 
   @Override
-  public Term visit(SmtMultiArityExpr multiArityExpression)
+  public Term visit(SmtMultiArityExpr expr)
   {
     tabsCount++;
     stringBuilder.append("\n");
     printTabs();
-    stringBuilder.append("(" + multiArityExpression.getOp() + " ");
-    Kind k = getKind(multiArityExpression.getOp());
+    stringBuilder.append("(" + expr.getOp() + " ");
     tabsCount++;
-    Term[] terms = new Term[multiArityExpression.getExprs().size()];
-    if (multiArityExpression.getExprs().size() == 1)
+    Term[] terms = new Term[expr.getExprs().size()];
+    if (expr.getExprs().size() == 1)
     {
-      terms[0] = visit(multiArityExpression.getExprs().get(0));
+      terms[0] = visit(expr.getExprs().get(0));
     }
-    else if (multiArityExpression.getExprs().size() > 1)
+    else if (expr.getExprs().size() > 1)
     {
-      for (int i = 0; i < multiArityExpression.getExprs().size() - 1; ++i)
+      for (int i = 0; i < expr.getExprs().size() - 1; ++i)
       {
-        terms[i] = visit(multiArityExpression.getExprs().get(i));
+        terms[i] = visit(expr.getExprs().get(i));
         stringBuilder.append(" ");
       }
-      int index = multiArityExpression.getExprs().size() - 1;
-      terms[index] = visit(multiArityExpression.getExprs().get(index));
-      return solver.mkTerm(k, terms);
+      int index = expr.getExprs().size() - 1;
+      terms[index] = visit(expr.getExprs().get(index));
     }
     else
     {
       throw new RuntimeException("");
     }
+    Term term;
+    if (expr.getOp() == SmtMultiArityExpr.Op.MKTUPLE)
+    {
+      Sort[] sorts = new Sort[expr.getExprs().size()];
+      for (int i = 0; i < expr.getExprs().size(); ++i)
+      {
+        sorts[i] = super.visit(expr.getExprs().get(i).getSort());
+      }
+      term = solver.mkTuple(sorts, terms);
+    }
+    else
+    {
+      Kind k = getKind(expr.getOp());
+      term = solver.mkTerm(k, terms);
+    }
     stringBuilder.append(")");
     tabsCount -= 2;
-    return solver.mkTerm(k, terms);
+    return term;
   }
 
   @Override

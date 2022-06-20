@@ -452,13 +452,35 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
   }
 
   @Override
-  public Term visit(SmtMultiArityExpr expression)
+  public Term visit(SmtMultiArityExpr expr)
   {
-    for (SmtExpr expr : expression.getExprs())
+    Term[] terms = new Term[expr.getExprs().size()];
+    if (expr.getExprs().size() == 1)
     {
-      visit(expr);
+      terms[0] = visit(expr.getExprs().get(0));
     }
-    return null;
+    else if (expr.getExprs().size() > 1)
+    {
+      for (int i = 0; i < expr.getExprs().size(); ++i)
+      {
+        terms[i] = visit(expr.getExprs().get(i));
+      }
+    }
+    else
+    {
+      throw new RuntimeException("");
+    }
+    if(expr.getOp() == SmtMultiArityExpr.Op.MKTUPLE)
+    {
+      Sort[] sorts = new Sort[expr.getExprs().size()];
+      for (int i = 0; i < expr.getExprs().size(); ++i)
+      {
+        sorts[i] = visit(expr.getExprs().get(i).getSort());
+      }
+      return solver.mkTuple(sorts, terms);
+    }
+    Kind k = getKind(expr.getOp());
+    return solver.mkTerm(k, terms);
   }
 
   protected Kind getKind(SmtMultiArityExpr.Op op)
