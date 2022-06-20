@@ -110,7 +110,7 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
     {
       visit((SmtSort) smtExpr);
       // todo: handle this
-      return null;
+      throw new UnsupportedOperationException(((SmtSort) smtExpr).getName());
     }
     if (smtExpr instanceof IntConstant)
     {
@@ -208,7 +208,15 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
     Kind k = getKind(expr.getOp());
     Term A = visit(expr.getA());
     Term B = visit(expr.getB());
-    return solver.mkTerm(k, A, B);
+    try
+    {
+      return solver.mkTerm(k, A, B);
+    }
+    catch (Exception e)
+    {
+      String message = expr.getA() + " " + k.toString() + " " + expr.getB() + e.getMessage();
+      throw new RuntimeException(message, e);
+    }
   }
 
   public Kind getKind(SmtBinaryExpr.Op op)
