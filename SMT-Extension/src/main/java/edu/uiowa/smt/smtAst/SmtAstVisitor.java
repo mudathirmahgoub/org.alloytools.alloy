@@ -13,7 +13,7 @@ import io.github.cvc5.*;
 public interface SmtAstVisitor {
   void visit(SmtAst smtAst);
 
-  void visit(Declaration declaration);
+  Term visit(Declaration declaration);
 
   void visit(SmtModel model);
 

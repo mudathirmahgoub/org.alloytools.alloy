@@ -249,7 +249,7 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
     Sort sort = visit(declaration.getSort());
     stringBuilder.append(")\n");
     Term term = solver.declareFun(symbol, sorts, sort);
-    termSymbols.add(new Pair<>(symbol, term));
+    termSymbols.add(new Triplet<>(symbol, declaration, term));
     return term;
   }
 
@@ -270,7 +270,7 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
     stringBuilder.append(")");
     stringBuilder.append("\n");
     Term term = solver.defineFun(symbol, terms, sort, body);
-    termSymbols.add(new Pair<>(symbol, term));
+    termSymbols.add(new Triplet<>(symbol, definition, term));
     return term;
   }
 

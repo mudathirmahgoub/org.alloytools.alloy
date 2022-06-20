@@ -16,7 +16,7 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
   // here we are using a list instead of a map to handle scopes for declared terms.
   // Innermost terms are closest to the end of the list.
   // Out of scope terms should be removed.
-  protected List<Pair<String, Term>> termSymbols = new ArrayList<>();
+  protected List<Triplet<String, Declaration, Term>> termSymbols = new ArrayList<>();
 
   @Override
   public void visit(SmtAst smtAst)
@@ -64,19 +64,19 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
   }
 
   @Override
-  public void visit(Declaration declaration)
+  public Term visit(Declaration declaration)
   {
     if (declaration instanceof FunctionDefinition)
     {
-      this.visit((FunctionDefinition) declaration);
+      return visit((FunctionDefinition) declaration);
     }
     else if (declaration instanceof FunctionDeclaration)
     {
-      this.visit((FunctionDeclaration) declaration);
+      return visit((FunctionDeclaration) declaration);
     }
     else if (declaration instanceof SmtVariable)
     {
-      this.visit((SmtVariable) declaration);
+      return visit((SmtVariable) declaration);
     }
     else
     {
@@ -395,16 +395,18 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
   public Term getTerm(Variable variable)
   {
     String symbol = TranslatorUtils.sanitizeWithBars(variable.getDeclaration());
-    for(int i = termSymbols.size() - 1; i >=0; i--)
+    for (int i = termSymbols.size() - 1; i >= 0; i--)
     {
-      if(termSymbols.get(i).first.equals(symbol))
+      if (termSymbols.get(i).first.equals(symbol)
+          && termSymbols.get(i).second.equals(variable.getDeclaration()))
       {
-        return termSymbols.get(i).second;
+        return termSymbols.get(i).third;
       }
     }
-    throw new RuntimeException("Didn't find term symbol: " + symbol  + "\n" + termSymbols + "\n" +
-            this.getClass()
-            );
+    // create term for this variable
+    Term term = visit(variable.getDeclaration());
+    // ToDo: review when there is a collision in names in different scopes
+    return term;
   }
 
   @Override
@@ -419,7 +421,7 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
     }
     Sort sort = visit(declaration.getSort());
     Term term = solver.declareFun(symbol, sorts, sort);
-    termSymbols.add(new Pair<>(symbol, term));
+    termSymbols.add(new Triplet<>(symbol, declaration, term));
     return term;
   }
 
@@ -435,7 +437,7 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
     Sort sort = visit(definition.getSort());
     Term body = visit(definition.smtExpr);
     Term term = solver.defineFun(symbol, terms, sort, body);
-    termSymbols.add(new Pair<>(symbol, term));
+    termSymbols.add(new Triplet<>(symbol, definition, term));
     return term;
   }
 
@@ -487,8 +489,11 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
   @Override
   public Term visit(SmtVariable smtVariable)
   {
-    visit(smtVariable.getSort());
-    return null;
+    Sort sort = visit(smtVariable.getSort());
+    String symbol = TranslatorUtils.sanitizeWithBars(smtVariable);
+    Term term = solver.mkVar(sort, symbol);
+    termSymbols.add(new Triplet<>(symbol, smtVariable, term));
+    return term;
   }
 
   @Override
