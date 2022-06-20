@@ -39,7 +39,7 @@ public interface SmtAstVisitor {
 
   Term visit(SmtUnaryExpr unaryExpression);
 
-  void visit(UninterpretedSort uninterpretedSort);
+  Sort visit(UninterpretedSort uninterpretedSort);
 
   Term visit(IntConstant intConstant);
 

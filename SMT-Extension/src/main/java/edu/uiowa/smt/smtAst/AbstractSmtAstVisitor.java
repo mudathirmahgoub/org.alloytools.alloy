@@ -3,11 +3,14 @@ package edu.uiowa.smt.smtAst;
 import static io.github.cvc5.Kind.*;
 
 import io.github.cvc5.*;
+
+import java.util.HashMap;
 import java.util.Map;
 
 abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
 {
   protected Solver solver = new Solver();
+  protected Map<String, Sort> sortMap = new HashMap<>();
   @Override
   public void visit(SmtAst smtAst)
   {
@@ -296,8 +299,9 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
   }
 
   @Override
-  public void visit(UninterpretedSort uninterpretedSort)
+  public Sort visit(UninterpretedSort uninterpretedSort)
   {
+    return sortMap.get(uninterpretedSort.getName());
   }
 
   @Override

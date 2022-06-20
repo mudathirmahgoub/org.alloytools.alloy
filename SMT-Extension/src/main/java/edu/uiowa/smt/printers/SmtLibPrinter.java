@@ -55,13 +55,22 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
       initializeProgram();
     }
 
-    for (SmtSort sort : script.getSorts())
+    for (SmtSort smtSort : script.getSorts())
     {
-      if (sort instanceof UninterpretedSort)
+      if (smtSort instanceof UninterpretedSort)
       {
         stringBuilder.append("(declare-sort ");
-        stringBuilder.append(sort.getName());
+        stringBuilder.append(smtSort.getName());
         stringBuilder.append(" 0)\n");
+        try
+        {
+          Sort sort = solver.declareSort(smtSort.getName(), 0);
+          sortMap.put(smtSort.getName(), sort);
+        }
+        catch (CVC5ApiException e)
+        {
+          throw new RuntimeException(e);
+        }
       }
     }
     for (FunctionDeclaration declaration : script.getFunctions())
@@ -183,9 +192,10 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
   }
 
   @Override
-  public void visit(UninterpretedSort uninterpretedSort)
+  public Sort visit(UninterpretedSort uninterpretedSort)
   {
     stringBuilder.append(uninterpretedSort.getName());
+    return sortMap.get(uninterpretedSort.getName());
   }
 
   @Override
@@ -401,6 +411,14 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
     for (String logic : smtSettings.getLogic())
     {
       stringBuilder.append("(set-logic " + logic + ")\n");
+      try
+      {
+        solver.setLogic(logic);
+      }
+      catch (CVC5ApiException e)
+      {
+        throw new RuntimeException(e);
+      }
     }
     Map<String, String> options = smtSettings.getSolverOptions();
     for (Map.Entry<String, String> entry : options.entrySet())
@@ -408,6 +426,7 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
       stringBuilder.append("(set-option ");
       stringBuilder.append(":" + entry.getKey() + " ");
       stringBuilder.append(entry.getValue() + ")\n");
+      solver.setOption(entry.getKey(), entry.getValue());
     }
   }
 
