@@ -233,7 +233,7 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
   {
     String symbol = TranslatorUtils.sanitizeWithBars(variable.getDeclaration());
     stringBuilder.append(symbol);
-    return getTerm(variable);
+    return getTerm(variable.getDeclaration());
   }
 
   @Override
@@ -357,31 +357,33 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
   @Override
   public Term visit(SmtCallExpr smtCallExpr)
   {
+    FunctionDeclaration f = smtCallExpr.getFunction();
+    Term fTerm = getTerm(f);
+    String symbol = TranslatorUtils.sanitizeWithBars(smtCallExpr.getFunction());
     if (smtCallExpr.getArguments().size() > 0)
     {
       stringBuilder.append("(");
-      String symbol = TranslatorUtils.sanitizeWithBars(smtCallExpr.getFunction());
       stringBuilder.append(symbol);
       stringBuilder.append(" ");
-      Term[] args = new Term[smtCallExpr.getArguments().size()];
+      Term[] terms = new Term[smtCallExpr.getArguments().size() + 1];
+      terms[0] = fTerm;
       for (int i = 0; i < smtCallExpr.getArguments().size() - 1; ++i)
       {
         Term term = visit(smtCallExpr.getArguments().get(i));
         stringBuilder.append(" ");
-        args[i] = term;
+        terms[i + 1] = term;
       }
-      Term term = visit(smtCallExpr.getArguments().get(smtCallExpr.getArguments().size() - 1));
-      args[smtCallExpr.getArguments().size() - 1] = term;
+      int index = smtCallExpr.getArguments().size() - 1;
+      terms[index + 1] = visit(smtCallExpr.getArguments().get(index));
       stringBuilder.append(")");
-      // ToDo: figure out what to do with fucntion terms
-      return null;
+      Term term = solver.mkTerm(APPLY_UF, terms);
+      return term;
     }
     else
     {
-      stringBuilder.append(TranslatorUtils.sanitizeWithBars(smtCallExpr.getFunction()));
+      stringBuilder.append(symbol);
+      return fTerm;
     }
-    // ToDo: figure out what to do with fucntion terms
-    return null;
   }
 
   @Override

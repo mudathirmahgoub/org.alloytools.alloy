@@ -387,22 +387,22 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
   @Override
   public Term visit(Variable variable)
   {
-    return getTerm(variable);
+    return getTerm(variable.getDeclaration());
   }
 
-  public Term getTerm(Variable variable)
+  public Term getTerm(Declaration declaration)
   {
-    String symbol = TranslatorUtils.sanitizeWithBars(variable.getDeclaration());
+    String symbol = TranslatorUtils.sanitizeWithBars(declaration);
     for (int i = termSymbols.size() - 1; i >= 0; i--)
     {
       if (termSymbols.get(i).first.equals(symbol)
-          && termSymbols.get(i).second.equals(variable.getDeclaration()))
+          && termSymbols.get(i).second.equals(declaration))
       {
         return termSymbols.get(i).third;
       }
     }
     // create term for this variable
-    Term term = visit(variable.getDeclaration());
+    Term term = visit(declaration);
     // ToDo: review when there is a collision in names in different scopes
     return term;
   }
