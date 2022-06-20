@@ -31,16 +31,27 @@ public class SmtLibPrettyPrinter extends SmtLibPrinter
   }
 
   @Override
-  public Term visit(SmtUnaryExpr unaryExpression)
+  public Term visit(SmtUnaryExpr expr)
   {
     tabsCount++;
     stringBuilder.append("\n");
     printTabs();
-    stringBuilder.append("(" + unaryExpression.getOp() + " ");
+    stringBuilder.append("(" + expr.getOp() + " ");
     tabsCount++;
-    Term term = visit(unaryExpression.getExpr());
+    Term term = visit(expr.getExpr());
     stringBuilder.append(")");
     tabsCount -= 2;
+    Kind k = getKind(expr.getOp());
+    if (k == SET_EMPTY)
+    {
+      Sort sort = this.visit(expr.getSort());
+      term = solver.mkEmptySet(sort);
+    }
+    else if (k == SET_UNIVERSE)
+    {
+      Sort sort = this.visit(expr.getSort());
+      term = solver.mkUniverseSet(sort);
+    }
     return term;
   }
 

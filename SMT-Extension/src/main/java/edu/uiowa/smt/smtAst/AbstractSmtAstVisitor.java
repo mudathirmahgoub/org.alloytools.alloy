@@ -2,6 +2,7 @@ package edu.uiowa.smt.smtAst;
 
 import static io.github.cvc5.Kind.*;
 
+import edu.uiowa.smt.TranslatorUtils;
 import io.github.cvc5.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,10 +13,10 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
 {
   protected Solver solver = new Solver();
   protected Map<String, Sort> sortMap = new HashMap<>();
-  // here we are using a list instead of a map to handle scopes for variables.
-  // Innermost variables are closest to the end of the list.
-  // Scope variables should be removed when they are out of scope.
-  protected List<Pair<String, Term>> variables = new ArrayList<>();
+  // here we are using a list instead of a map to handle scopes for declared terms.
+  // Innermost terms are closest to the end of the list.
+  // Out of scope terms should be removed.
+  protected List<Pair<String, Term>> termSymbols = new ArrayList<>();
 
   @Override
   public void visit(SmtAst smtAst)
@@ -313,10 +314,24 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
   }
 
   @Override
-  public Term visit(SmtUnaryExpr unaryExpression)
+  public Term visit(SmtUnaryExpr expr)
   {
-    Kind k = getKind(unaryExpression.getOp());
-    Term term = visit(unaryExpression.getExpr());
+    Kind k = getKind(expr.getOp());
+    Term term;
+    if (k == SET_EMPTY)
+    {
+      Sort sort = this.visit(expr.getSort());
+      term = solver.mkEmptySet(sort);
+    }
+    else if (k == SET_UNIVERSE)
+    {
+      Sort sort = this.visit(expr.getSort());
+      term = solver.mkUniverseSet(sort);
+    }
+    else
+    {
+      term = visit(expr.getExpr());
+    }
     // todo: handle universe set and empty set cases
     return solver.mkTerm(k, term);
   }
@@ -378,26 +393,35 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
   }
 
   @Override
-  public Term visit(FunctionDeclaration functionDeclaration)
+  public Term visit(FunctionDeclaration declaration)
   {
-    for (SmtSort sort : functionDeclaration.getInputSorts())
+    String symbol = TranslatorUtils.sanitizeWithBars(declaration);
+    List<SmtSort> inputSorts = declaration.getInputSorts();
+    Sort[] sorts = new Sort[inputSorts.size()];
+    for (int i = 0; i < inputSorts.size(); i++)
     {
-      visit(sort);
+      sorts[i] = visit(inputSorts.get(i));
     }
-    visit(functionDeclaration.getSort());
-    return null;
+    Sort sort = visit(declaration.getSort());
+    Term term = solver.declareFun(symbol, sorts, sort);
+    termSymbols.add(new Pair<>(symbol, term));
+    return term;
   }
 
   @Override
-  public Term visit(FunctionDefinition functionDefinition)
+  public Term visit(FunctionDefinition definition)
   {
-    for (SmtVariable variable : functionDefinition.getInputVariables())
+    String symbol = TranslatorUtils.sanitizeWithBars(definition);
+    Term[] terms = new Term[definition.inputVariables.size()];
+    for (int i = 0; i < definition.inputVariables.size(); i++)
     {
-      visit(variable);
+      terms[i] = visit(definition.inputVariables.get(i));
     }
-    visit(functionDefinition.getBody());
-    visit(functionDefinition.getSort());
-    return null;
+    Sort sort = visit(definition.getSort());
+    Term body = visit(definition.smtExpr);
+    Term term = solver.defineFun(symbol, terms, sort, body);
+    termSymbols.add(new Pair<>(symbol, term));
+    return term;
   }
 
   @Override

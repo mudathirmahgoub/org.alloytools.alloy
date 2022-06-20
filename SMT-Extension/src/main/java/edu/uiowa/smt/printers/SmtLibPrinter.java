@@ -183,11 +183,22 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
   }
 
   @Override
-  public Term visit(SmtUnaryExpr unaryExpression)
+  public Term visit(SmtUnaryExpr expr)
   {
-    stringBuilder.append("(" + unaryExpression.getOp() + " ");
-    Term term = visit(unaryExpression.getExpr());
+    stringBuilder.append("(" + expr.getOp() + " ");
+    Term term = visit(expr.getExpr());
     stringBuilder.append(")");
+    Kind k = getKind(expr.getOp());
+    if (k == SET_EMPTY)
+    {
+      Sort sort = this.visit(expr.getSort());
+      term = solver.mkEmptySet(sort);
+    }
+    else if (k == SET_UNIVERSE)
+    {
+      Sort sort = this.visit(expr.getSort());
+      term = solver.mkUniverseSet(sort);
+    }
     return term;
   }
 
@@ -197,8 +208,6 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
     stringBuilder.append(uninterpretedSort.getName());
     return getUninterpretedSort(uninterpretedSort);
   }
-
-
 
   @Override
   public Term visit(IntConstant intConstant)
@@ -225,21 +234,24 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
   }
 
   @Override
-  public Term visit(FunctionDeclaration functionDeclaration)
+  public Term visit(FunctionDeclaration declaration)
   {
     stringBuilder.append("(declare-fun ");
-    stringBuilder.append(TranslatorUtils.sanitizeWithBars(functionDeclaration) + " (");
+    String symbol = TranslatorUtils.sanitizeWithBars(declaration);
+    stringBuilder.append(symbol + " (");
 
-    List<SmtSort> inputSorts = functionDeclaration.getInputSorts();
+    List<SmtSort> inputSorts = declaration.getInputSorts();
+    Sort[] sorts = new Sort[inputSorts.size()];
     for (int i = 0; i < inputSorts.size(); i++)
     {
-      this.visit(inputSorts.get(i));
+      sorts[i] = visit(inputSorts.get(i));
     }
     stringBuilder.append(") ");
-    this.visit(functionDeclaration.getSort());
+    Sort sort = visit(declaration.getSort());
     stringBuilder.append(")\n");
-    // ToDo: figure out what to return here
-    return null;
+    Term term = solver.declareFun(symbol, sorts, sort);
+    termSymbols.add(new Pair<>(symbol, term));
+    return term;
   }
 
   @Override
@@ -255,10 +267,12 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
     stringBuilder.append(") ");
     Sort sort = visit(definition.getSort());
     stringBuilder.append(" ").append("\n");
-    Term term = visit(definition.smtExpr);
+    Term body = visit(definition.smtExpr);
     stringBuilder.append(")");
     stringBuilder.append("\n");
-    return solver.defineFun(symbol, terms, sort, term);
+    Term term = solver.defineFun(symbol, terms, sort, body);
+    termSymbols.add(new Pair<>(symbol, term));
+    return term;
   }
 
   @Override
