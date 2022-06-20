@@ -8,15 +8,16 @@
 
 package edu.uiowa.smt.printers;
 
-import static io.github.cvc5.Kind.*;
-
 import edu.uiowa.smt.TranslatorUtils;
 import edu.uiowa.smt.smtAst.*;
 import io.github.cvc5.*;
+
 import java.util.List;
 import java.util.Map;
 
-public class SmtLibPrinter extends AbstractSmtAstVisitor
+import static io.github.cvc5.Kind.*;
+
+public class TermPrinter extends AbstractSmtAstVisitor
 {
   public final static String CHECK_SAT = "(check-sat)";
   public final static String GET_MODEL = "(get-model)";
@@ -27,12 +28,12 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
   protected SmtSettings smtSettings;
   protected StringBuilder stringBuilder = new StringBuilder();
 
-  public SmtLibPrinter(SmtSettings smtSettings)
+  public TermPrinter(SmtSettings smtSettings)
   {
     this.smtSettings = smtSettings;
   }
 
-  public SmtLibPrinter()
+  public TermPrinter()
   {
     this.smtSettings = SmtSettings.Default;
   }
