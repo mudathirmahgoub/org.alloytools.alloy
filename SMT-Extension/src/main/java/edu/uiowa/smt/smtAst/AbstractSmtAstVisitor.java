@@ -3,13 +3,20 @@ package edu.uiowa.smt.smtAst;
 import static io.github.cvc5.Kind.*;
 
 import io.github.cvc5.*;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
 {
   protected Solver solver = new Solver();
   protected Map<String, Sort> sortMap = new HashMap<>();
+  // here we are using a list instead of a map to handle scopes for variables.
+  // Innermost variables are closest to the end of the list.
+  // Scope variables should be removed when they are out of scope.
+  protected List<Pair<String, Term>> variables = new ArrayList<>();
+
   @Override
   public void visit(SmtAst smtAst)
   {
@@ -102,6 +109,7 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
     if (smtExpr instanceof SmtSort)
     {
       visit((SmtSort) smtExpr);
+      // todo: handle this
       return null;
     }
     if (smtExpr instanceof IntConstant)
@@ -202,6 +210,7 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
     Term B = visit(expr.getB());
     return solver.mkTerm(k, A, B);
   }
+
   public Kind getKind(SmtBinaryExpr.Op op)
   {
     switch (op)
@@ -242,15 +251,19 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
   }
 
   @Override
-  public Term visit(SmtQtExpr quantifiedExpression)
+  public Term visit(SmtQtExpr expr)
   {
-    for (SmtVariable boundVariable : quantifiedExpression.getVariables())
+    Kind k = getKind(expr.getOp());
+    Term[] vars = new Term[expr.getVariables().size()];
+    for (int i = 0; i < expr.getVariables().size(); i++)
     {
-      this.visit(boundVariable);
+      vars[i] = visit(expr.getVariables().get(i));
     }
-    this.visit(quantifiedExpression.getExpr());
-    return null;
+    Term body = visit(expr.getExpr());
+    Term bvl = solver.mkTerm(VARIABLE_LIST, vars);
+    return solver.mkTerm(k, new Term[] {bvl, body});
   }
+
   public Kind getKind(SmtQtExpr.Op op)
   {
     switch (op)
@@ -296,7 +309,7 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
   {
     Kind k = getKind(unaryExpression.getOp());
     Term term = visit(unaryExpression.getExpr());
-    //todo: handle universe set and empty set cases
+    // todo: handle universe set and empty set cases
     return solver.mkTerm(k, term);
   }
 
