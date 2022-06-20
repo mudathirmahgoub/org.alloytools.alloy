@@ -325,7 +325,8 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
   @Override
   public Term visit(IntConstant intConstant)
   {
-    return null;
+    int value = Integer.parseInt(intConstant.getValue());
+    return solver.mkInteger(value);
   }
 
   @Override
