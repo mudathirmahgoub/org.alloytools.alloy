@@ -9,9 +9,7 @@ public class UninterpretedIntVisitor extends AbstractSmtAstVisitor
 {
   private boolean uninterpretedIntUsed = false;
 
-  public UninterpretedIntVisitor()
-  {
-  }
+  public UninterpretedIntVisitor() {}
 
   public boolean isUninterpretedIntUsed()
   {
@@ -25,6 +23,6 @@ public class UninterpretedIntVisitor extends AbstractSmtAstVisitor
     {
       this.uninterpretedIntUsed = true;
     }
-    return sortMap.get(uninterpretedSort.getName());
+    return getUninterpretedSort(uninterpretedSort);
   }
 }

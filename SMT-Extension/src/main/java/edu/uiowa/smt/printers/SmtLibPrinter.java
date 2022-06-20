@@ -195,8 +195,10 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
   public Sort visit(UninterpretedSort uninterpretedSort)
   {
     stringBuilder.append(uninterpretedSort.getName());
-    return sortMap.get(uninterpretedSort.getName());
+    return getUninterpretedSort(uninterpretedSort);
   }
+
+
 
   @Override
   public Term visit(IntConstant intConstant)

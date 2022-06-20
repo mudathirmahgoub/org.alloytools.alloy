@@ -332,7 +332,28 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
   @Override
   public Sort visit(UninterpretedSort uninterpretedSort)
   {
-    return sortMap.get(uninterpretedSort.getName());
+    return getUninterpretedSort(uninterpretedSort);
+  }
+
+  protected Sort getUninterpretedSort(UninterpretedSort uninterpretedSort)
+  {
+    if (sortMap.containsKey(uninterpretedSort.getName()))
+    {
+      return sortMap.get(uninterpretedSort.getName());
+    }
+    else
+    {
+      try
+      {
+        Sort sort = solver.declareSort(uninterpretedSort.getName(), 0);
+        sortMap.put(uninterpretedSort.getName(), sort);
+        return sort;
+      }
+      catch (CVC5ApiException e)
+      {
+        throw new RuntimeException(e);
+      }
+    }
   }
 
   @Override
