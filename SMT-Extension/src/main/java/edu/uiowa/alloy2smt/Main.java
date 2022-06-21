@@ -11,6 +11,7 @@ package edu.uiowa.alloy2smt;
 import edu.uiowa.alloy2smt.translators.Translation;
 import edu.uiowa.alloy2smt.utils.AlloySettings;
 import edu.uiowa.smt.printers.SmtLibPrinter;
+import edu.uiowa.smt.printers.TermPrinter;
 import edu.uiowa.smt.smtAst.SmtScript;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -21,6 +22,8 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.util.Formatter;
 import java.util.Scanner;
+
+import io.github.cvc5.Solver;
 import org.apache.commons.cli.*;
 
 public class Main
