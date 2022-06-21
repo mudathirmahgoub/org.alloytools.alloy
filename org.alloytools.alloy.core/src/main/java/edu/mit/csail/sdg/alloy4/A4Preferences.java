@@ -726,7 +726,7 @@ public class A4Preferences {
     public static final String cvc5 = "cvc5 (experimental)";
     public static final StringChoicePref RelationalSolver = new StringChoicePref("Relational Solver",
         Arrays.asList(KODKOD, CVC4, cvc5), KODKOD);
-    public static final IntChoicePref Cvc4Timeout = new IntChoicePref("Cvc4Timeout", "CVC4 timeout", Arrays.asList(5000, 30000, 60000, 120000, 300000, 600000, 0), 30000)
+    public static final IntChoicePref CvcTimeout = new IntChoicePref("CvcTimeout", "CVC timeout", Arrays.asList(5000, 30000, 60000, 120000, 300000, 600000, 0), 30000)
     {
         @Override
         public Object renderValueShort(Integer value)
@@ -743,12 +743,12 @@ public class A4Preferences {
         }
     };
 
-    public static final BooleanPref Cvc4IncludeCommandScope = new BooleanPref("Cvc4IncludeCommandScope", "CVC4 include scope", false);
+    public static final BooleanPref CvcIncludeCommandScope = new BooleanPref("CvcIncludeCommandScope", "CVC include scope", false);
 
-    public static final BooleanPref Cvc4ProduceUnsatCores = new BooleanPref("Cvc4ProduceUnsatCores", "CVC4 produce unsat cores", false);
-    public static final BooleanPref Cvc4FiniteModelFind = new BooleanPref("Cvc4FiniteModelFind", "Finite model find", true);
+    public static final BooleanPref CvcProduceUnsatCores = new BooleanPref("CvcProduceUnsatCores", "CVC produce unsat cores", false);
+    public static final BooleanPref CvcFiniteModelFind = new BooleanPref("CvcFiniteModelFind", "Finite model find", true);
 
-    public static final BooleanPref Cvc4IntegerSingletonsOnly = new BooleanPref("Cvc4IntegerSingletonsOnly", "CVC4 integer singletons only", false);
+    public static final BooleanPref CvcIntegerSingletonsOnly = new BooleanPref("CvcIntegerSingletonsOnly", "CVC integer singletons only", false);
 
     public static final DelayedChoicePref<SatSolver> Solver               = new DelayedChoicePref<SatSolver>("SatSolver2", "Solver", SatSolver.values(), SatSolver.SAT4J) {
 

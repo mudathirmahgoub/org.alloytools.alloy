@@ -1,10 +1,10 @@
 package edu.mit.csail.sdg.alloy4whole;
 
-import static edu.mit.csail.sdg.alloy4.A4Preferences.Cvc4FiniteModelFind;
-import static edu.mit.csail.sdg.alloy4.A4Preferences.Cvc4IncludeCommandScope;
-import static edu.mit.csail.sdg.alloy4.A4Preferences.Cvc4IntegerSingletonsOnly;
-import static edu.mit.csail.sdg.alloy4.A4Preferences.Cvc4ProduceUnsatCores;
-import static edu.mit.csail.sdg.alloy4.A4Preferences.Cvc4Timeout;
+import static edu.mit.csail.sdg.alloy4.A4Preferences.CvcFiniteModelFind;
+import static edu.mit.csail.sdg.alloy4.A4Preferences.CvcIncludeCommandScope;
+import static edu.mit.csail.sdg.alloy4.A4Preferences.CvcIntegerSingletonsOnly;
+import static edu.mit.csail.sdg.alloy4.A4Preferences.CvcProduceUnsatCores;
+import static edu.mit.csail.sdg.alloy4.A4Preferences.CvcTimeout;
 
 import edu.mit.csail.sdg.alloy4.ErrorWarning;
 import edu.mit.csail.sdg.alloy4.Pair;
@@ -215,7 +215,7 @@ public class Cvc4Task implements WorkerEngine.WorkerTask
 
     callbackBold("Executing " + command + "\n");
 
-    if (!Cvc4IncludeCommandScope.get())
+    if (!CvcIncludeCommandScope.get())
     {
       ErrorWarning warning = new ErrorWarning(command.pos, "The scope is ignored by cvc4");
       callbackWarning(warning);
@@ -244,7 +244,7 @@ public class Cvc4Task implements WorkerEngine.WorkerTask
       {
         case "sat": commandResult.xmlFileName = prepareInstance(index, duration); break;
         case "unsat":
-          if (Cvc4ProduceUnsatCores.get())
+          if (CvcProduceUnsatCores.get())
           {
             commandResult.unsatCore = prepareUnsatCore(index, duration);
           }
@@ -810,17 +810,17 @@ public class Cvc4Task implements WorkerEngine.WorkerTask
   public static void setAlloySettings()
   {
     // (set-option :tlimit 30000)
-    alloySettings.putSolverOption(SmtSettings.TLIMIT, Cvc4Timeout.get().toString());
+    alloySettings.putSolverOption(SmtSettings.TLIMIT, CvcTimeout.get().toString());
     //(set-option :produce-unsat-cores false)
     alloySettings.putSolverOption(
-        SmtSettings.PRODUCE_UNSAT_CORES, Cvc4ProduceUnsatCores.get().toString());
+        SmtSettings.PRODUCE_UNSAT_CORES, CvcProduceUnsatCores.get().toString());
     //(set-option :finite-model-find false)
     alloySettings.putSolverOption(
-        SmtSettings.FINITE_MODEL_FIND, Cvc4FiniteModelFind.get().toString());
-    alloySettings.includeCommandScope = Cvc4IncludeCommandScope.get();
-    alloySettings.produceUnsatCore = Cvc4ProduceUnsatCores.get();
-    alloySettings.finiteModelFinding = Cvc4FiniteModelFind.get();
-    alloySettings.integerSingletonsOnly = Cvc4IntegerSingletonsOnly.get();
+        SmtSettings.FINITE_MODEL_FIND, CvcFiniteModelFind.get().toString());
+    alloySettings.includeCommandScope = CvcIncludeCommandScope.get();
+    alloySettings.produceUnsatCore = CvcProduceUnsatCores.get();
+    alloySettings.finiteModelFinding = CvcFiniteModelFind.get();
+    alloySettings.integerSingletonsOnly = CvcIntegerSingletonsOnly.get();
   }
 
   // ToDo: replace this with a call edu.uiowa.smt.Result.parseModel

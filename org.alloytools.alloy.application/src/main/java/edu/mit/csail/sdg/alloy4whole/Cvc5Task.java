@@ -160,7 +160,7 @@ public class Cvc5Task implements WorkerEngine.WorkerTask
 
     callbackBold("Executing " + command + "\n");
 
-    if (!Cvc4IncludeCommandScope.get())
+    if (!CvcIncludeCommandScope.get())
     {
       ErrorWarning warning = new ErrorWarning(command.pos, "The scope is ignored by cvc4");
       callbackWarning(warning);
@@ -185,7 +185,7 @@ public class Cvc5Task implements WorkerEngine.WorkerTask
     {
       commandResult.xmlFileName = prepareInstance(index, duration, solver, cvc5Visitor);
     }
-    if (result.isUnsat() && Cvc4ProduceUnsatCores.get())
+    if (result.isUnsat() && CvcProduceUnsatCores.get())
     {
       commandResult.unsatCore = prepareUnsatCore(index, duration);
     }
@@ -756,17 +756,17 @@ public class Cvc5Task implements WorkerEngine.WorkerTask
   public static void setAlloySettings()
   {
     // (set-option :tlimit 30000)
-    alloySettings.putSolverOption(SmtSettings.TLIMIT, Cvc4Timeout.get().toString());
+    alloySettings.putSolverOption(SmtSettings.TLIMIT, CvcTimeout.get().toString());
     //(set-option :produce-unsat-cores false)
     alloySettings.putSolverOption(
-        SmtSettings.PRODUCE_UNSAT_CORES, Cvc4ProduceUnsatCores.get().toString());
+        SmtSettings.PRODUCE_UNSAT_CORES, CvcProduceUnsatCores.get().toString());
     //(set-option :finite-model-find false)
     alloySettings.putSolverOption(
-        SmtSettings.FINITE_MODEL_FIND, Cvc4FiniteModelFind.get().toString());
-    alloySettings.includeCommandScope = Cvc4IncludeCommandScope.get();
-    alloySettings.produceUnsatCore = Cvc4ProduceUnsatCores.get();
-    alloySettings.finiteModelFinding = Cvc4FiniteModelFind.get();
-    alloySettings.integerSingletonsOnly = Cvc4IntegerSingletonsOnly.get();
+        SmtSettings.FINITE_MODEL_FIND, CvcFiniteModelFind.get().toString());
+    alloySettings.includeCommandScope = CvcIncludeCommandScope.get();
+    alloySettings.produceUnsatCore = CvcProduceUnsatCores.get();
+    alloySettings.finiteModelFinding = CvcFiniteModelFind.get();
+    alloySettings.integerSingletonsOnly = CvcIntegerSingletonsOnly.get();
   }
 
   // ToDo: replace this with a call edu.uiowa.smt.Result.parseModel
