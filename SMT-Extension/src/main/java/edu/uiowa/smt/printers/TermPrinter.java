@@ -308,18 +308,19 @@ public class TermPrinter extends AbstractSmtAstVisitor
   @Override
   public Term visit(SmtLetExpr let)
   {
+    int size = termSymbols.size();
     for (Map.Entry<SmtVariable, SmtExpr> letVar : let.getLetVariables().entrySet())
     {
-      //      stringBuilder.append("(");
-      //      stringBuilder.append(TranslatorUtils.sanitizeWithBars(letVar.getKey())).append(" ");
-      this.visit(letVar.getValue());
-      //      stringBuilder.append(")");
+      String symbol = TranslatorUtils.sanitizeWithBars(letVar.getKey());
+      Term body = visit(letVar.getValue());
+      Sort sort = visit(letVar.getValue().getSort());
+      Term term = solver.defineFun(symbol, new Term[0], sort, body);
+      termSymbols.add(new Triplet<>(symbol, letVar.getKey(), term));
     }
-    //    stringBuilder.append(") ");
-    this.visit(let.getSmtExpr());
-    //    stringBuilder.append(")");
-    // ToDo: figure this out
-    return null;
+    Term letBody = visit(let.getSmtExpr());
+    // restore scope after let body
+    termSymbols.subList(size, termSymbols.size()).clear();
+    return letBody;
   }
 
   @Override
