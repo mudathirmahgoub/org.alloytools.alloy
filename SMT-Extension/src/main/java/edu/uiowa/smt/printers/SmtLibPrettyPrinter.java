@@ -1,11 +1,8 @@
 package edu.uiowa.smt.printers;
 
-import static io.github.cvc5.Kind.*;
-
 import edu.uiowa.smt.TranslatorUtils;
 import edu.uiowa.smt.smtAst.*;
-import io.github.cvc5.*;
-import java.util.List;
+import io.github.cvc5.Term;
 import java.util.Map;
 
 public class SmtLibPrettyPrinter extends SmtLibPrinter
@@ -31,32 +28,17 @@ public class SmtLibPrettyPrinter extends SmtLibPrinter
   }
 
   @Override
-  public Term visit(SmtUnaryExpr expr)
+  public Term visit(SmtUnaryExpr unaryExpression)
   {
     tabsCount++;
     stringBuilder.append("\n");
     printTabs();
-    stringBuilder.append("(" + expr.getOp() + " ");
+    stringBuilder.append("(" + unaryExpression.getOp() + " ");
     tabsCount++;
-    Term term = visit(expr.getExpr());
+    this.visit(unaryExpression.getExpr());
     stringBuilder.append(")");
     tabsCount -= 2;
-    Kind k = getKind(expr.getOp());
-    if (k == SET_EMPTY)
-    {
-      Sort sort = super.visit(expr.getSort());
-      term = solver.mkEmptySet(sort);
-    }
-    else if (k == SET_UNIVERSE)
-    {
-      Sort sort = super.visit(expr.getSort());
-      term = solver.mkUniverseSet(sort);
-    }
-    else
-    {
-      term = solver.mkTerm(k, term);
-    }
-    return term;
+    return termPrinter.visit(unaryExpression);
   }
 
   @Override
@@ -69,24 +51,21 @@ public class SmtLibPrettyPrinter extends SmtLibPrinter
       printTabs();
       stringBuilder.append("(" + expr.getOp() + " ");
       tabsCount++;
-      Kind k = getKind(expr.getOp());
-      Term A = visit(expr.getA());
+      this.visit(expr.getA());
       stringBuilder.append(" ");
-      Term B = visit(expr.getB());
+      this.visit(expr.getB());
       stringBuilder.append(")");
       tabsCount -= 2;
-      return solver.mkTerm(k, A, B);
     }
     else
     {
       stringBuilder.append("((_ " + expr.getOp() + " ");
-      int index = Integer.parseInt(((IntConstant) expr.getA()).getValue());
-      stringBuilder.append(index);
+      stringBuilder.append(((IntConstant) expr.getA()).getValue());
       stringBuilder.append(") ");
-      Term tuple = visit(expr.getB());
+      this.visit(expr.getB());
       stringBuilder.append(")");
-      return tupleSelect(tuple, index);
     }
+    return termPrinter.visit(expr);
   }
 
   @Override
@@ -97,68 +76,45 @@ public class SmtLibPrettyPrinter extends SmtLibPrinter
     printTabs();
     stringBuilder.append("(" + expr.getOp() + " ");
     tabsCount++;
-    Term[] terms = new Term[expr.getExprs().size()];
     if (expr.getExprs().size() == 1)
     {
-      terms[0] = visit(expr.getExprs().get(0));
+      this.visit(expr.getExprs().get(0));
     }
     else if (expr.getExprs().size() > 1)
     {
       for (int i = 0; i < expr.getExprs().size() - 1; ++i)
       {
-        terms[i] = visit(expr.getExprs().get(i));
+        this.visit(expr.getExprs().get(i));
         stringBuilder.append(" ");
       }
-      int index = expr.getExprs().size() - 1;
-      terms[index] = visit(expr.getExprs().get(index));
+      this.visit(expr.getExprs().get(expr.getExprs().size() - 1));
     }
     else
     {
       throw new RuntimeException("");
     }
-    Term term;
-    if (expr.getOp() == SmtMultiArityExpr.Op.MKTUPLE)
-    {
-      Sort[] sorts = new Sort[expr.getExprs().size()];
-      for (int i = 0; i < expr.getExprs().size(); ++i)
-      {
-        sorts[i] = super.visit(expr.getExprs().get(i).getSort());
-      }
-      term = solver.mkTuple(sorts, terms);
-    }
-    else
-    {
-      Kind k = getKind(expr.getOp());
-      term = solver.mkTerm(k, terms);
-    }
     stringBuilder.append(")");
     tabsCount -= 2;
-    return term;
+    return termPrinter.visit(expr);
   }
 
   @Override
-  public Term visit(SmtQtExpr smtQtExpr)
+  public Term visit(SmtQtExpr expr)
   {
     tabsCount++;
     stringBuilder.append("\n");
     printTabs();
-    stringBuilder.append("(" + smtQtExpr.getOp() + " (");
-    Kind k = getKind(smtQtExpr.getOp());
-    Term[] boundVars = new Term[smtQtExpr.getVariables().size()];
-    List<SmtVariable> smtVariables = smtQtExpr.getVariables();
-    for (int i = 0; i < smtVariables.size(); i++)
+    stringBuilder.append("(" + expr.getOp() + " (");
+    for (SmtVariable boundVariable : expr.getVariables())
     {
-      visit(smtVariables.get(i));
-      Sort sort = visit(smtVariables.get(i).getSort());
-      boundVars[i] = solver.mkVar(sort, smtVariables.get(i).getName());
+      this.visit(boundVariable);
     }
     stringBuilder.append(") ");
     tabsCount++;
-    Term body = visit(smtQtExpr.getExpr());
+    this.visit(expr.getExpr());
     stringBuilder.append(")");
     tabsCount -= 2;
-    Term bvl = solver.mkTerm(VARIABLE_LIST, boundVars);
-    return solver.mkTerm(k, new Term[] {bvl, body});
+    return termPrinter.visit(expr);
   }
 
   @Override
@@ -184,19 +140,18 @@ public class SmtLibPrettyPrinter extends SmtLibPrinter
     this.visit(let.getSmtExpr());
     stringBuilder.append(")");
     tabsCount -= 2;
-    // ToDo: figure what do here
-    return null;
+    return termPrinter.visit(let);
   }
 
   @Override
   public Term visit(SmtExpr smtExpr)
   {
-    Term term = super.visit(smtExpr);
+    super.visit(smtExpr);
     if (!smtExpr.getComment().isEmpty())
     {
       stringBuilder.append("; " + smtExpr.getComment() + "\n");
       printTabs();
     }
-    return term;
+    return termPrinter.visit(smtExpr);
   }
 }
