@@ -15,8 +15,6 @@ public interface SmtAstVisitor {
 
   Term visit(Declaration declaration);
 
-  void visit(SmtModel model);
-
   void visit(SmtScript script);
 
   Term visit(SmtBinaryExpr expr);

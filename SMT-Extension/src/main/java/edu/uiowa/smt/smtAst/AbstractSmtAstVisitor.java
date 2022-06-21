@@ -2,7 +2,6 @@ package edu.uiowa.smt.smtAst;
 
 import static io.github.cvc5.Kind.*;
 
-import edu.uiowa.smt.TranslatorUtils;
 import io.github.cvc5.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -85,141 +84,18 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
   }
 
   @Override
-  public Term visit(SmtExpr smtExpr)
-  {
-    if (smtExpr instanceof Variable)
-    {
-      return visit((Variable) smtExpr);
-    }
-    if (smtExpr instanceof SmtUnaryExpr)
-    {
-      return visit((SmtUnaryExpr) smtExpr);
-    }
-    if (smtExpr instanceof SmtBinaryExpr)
-    {
-      return visit((SmtBinaryExpr) smtExpr);
-    }
-    if (smtExpr instanceof SmtMultiArityExpr)
-    {
-      return visit((SmtMultiArityExpr) smtExpr);
-    }
-    if (smtExpr instanceof SmtQtExpr)
-    {
-      return visit((SmtQtExpr) smtExpr);
-    }
-    if (smtExpr instanceof SmtSort)
-    {
-      visit((SmtSort) smtExpr);
-      return null;
-    }
-    if (smtExpr instanceof IntConstant)
-    {
-      return visit((IntConstant) smtExpr);
-    }
-    if (smtExpr instanceof SmtCallExpr)
-    {
-      return visit((SmtCallExpr) smtExpr);
-    }
-    if (smtExpr instanceof BoolConstant)
-    {
-      return visit((BoolConstant) smtExpr);
-    }
-    if (smtExpr instanceof SmtLetExpr)
-    {
-      return visit((SmtLetExpr) smtExpr);
-    }
-    if (smtExpr instanceof SmtIteExpr)
-    {
-      return visit((SmtIteExpr) smtExpr);
-    }
-    if (smtExpr instanceof UninterpretedConstant)
-    {
-      this.visit((UninterpretedConstant) smtExpr);
-      return null;
-    }
-    else
-    {
-      throw new UnsupportedOperationException();
-    }
-  }
+  abstract public Term visit(SmtExpr smtExpr);
 
   @Override
-  public Sort visit(SmtSort sort)
-  {
-    if (sort instanceof UninterpretedSort)
-    {
-      return visit((UninterpretedSort) sort);
-    }
-    else if (sort instanceof SetSort)
-    {
-      return visit((SetSort) sort);
-    }
-    else if (sort instanceof TupleSort)
-    {
-      return visit((TupleSort) sort);
-    }
-    else if (sort instanceof IntSort)
-    {
-      return visit((IntSort) sort);
-    }
-    else if (sort instanceof RealSort)
-    {
-      return visit((RealSort) sort);
-    }
-    else if (sort instanceof StringSort)
-    {
-      return visit((StringSort) sort);
-    }
-    else if (sort instanceof BoolSort)
-    {
-      return visit((BoolSort) sort);
-    }
-    else
-    {
-      throw new UnsupportedOperationException();
-    }
-  }
+  abstract public Sort visit(SmtSort sort);
 
   @Override
-  public void visit(SmtModel model)
-  {
-  }
+  abstract public void visit(SmtScript script);
 
   @Override
-  public void visit(SmtScript script)
-  {
-    for (SmtSort sort : script.getSorts())
-    {
-      visit(sort);
-    }
-    for (Declaration function : script.getFunctions())
-    {
-      visit(function);
-    }
-    for (Assertion assertion : script.getAssertions())
-    {
-      visit(assertion);
-    }
-  }
+  abstract public Term visit(SmtBinaryExpr expr);
 
-  @Override
-  public Term visit(SmtBinaryExpr expr)
-  {
-    Kind k = getKind(expr.getOp());
-    Term A = visit(expr.getA());
-    Term B = visit(expr.getB());
-    try
-    {
-      return solver.mkTerm(k, A, B);
-    }
-    catch (Exception e)
-    {
-      String message = expr.getA() + " " + k.toString() + " " + expr.getB() + e.getMessage();
-      throw new RuntimeException(message, e);
-    }
-  }
-
-  public Kind getKind(SmtBinaryExpr.Op op)
+  public final Kind getKind(SmtBinaryExpr.Op op)
   {
     switch (op)
     {
@@ -253,26 +129,12 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
   }
 
   @Override
-  public Sort visit(IntSort intSort)
-  {
-    return solver.getIntegerSort();
-  }
+  abstract public Sort visit(IntSort intSort);
 
   @Override
-  public Term visit(SmtQtExpr expr)
-  {
-    Kind k = getKind(expr.getOp());
-    Term[] vars = new Term[expr.getVariables().size()];
-    for (int i = 0; i < expr.getVariables().size(); i++)
-    {
-      vars[i] = visit(expr.getVariables().get(i));
-    }
-    Term body = visit(expr.getExpr());
-    Term bvl = solver.mkTerm(VARIABLE_LIST, vars);
-    return solver.mkTerm(k, new Term[] {bvl, body});
-  }
+  abstract public Term visit(SmtQtExpr expr);
 
-  public Kind getKind(SmtQtExpr.Op op)
+  public final Kind getKind(SmtQtExpr.Op op)
   {
     switch (op)
     {
@@ -283,17 +145,10 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
   }
 
   @Override
-  public Sort visit(RealSort realSort)
-  {
-    return solver.getRealSort();
-  }
+  abstract public Sort visit(RealSort realSort);
 
   @Override
-  public Sort visit(SetSort setSort)
-  {
-    Sort sort = visit(setSort.elementSort);
-    return solver.mkSetSort(sort);
-  }
+  abstract public Sort visit(SetSort setSort);
 
   @Override
   public Sort visit(StringSort stringSort)
@@ -302,39 +157,12 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
   }
 
   @Override
-  public Sort visit(TupleSort tupleSort)
-  {
-    Sort[] sorts = new Sort[tupleSort.elementSorts.size()];
-    for (int i = 0; i < tupleSort.elementSorts.size(); i++)
-    {
-      sorts[i] = visit(tupleSort.elementSorts.get(i));
-    }
-    return solver.mkTupleSort(sorts);
-  }
+  abstract public Sort visit(TupleSort tupleSort);
 
   @Override
-  public Term visit(SmtUnaryExpr expr)
-  {
-    Kind k = getKind(expr.getOp());
-    Term term = visit(expr.getExpr());
-    if (k == SET_EMPTY)
-    {
-      Sort sort = visit(expr.getSort());
-      term = solver.mkEmptySet(sort);
-    }
-    else if (k == SET_UNIVERSE)
-    {
-      Sort sort = visit(expr.getSort());
-      term = solver.mkUniverseSet(sort);
-    }
-    else
-    {
-      term = solver.mkTerm(k, term);
-    }
-    return term;
-  }
+  abstract public Term visit(SmtUnaryExpr expr);
 
-  public Kind getKind(SmtUnaryExpr.Op op)
+  public final Kind getKind(SmtUnaryExpr.Op op)
   {
     switch (op)
     {
@@ -351,12 +179,9 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
   }
 
   @Override
-  public Sort visit(UninterpretedSort uninterpretedSort)
-  {
-    return getUninterpretedSort(uninterpretedSort);
-  }
+  abstract public Sort visit(UninterpretedSort uninterpretedSort);
 
-  protected Sort getUninterpretedSort(UninterpretedSort uninterpretedSort)
+  public final Sort getUninterpretedSort(UninterpretedSort uninterpretedSort)
   {
     if (sortMap.containsKey(uninterpretedSort.getName()))
     {
@@ -378,112 +203,25 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
   }
 
   @Override
-  public Term visit(IntConstant intConstant)
-  {
-    int value = Integer.parseInt(intConstant.getValue());
-    return solver.mkInteger(value);
-  }
+  abstract public Term visit(IntConstant intConstant);
 
   @Override
-  public Term visit(Variable variable)
-  {
-    return getTerm(variable.getDeclaration());
-  }
-
-  public Term getTerm(Declaration declaration)
-  {
-    String symbol = TranslatorUtils.sanitizeWithBars(declaration);
-    for (int i = termSymbols.size() - 1; i >= 0; i--)
-    {
-      if (termSymbols.get(i).first.equals(symbol)
-          && termSymbols.get(i).second.equals(declaration))
-      {
-        return termSymbols.get(i).third;
-      }
-    }
-    // create term for this variable
-    Term term = visit(declaration);
-    // ToDo: review when there is a collision in names in different scopes
-    return term;
-  }
+  abstract public Term visit(Variable variable);
+  @Override
+  abstract public Term visit(FunctionDeclaration declaration);
 
   @Override
-  public Term visit(FunctionDeclaration declaration)
-  {
-    String symbol = TranslatorUtils.sanitizeWithBars(declaration);
-    List<SmtSort> inputSorts = declaration.getInputSorts();
-    Sort[] sorts = new Sort[inputSorts.size()];
-    for (int i = 0; i < inputSorts.size(); i++)
-    {
-      sorts[i] = visit(inputSorts.get(i));
-    }
-    Sort sort = visit(declaration.getSort());
-    Term term = solver.declareFun(symbol, sorts, sort);
-    termSymbols.add(new Triplet<>(symbol, declaration, term));
-    return term;
-  }
+  abstract public Term visit(FunctionDefinition definition);
 
   @Override
-  public Term visit(FunctionDefinition definition)
-  {
-    String symbol = TranslatorUtils.sanitizeWithBars(definition);
-    Term[] terms = new Term[definition.inputVariables.size()];
-    for (int i = 0; i < definition.inputVariables.size(); i++)
-    {
-      terms[i] = visit(definition.inputVariables.get(i));
-    }
-    Sort sort = visit(definition.getSort());
-    Term body = visit(definition.smtExpr);
-    Term term = solver.defineFun(symbol, terms, sort, body);
-    termSymbols.add(new Triplet<>(symbol, definition, term));
-    return term;
-  }
+  abstract public Term visit(BoolConstant booleanConstant);
 
   @Override
-  public Term visit(BoolConstant booleanConstant)
-  {
-    return null;
-  }
+  abstract public void visit(Assertion assertion);
 
   @Override
-  public void visit(Assertion assertion)
-  {
-    visit(assertion.getSmtExpr());
-  }
-
-  @Override
-  public Term visit(SmtMultiArityExpr expr)
-  {
-    Term[] terms = new Term[expr.getExprs().size()];
-    if (expr.getExprs().size() == 1)
-    {
-      terms[0] = visit(expr.getExprs().get(0));
-    }
-    else if (expr.getExprs().size() > 1)
-    {
-      for (int i = 0; i < expr.getExprs().size(); ++i)
-      {
-        terms[i] = visit(expr.getExprs().get(i));
-      }
-    }
-    else
-    {
-      throw new RuntimeException("");
-    }
-    if(expr.getOp() == SmtMultiArityExpr.Op.MKTUPLE)
-    {
-      Sort[] sorts = new Sort[expr.getExprs().size()];
-      for (int i = 0; i < expr.getExprs().size(); ++i)
-      {
-        sorts[i] = visit(expr.getExprs().get(i).getSort());
-      }
-      return solver.mkTuple(sorts, terms);
-    }
-    Kind k = getKind(expr.getOp());
-    return solver.mkTerm(k, terms);
-  }
-
-  protected Kind getKind(SmtMultiArityExpr.Op op)
+  abstract public Term visit(SmtMultiArityExpr expr);
+  public final Kind getKind(SmtMultiArityExpr.Op op)
   {
     switch (op)
     {
@@ -497,76 +235,31 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
   }
 
   @Override
-  public Term visit(SmtCallExpr callExpression)
-  {
-    for (SmtExpr expr : callExpression.getArguments())
-    {
-      visit(expr);
-    }
-    return null;
-  }
+  abstract public Term visit(SmtCallExpr callExpression);
+  @Override
+  abstract public Term visit(SmtVariable smtVariable);
 
   @Override
-  public Term visit(SmtVariable smtVariable)
-  {
-    Sort sort = visit(smtVariable.getSort());
-    String symbol = TranslatorUtils.sanitizeWithBars(smtVariable);
-    Term term = solver.mkVar(sort, symbol);
-    termSymbols.add(new Triplet<>(symbol, smtVariable, term));
-    return term;
-  }
+  abstract public Sort visit(BoolSort boolSort);
 
   @Override
-  public Sort visit(BoolSort boolSort)
-  {
-    return solver.getBooleanSort();
-  }
+  abstract public Term visit(SmtLetExpr letExpression);
 
   @Override
-  public Term visit(SmtLetExpr letExpression)
-  {
-    for (Map.Entry<SmtVariable, SmtExpr> entry : letExpression.getLetVariables().entrySet())
-    {
-      visit(entry.getKey());
-      visit(entry.getValue());
-    }
-    visit(letExpression.getSmtExpr());
-    // ToDo: find a way for terms
-    return null;
-  }
+  abstract public Term visit(SmtIteExpr iteExpression);
 
   @Override
-  public Term visit(SmtIteExpr iteExpression)
-  {
-    Term condition = visit(iteExpression.getCondExpr());
-    Term thenTerm = visit(iteExpression.getThenExpr());
-    Term elseTerm = visit(iteExpression.getElseExpr());
-    return solver.mkTerm(ITE, condition, thenTerm, elseTerm);
-  }
+  abstract public void visit(UninterpretedConstant uninterpretedConstant);
 
   @Override
-  public void visit(UninterpretedConstant uninterpretedConstant)
-  {
-    visit(uninterpretedConstant.getSort());
-  }
+  abstract public void visit(SmtSettings smtSettings);
 
   @Override
-  public void visit(SmtSettings smtSettings)
-  {
-  }
+  abstract public void visit(SmtValues smtValues);
 
   @Override
-  public void visit(SmtValues smtValues)
-  {
-  }
+  abstract public void visit(ExpressionValue expressionValue);
 
   @Override
-  public void visit(ExpressionValue expressionValue)
-  {
-  }
-
-  @Override
-  public void visit(SmtUnsatCore smtUnsatCore)
-  {
-  }
+  abstract public void visit(SmtUnsatCore smtUnsatCore);
 }
