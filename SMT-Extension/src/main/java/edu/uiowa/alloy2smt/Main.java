@@ -11,9 +11,9 @@ package edu.uiowa.alloy2smt;
 import edu.uiowa.alloy2smt.translators.Translation;
 import edu.uiowa.alloy2smt.utils.AlloySettings;
 import edu.uiowa.smt.printers.SmtLibPrinter;
-import org.apache.commons.cli.*;
-
+import edu.uiowa.smt.smtAst.SmtScript;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -21,6 +21,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.util.Formatter;
 import java.util.Scanner;
+import org.apache.commons.cli.*;
 
 public class Main
 {
@@ -61,8 +62,10 @@ public class Main
     Options options = new Options();
     CommandLineParser commandLineParser = new DefaultParser();
 
-    options.addOption(Option.builder("i").longOpt("input").desc("Input Alloy model").hasArg().build());
-    options.addOption(Option.builder("o").longOpt("output").desc("SMT-LIB model output").hasArg().build());
+    options.addOption(
+        Option.builder("i").longOpt("input").desc("Input Alloy model").hasArg().build());
+    options.addOption(
+        Option.builder("o").longOpt("output").desc("SMT-LIB model output").hasArg().build());
 
     try
     {
@@ -77,7 +80,8 @@ public class Main
 
         if (isValidInputFilePath(inputFile))
         {
-          String alloy = new String(Files.readAllBytes(Paths.get(inputFile)), StandardCharsets.UTF_8);
+          String alloy =
+              new String(Files.readAllBytes(Paths.get(inputFile)), StandardCharsets.UTF_8);
           translation = Utils.translate(alloy, AlloySettings.Default);
           defaultOutputFile = OUTPUT_DIR + SEP + new File(inputFile).getName() + ".smt2";
         }
@@ -113,27 +117,10 @@ public class Main
       {
         outputFile = new File(defaultOutputFile);
       }
-      try (Formatter formatter = new Formatter(outputFile))
-      {
-        formatter.format("%s\n", translation.getOptimizedSmtScript());
 
-        System.out.println("\n");
-        System.out.println(translation.getOptimizedSmtScript());
+      SmtScript optimizedScript = translation.getOptimizedSmtScript();
 
-        // translate all alloy commands
-        for (int i = 0; i < translation.getCommands().size(); i++)
-        {
-          String commandTranslation = translation.getOptimizedSmtScript(i).toString();
-
-          commandTranslation = SmtLibPrinter.PUSH + "\n" + commandTranslation +
-              SmtLibPrinter.CHECK_SAT + "\n" + SmtLibPrinter.GET_MODEL + "\n" +
-              SmtLibPrinter.POP + "\n";
-
-          formatter.format("%s\n", commandTranslation);
-          System.out.println("\n" + commandTranslation);
-        }
-      }
-      System.out.println("\nThe SMT-LIB model was generated at: " + outputFile.getAbsolutePath());
+      outputTranslation(translation, outputFile, optimizedScript);
     }
     catch (ParseException exception)
     {
@@ -143,6 +130,33 @@ public class Main
     catch (Exception exception)
     {
       exception.printStackTrace();
+    }
+  }
+
+  private static void outputTranslation(
+      Translation translation, File outputFile, SmtScript optimizedScript)
+      throws FileNotFoundException
+  {
+    try (Formatter formatter = new Formatter(outputFile))
+    {
+      formatter.format("%s\n", optimizedScript);
+
+      System.out.println("\n");
+      System.out.println(optimizedScript);
+
+      // translate all alloy commands
+      for (int i = 0; i < translation.getCommands().size(); i++)
+      {
+        String commandTranslation = translation.getOptimizedSmtScript(i).toString();
+
+        commandTranslation = SmtLibPrinter.PUSH + "\n" + commandTranslation
+            + SmtLibPrinter.CHECK_SAT + "\n" + SmtLibPrinter.GET_MODEL + "\n" + SmtLibPrinter.POP
+            + "\n";
+
+        formatter.format("%s\n", commandTranslation);
+        System.out.println("\n" + commandTranslation);
+        System.out.println("\nThe SMT-LIB model was generated at: " + outputFile.getAbsolutePath());
+      }
     }
   }
 }
