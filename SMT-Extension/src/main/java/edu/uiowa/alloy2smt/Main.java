@@ -10,8 +10,8 @@ package edu.uiowa.alloy2smt;
 
 import edu.uiowa.alloy2smt.translators.Translation;
 import edu.uiowa.alloy2smt.utils.AlloySettings;
+import edu.uiowa.smt.printers.Cvc5Visitor;
 import edu.uiowa.smt.printers.SmtLibPrinter;
-import edu.uiowa.smt.printers.TermPrinter;
 import edu.uiowa.smt.smtAst.Declaration;
 import edu.uiowa.smt.smtAst.SmtScript;
 import io.github.cvc5.*;
@@ -170,27 +170,27 @@ public class Main
       Translation translation, SmtScript optimizedScript, AlloySettings settings)
       throws CVC5ApiException
   {
-    TermPrinter printer = optimizedScript.toTermPrinter(settings);
-    Solver solver = printer.getSolver();
+    Cvc5Visitor cvc5Visitor = optimizedScript.toCvc5(settings);
+    Solver solver = cvc5Visitor.getSolver();
     for (int i = 0; i < translation.getCommands().size(); i++)
     {
       solver.push();
       System.out.println(
           "-------------------------------------------------------------------------------------------");
       System.out.println("Solving command: " + translation.getCommands().get(i));
-      printer.visit(translation.getOptimizedSmtScript(i));
+      cvc5Visitor.visit(translation.getOptimizedSmtScript(i));
       Result result = solver.checkSat();
       System.out.println("Sat result: " + result);
       if (result.isSat())
       {
-        List<Triplet<String, Declaration, Term>> termSymbols = printer.getTermSymbols();
+        List<Triplet<String, Declaration, Term>> termSymbols = cvc5Visitor.getTermSymbols();
         Term[] terms = new Term[termSymbols.size()];
         for (int j = 0; j < termSymbols.size(); j++)
         {
           terms[j] = termSymbols.get(j).third;
         }
         Set<Sort> sorts = new HashSet<>();
-        Map<String, Sort> sortSymbols = printer.getSortSymbols();
+        Map<String, Sort> sortSymbols = cvc5Visitor.getSortSymbols();
         for (Map.Entry<String, Sort> entry : sortSymbols.entrySet())
         {
           if (entry.getValue().isUninterpretedSort())

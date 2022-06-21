@@ -18,16 +18,13 @@ import edu.uiowa.smt.AbstractTranslator;
 import edu.uiowa.smt.parser.SmtModelVisitor;
 import edu.uiowa.smt.parser.antlr.SmtLexer;
 import edu.uiowa.smt.parser.antlr.SmtParser;
-import edu.uiowa.smt.printers.SmtLibPrinter;
-import edu.uiowa.smt.printers.TermPrinter;
+import edu.uiowa.smt.printers.Cvc5Visitor;
 import edu.uiowa.smt.smtAst.*;
 import io.github.cvc5.*;
-
 import java.io.*;
 import java.util.*;
 import java.util.stream.Collectors;
 import javax.swing.*;
-
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -75,8 +72,8 @@ public class Cvc5Task implements WorkerEngine.WorkerTask
       //            callbackBold("Translation time: " + (endTranslate - startTranslate) + " ms\n");
 
       SmtScript optimizedScript = translation.getOptimizedSmtScript();
-      TermPrinter printer = optimizedScript.toTermPrinter(translation.getAlloySettings());
-      Solver solver = printer.getSolver();
+      Cvc5Visitor cvc5Visitor = optimizedScript.toCvc5(translation.getAlloySettings());
+      Solver solver = cvc5Visitor.getSolver();
 
       CommandResult commandResult;
 
@@ -88,14 +85,14 @@ public class Cvc5Task implements WorkerEngine.WorkerTask
         {
           // (push)
           solver.push();
-          commandResult = solveCommand(index, solver, printer);
+          commandResult = solveCommand(index, solver, cvc5Visitor);
           // (pop)
           solver.pop();
           this.commandResults.add(commandResult);
         }
 
         // solve the last command without push and pop to view multiple models if sat
-        commandResult = solveCommand(translation.getCommands().size() - 1, solver, printer);
+        commandResult = solveCommand(translation.getCommands().size() - 1, solver, cvc5Visitor);
         this.commandResults.add(commandResult);
 
         // display a summary of the results
@@ -104,7 +101,7 @@ public class Cvc5Task implements WorkerEngine.WorkerTask
       else // execute only the target command
       {
         // solve the target command without push and pop to view multiple models if sat
-        commandResult = solveCommand(targetCommandIndex, solver, printer);
+        commandResult = solveCommand(targetCommandIndex, solver, cvc5Visitor);
       }
 
       if (commandResult != null && commandResult.xmlFileName != null)
@@ -155,9 +152,10 @@ public class Cvc5Task implements WorkerEngine.WorkerTask
     }
   }
 
-  private CommandResult solveCommand(int index, Solver solver, TermPrinter printer) throws Exception
+  private CommandResult solveCommand(int index, Solver solver, Cvc5Visitor cvc5Visitor)
+      throws Exception
   {
-    printer.visit(translation.getOptimizedSmtScript(index));
+    cvc5Visitor.visit(translation.getOptimizedSmtScript(index));
     Command command = translation.getCommands().get(index);
 
     callbackBold("Executing " + command + "\n");
@@ -185,7 +183,7 @@ public class Cvc5Task implements WorkerEngine.WorkerTask
 
     if (result.isSat())
     {
-      commandResult.xmlFileName = prepareInstance(index, duration, solver, printer);
+      commandResult.xmlFileName = prepareInstance(index, duration, solver, cvc5Visitor);
     }
     if (result.isUnsat() && Cvc4ProduceUnsatCores.get())
     {
@@ -285,16 +283,17 @@ public class Cvc5Task implements WorkerEngine.WorkerTask
    * @return a path to the xml file where the model is saved
    * @throws Exception
    */
-  private String prepareInstance(int commandIndex, long duration, Solver solver, TermPrinter printer) throws Exception
+  private String prepareInstance(
+      int commandIndex, long duration, Solver solver, Cvc5Visitor cvc5Visitor) throws Exception
   {
-    List<Triplet<String, Declaration, Term>> termSymbols = printer.getTermSymbols();
+    List<Triplet<String, Declaration, Term>> termSymbols = cvc5Visitor.getTermSymbols();
     Term[] terms = new Term[termSymbols.size()];
     for (int j = 0; j < termSymbols.size(); j++)
     {
       terms[j] = termSymbols.get(j).third;
     }
     Set<Sort> sorts = new HashSet<>();
-    Map<String, Sort> sortSymbols = printer.getSortSymbols();
+    Map<String, Sort> sortSymbols = cvc5Visitor.getSortSymbols();
     for (Map.Entry<String, Sort> entry : sortSymbols.entrySet())
     {
       if (entry.getValue().isUninterpretedSort())

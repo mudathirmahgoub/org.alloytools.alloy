@@ -16,16 +16,16 @@ import io.github.cvc5.*;
 import java.util.List;
 import java.util.Map;
 
-public class TermPrinter extends AbstractSmtAstVisitor
+public class Cvc5Visitor extends AbstractSmtAstVisitor
 {
   protected SmtSettings smtSettings;
 
-  public TermPrinter(SmtSettings smtSettings)
+  public Cvc5Visitor(SmtSettings smtSettings)
   {
     this.smtSettings = smtSettings;
   }
 
-  public TermPrinter()
+  public Cvc5Visitor()
   {
     this.smtSettings = SmtSettings.Default;
   }

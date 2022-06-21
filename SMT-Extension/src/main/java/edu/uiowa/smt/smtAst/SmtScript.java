@@ -9,8 +9,8 @@
 package edu.uiowa.smt.smtAst;
 
 import edu.uiowa.smt.AbstractTranslator;
+import edu.uiowa.smt.printers.Cvc5Visitor;
 import edu.uiowa.smt.printers.SmtLibPrettyPrinter;
-import edu.uiowa.smt.printers.TermPrinter;
 import java.math.BigInteger;
 import java.util.*;
 
@@ -180,11 +180,11 @@ public class SmtScript extends SmtModel
     return prettyPrinter.getSmtLib();
   }
 
-  public TermPrinter toTermPrinter(SmtSettings settings)
+  public Cvc5Visitor toCvc5(SmtSettings settings)
   {
-    TermPrinter printer = new TermPrinter(settings);
-    printer.visit(this);
-    return printer;
+    Cvc5Visitor cvc5Visitor = new Cvc5Visitor(settings);
+    cvc5Visitor.visit(this);
+    return cvc5Visitor;
   }
 
   public String print(SmtSettings settings)
