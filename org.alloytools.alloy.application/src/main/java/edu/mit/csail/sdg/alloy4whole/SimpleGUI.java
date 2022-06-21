@@ -23,6 +23,7 @@ import static edu.mit.csail.sdg.alloy4.A4Preferences.AntiAlias;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.AutoVisualize;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.CoreGranularity;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.CoreMinimization;
+import static edu.mit.csail.sdg.alloy4.A4Preferences.CVC4;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.Cvc4FiniteModelFind;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.Cvc4IncludeCommandScope;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.Cvc4ProduceUnsatCores;
@@ -52,6 +53,7 @@ import static edu.mit.csail.sdg.alloy4.A4Preferences.Unrolls;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.VerbosityPref;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.WarningNonfatal;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.Welcome;
+import static edu.mit.csail.sdg.alloy4.A4Preferences.cvc5;
 import static edu.mit.csail.sdg.alloy4.OurUtil.menu;
 import static edu.mit.csail.sdg.alloy4.OurUtil.menuItem;
 import static java.awt.event.KeyEvent.VK_A;
@@ -1223,8 +1225,14 @@ public final class SimpleGUI implements ComponentListener, Listener {
             kodkodTask.tempdir = maketemp(frame);
             task = kodkodTask;
         }
-        else{
+        else if (RelationalSolver.get().equals(CVC4)){
             task = new Cvc4Task(alloyFiles, opt.originalFilename, resolutionMode, i);
+        }
+        else if (RelationalSolver.get().equals(cvc5)){
+            task = new Cvc5Task(alloyFiles, opt.originalFilename, resolutionMode, i);
+        }
+        else {
+            throw new RuntimeException("Relation solver unspecified");
         }
         try {
             runmenu.setEnabled(false);
