@@ -22,6 +22,6 @@ public class UninterpretedIntVisitor extends SmtLibPrinter
     {
       this.uninterpretedIntUsed = true;
     }
-    return getUninterpretedSort(uninterpretedSort);
+    return null;
   }
 }

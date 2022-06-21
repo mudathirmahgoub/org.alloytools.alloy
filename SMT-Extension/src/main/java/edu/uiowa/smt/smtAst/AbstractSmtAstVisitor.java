@@ -1,22 +1,9 @@
 package edu.uiowa.smt.smtAst;
 
-import static io.github.cvc5.Kind.*;
-
 import io.github.cvc5.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
 {
-  protected Solver solver = new Solver();
-  protected Map<String, Sort> sortSymbols = new HashMap<>();
-  // here we are using a list instead of a map to handle scopes for declared terms.
-  // Innermost terms are closest to the end of the list.
-  // Out of scope terms should be removed.
-  protected List<Triplet<String, Declaration, Term>> termSymbols = new ArrayList<>();
-
   @Override
   public void visit(SmtAst smtAst)
   {
@@ -95,54 +82,11 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
   @Override
   abstract public Term visit(SmtBinaryExpr expr);
 
-  public final Kind getKind(SmtBinaryExpr.Op op)
-  {
-    switch (op)
-    {
-      case IMPLIES: return IMPLIES;
-      case PLUS: return ADD;
-      case MINUS: return SUB;
-      case MULTIPLY: return MULT;
-      case DIVIDE: return INTS_DIVISION;
-      case MOD: return INTS_MODULUS;
-      case EQ: return EQUAL;
-      case GTE: return GEQ;
-      case LTE: return LEQ;
-      case GT: return GT;
-      case LT: return LT;
-      case UNION: return SET_UNION;
-      case INTERSECTION: return SET_INTER;
-      case SETMINUS: return SET_MINUS;
-      case MEMBER: return SET_MEMBER;
-      case SUBSET: return SET_SUBSET;
-      case JOIN: return RELATION_JOIN;
-      case PRODUCT: return RELATION_PRODUCT;
-      default: throw new UnsupportedOperationException(op.toString());
-    }
-  }
-
-  public Term tupleSelect(Term tuple, int index)
-  {
-    Term projection = tuple.getSort().getDatatype().getConstructor(0).getSelector(index).getTerm();
-    Term select = solver.mkTerm(APPLY_SELECTOR, projection, tuple);
-    return select;
-  }
-
   @Override
   abstract public Sort visit(IntSort intSort);
 
   @Override
   abstract public Term visit(SmtQtExpr expr);
-
-  public final Kind getKind(SmtQtExpr.Op op)
-  {
-    switch (op)
-    {
-      case FORALL: return FORALL;
-      case EXISTS: return EXISTS;
-      default: throw new UnsupportedOperationException();
-    }
-  }
 
   @Override
   abstract public Sort visit(RealSort realSort);
@@ -151,10 +95,7 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
   abstract public Sort visit(SetSort setSort);
 
   @Override
-  public Sort visit(StringSort stringSort)
-  {
-    return solver.getStringSort();
-  }
+  abstract public Sort visit(StringSort stringSort);
 
   @Override
   abstract public Sort visit(TupleSort tupleSort);
@@ -162,45 +103,8 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
   @Override
   abstract public Term visit(SmtUnaryExpr expr);
 
-  public final Kind getKind(SmtUnaryExpr.Op op)
-  {
-    switch (op)
-    {
-      case NOT: return NOT;
-      case COMPLEMENT: return SET_COMPLEMENT;
-      case TRANSPOSE: return RELATION_TRANSPOSE;
-      case TCLOSURE: return RELATION_TCLOSURE;
-      case SINGLETON: return SET_SINGLETON;
-      case CHOOSE: return SET_CHOOSE;
-      case UNIVSET: return SET_UNIVERSE;
-      case EMPTYSET: return SET_EMPTY;
-      default: throw new UnsupportedOperationException(op.toString());
-    }
-  }
-
   @Override
   abstract public Sort visit(UninterpretedSort uninterpretedSort);
-
-  public final Sort getUninterpretedSort(UninterpretedSort uninterpretedSort)
-  {
-    if (sortSymbols.containsKey(uninterpretedSort.getName()))
-    {
-      return sortSymbols.get(uninterpretedSort.getName());
-    }
-    else
-    {
-      try
-      {
-        Sort sort = solver.declareSort(uninterpretedSort.getName(), 0);
-        sortSymbols.put(uninterpretedSort.getName(), sort);
-        return sort;
-      }
-      catch (CVC5ApiException e)
-      {
-        throw new RuntimeException(e);
-      }
-    }
-  }
 
   @Override
   abstract public Term visit(IntConstant intConstant);
@@ -221,18 +125,6 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
 
   @Override
   abstract public Term visit(SmtMultiArityExpr expr);
-  public final Kind getKind(SmtMultiArityExpr.Op op)
-  {
-    switch (op)
-    {
-      case MKTUPLE: throw new UnsupportedOperationException(op.toString());
-      case INSERT: return SET_INSERT;
-      case DISTINCT: return DISTINCT;
-      case OR: return OR;
-      case AND: return AND;
-      default: throw new UnsupportedOperationException();
-    }
-  }
 
   @Override
   abstract public Term visit(SmtCallExpr callExpression);
