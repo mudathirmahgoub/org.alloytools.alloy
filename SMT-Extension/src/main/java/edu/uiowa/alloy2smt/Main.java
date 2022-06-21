@@ -119,6 +119,15 @@ public class Main
       }
 
       SmtScript optimizedScript = translation.getOptimizedSmtScript();
+      TermPrinter printer = optimizedScript.toTermPrinter();
+      Solver solver = printer.getSolver();
+      for (int i = 0; i < translation.getCommands().size(); i++)
+      {
+        solver.push();
+        printer.visit(translation.getOptimizedSmtScript(i));
+        solver.checkSat();
+        solver.pop();
+      }
 
       outputTranslation(translation, outputFile, optimizedScript);
     }

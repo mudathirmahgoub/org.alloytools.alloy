@@ -10,7 +10,7 @@ package edu.uiowa.smt.smtAst;
 
 import edu.uiowa.smt.AbstractTranslator;
 import edu.uiowa.smt.printers.SmtLibPrettyPrinter;
-
+import edu.uiowa.smt.printers.TermPrinter;
 import java.math.BigInteger;
 import java.util.*;
 
@@ -18,7 +18,7 @@ public class SmtScript extends SmtModel
 {
   private List<Assertion> assertions = new ArrayList<>();
   private SmtScript parent;
-  //ToDo: refactor classes abstract translator and SmtScript
+  // ToDo: refactor classes abstract translator and SmtScript
   private Map<BigInteger, FunctionDeclaration> integerConstants = new HashMap<>();
   // script between push pop commands
   private List<SmtScript> children = new ArrayList<>();
@@ -124,7 +124,8 @@ public class SmtScript extends SmtModel
 
   public boolean isUninterpretedIntUsed()
   {
-    List<FunctionDeclaration> excludedFunctions = AbstractTranslator.getUninterpretedIntFunctions(this);
+    List<FunctionDeclaration> excludedFunctions =
+        AbstractTranslator.getUninterpretedIntFunctions(this);
     for (FunctionDeclaration function : this.getFunctions())
     {
       if (excludedFunctions.contains(function))
@@ -139,7 +140,6 @@ public class SmtScript extends SmtModel
       {
         return true;
       }
-
     }
 
     List<Assertion> excludedAssertions = AbstractTranslator.getUninterpretedIntAssertions(this);
@@ -178,6 +178,13 @@ public class SmtScript extends SmtModel
     SmtLibPrettyPrinter prettyPrinter = new SmtLibPrettyPrinter();
     prettyPrinter.visit(this);
     return prettyPrinter.getSmtLib();
+  }
+
+  public TermPrinter toTermPrinter()
+  {
+    TermPrinter printer = new TermPrinter();
+    printer.visit(this);
+    return printer;
   }
 
   public String print(SmtSettings settings)
