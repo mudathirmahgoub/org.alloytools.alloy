@@ -69,8 +69,6 @@ public class Cvc5Task implements WorkerEngine.WorkerTask
 
       final long endTranslate = System.currentTimeMillis();
 
-      //            callbackBold("Translation time: " + (endTranslate - startTranslate) + " ms\n");
-
       SmtScript optimizedScript = translation.getOptimizedSmtScript();
       Cvc5Visitor cvc5Visitor = optimizedScript.toCvc5(translation.getAlloySettings());
       Solver solver = cvc5Visitor.getSolver();
@@ -162,7 +160,7 @@ public class Cvc5Task implements WorkerEngine.WorkerTask
 
     if (!CvcIncludeCommandScope.get())
     {
-      ErrorWarning warning = new ErrorWarning(command.pos, "The scope is ignored by cvc4");
+      ErrorWarning warning = new ErrorWarning(command.pos, "The scope is ignored by cvc5");
       callbackWarning(warning);
     }
 
@@ -196,7 +194,7 @@ public class Cvc5Task implements WorkerEngine.WorkerTask
   {
     String smtCore = ""; // cvc4Process.sendCommand(SmtLibPrinter.GET_UNSAT_CORE);
 
-    callbackPlain("CVC4 found an ");
+    callbackPlain("cvc5 found an ");
     Object[] modelMessage = new Object[] {"link", "unsat core", "MSG: " + smtCore};
     workerCallback.callback(modelMessage);
     callbackPlain("\n");
@@ -210,14 +208,6 @@ public class Cvc5Task implements WorkerEngine.WorkerTask
     Object[] message = new Object[] {"link", "Core", coreMessage};
     workerCallback.callback(message);
     callbackPlain(" contains " + positions.size() + " top-level formulas. " + duration + "ms.\n");
-
-    //        Command command = translation.getCommands().get(commandIndex);
-    //        String  satResult = "unsat";
-    //        int minimizedBefore = 0;
-    //        int minimizedAfter = positions.size();
-    //        Object[] message = new Object []{satResult, command.check, command.expects, duration,
-    //        null, coreMessage, minimizedBefore, minimizedAfter,  duration};
-    //        workerCallback.callback(message);
 
     return positions;
   }
@@ -275,7 +265,7 @@ public class Cvc5Task implements WorkerEngine.WorkerTask
   }
 
   /**
-   * gets a model from cvc4 if the satResult is sat and saves it into a new xml
+   * gets a model from cvc5 if the satResult is sat and saves it into a new xml
    * file and return its path
    *
    * @param commandIndex the index of the sat command
@@ -361,7 +351,6 @@ public class Cvc5Task implements WorkerEngine.WorkerTask
       {
         name = name.substring(0, name.length() - 2);
       }
-      //JOptionPane.showMessageDialog(null, function.getName() + " \n " + name);
       functionsMap.put(name, definition);
     }
 
@@ -380,8 +369,6 @@ public class Cvc5Task implements WorkerEngine.WorkerTask
       Field field = getField(functionsMap, mappingField);
       fields.add(field);
     }
-
-    // addSpecialSignatures(translation, functionsMap, signatures ,fields);
 
     Instance instance = new Instance();
     instance.signatures = signatures;
@@ -406,29 +393,6 @@ public class Cvc5Task implements WorkerEngine.WorkerTask
     alloySolution.writeToXml(xmlFileName);
     return instance;
   }
-
-  //    private static void addSpecialSignatures(Translation translation,
-  //    Map<String,FunctionDefinition> functionsMap, List<Signature> signatures, List<Field> fields)
-  //    throws Exception {
-  //        Signature signature = new Signature();
-  //        signature.label = "Operations";
-  //        Sig.SubsetSig operations = new Sig.SubsetSig(null, signature.label,
-  //        Arrays.asList(Sig.SIGINT)); signature.id = translation.getSigId(operations);
-  //        signature.parentId = translation.getSigId(Sig.SIGINT);
-  //        signature.types.add(new Type(signature.parentId));
-  //
-  //        signature.builtIn = "no";
-  //        signature.isAbstract = "no";
-  //        signature.isOne = "no";
-  //        signature.isLone = "no";
-  //        signature.isSome = "no";
-  //        signature.isPrivate = "no";
-  //        signature.isMeta = "no";
-  //        signature.isExact = "no";
-  //        signature.isEnum = "no";
-  //        signatures.add(signature);
-  //        addSpecialFields(functionsMap, fields, signature.id);
-  //    }
 
   private static void addSpecialFields(
       Map<String, FunctionDefinition> functionsMap, List<Field> fields, int parentId)
