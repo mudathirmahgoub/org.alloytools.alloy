@@ -185,21 +185,23 @@ public class Cvc5Task implements WorkerEngine.WorkerTask
     }
     if (result.isUnsat() && CvcProduceUnsatCores.get())
     {
-      commandResult.unsatCore = prepareUnsatCore(index, duration);
+      commandResult.unsatCore = prepareUnsatCore(index, duration, solver);
     }
     return commandResult;
   }
 
-  private Set<Pos> prepareUnsatCore(int commandIndex, long duration) throws Exception
+  private Set<Pos> prepareUnsatCore(int commandIndex, long duration, Solver solver) throws Exception
   {
-    String smtCore = ""; // cvc4Process.sendCommand(SmtLibPrinter.GET_UNSAT_CORE);
+    Term[] coreTerms = solver.getUnsatCore();
+    String corString =
+        Arrays.asList(coreTerms).stream().map(t -> t.toString()).collect(Collectors.joining("\n"));
 
     callbackPlain("cvc5 found an ");
-    Object[] modelMessage = new Object[] {"link", "unsat core", "MSG: " + smtCore};
+    Object[] modelMessage = new Object[] {"link", "unsat core", "MSG: " + corString};
     workerCallback.callback(modelMessage);
     callbackPlain("\n");
 
-    SmtUnsatCore smtUnsatCore = parseUnsatCore(smtCore);
+    SmtUnsatCore smtUnsatCore = parseUnsatCore(corString);
     AlloyUnsatCore alloyUnsatCore = AlloyUnsatCore.fromSmtUnsatCore(smtUnsatCore);
     Set<Pos> positions = alloyUnsatCore.getPositions();
 
