@@ -15,9 +15,9 @@ import edu.uiowa.alloy2smt.translators.Translation;
 import edu.uiowa.alloy2smt.utils.AlloySettings;
 import edu.uiowa.alloy2smt.utils.AlloyUnsatCore;
 import edu.uiowa.smt.AbstractTranslator;
-import edu.uiowa.smt.parser.SmtModelVisitor;
-import edu.uiowa.smt.parser.antlr.SmtLexer;
-import edu.uiowa.smt.parser.antlr.SmtParser;
+import edu.uiowa.smt.parser.Cvc5SmtModelVisitor;
+import edu.uiowa.smt.parser.antlr.Cvc5SmtLexer;
+import edu.uiowa.smt.parser.antlr.Cvc5SmtParser;
 import edu.uiowa.smt.printers.Cvc5Visitor;
 import edu.uiowa.smt.smtAst.*;
 import io.github.cvc5.*;
@@ -774,12 +774,12 @@ public class Cvc5Task implements WorkerEngine.WorkerTask
   {
     CharStream charStream = CharStreams.fromString(model);
 
-    SmtLexer lexer = new SmtLexer(charStream);
+    Cvc5SmtLexer lexer = new Cvc5SmtLexer(charStream);
     CommonTokenStream tokenStream = new CommonTokenStream(lexer);
-    SmtParser parser = new SmtParser(tokenStream);
+    Cvc5SmtParser parser = new Cvc5SmtParser(tokenStream);
 
     ParseTree tree = parser.model();
-    SmtModelVisitor visitor = new SmtModelVisitor();
+    Cvc5SmtModelVisitor visitor = new Cvc5SmtModelVisitor();
 
     SmtModel smtModel = (SmtModel) visitor.visit(tree);
 
@@ -791,12 +791,12 @@ public class Cvc5Task implements WorkerEngine.WorkerTask
   {
     CharStream charStream = CharStreams.fromString(smtCore);
 
-    SmtLexer lexer = new SmtLexer(charStream);
+    Cvc5SmtLexer lexer = new Cvc5SmtLexer(charStream);
     CommonTokenStream tokenStream = new CommonTokenStream(lexer);
-    SmtParser parser = new SmtParser(tokenStream);
+    Cvc5SmtParser parser = new Cvc5SmtParser(tokenStream);
 
     ParseTree tree = parser.getUnsatCore();
-    SmtModelVisitor visitor = new SmtModelVisitor();
+    Cvc5SmtModelVisitor visitor = new Cvc5SmtModelVisitor();
 
     SmtUnsatCore smtUnsatCore = (SmtUnsatCore) visitor.visit(tree);
     return smtUnsatCore;
