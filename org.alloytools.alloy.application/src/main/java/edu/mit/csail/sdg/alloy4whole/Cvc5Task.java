@@ -352,7 +352,17 @@ public class Cvc5Task implements WorkerEngine.WorkerTask
     for (FunctionDeclaration function : model.getFunctions())
     {
       FunctionDefinition definition = (FunctionDefinition) function;
-      functionsMap.put(function.getName(), definition);
+      String name = function.getName();
+      if (name.startsWith("_"))
+      {
+        name = name.substring(1);
+      }
+      if (name.endsWith("_"))
+      {
+        name = name.substring(0, name.length() - 2);
+      }
+      //JOptionPane.showMessageDialog(null, function.getName() + " \n " + name);
+      functionsMap.put(name, definition);
     }
 
     List<Signature> signatures = new ArrayList<>();
