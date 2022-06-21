@@ -27,6 +27,10 @@ public class Cvc5Visitor extends AbstractSmtAstVisitor
   // Out of scope terms should be removed.
   protected List<Triplet<String, Declaration, Term>> termSymbols = new ArrayList<>();
 
+  // should be managed with push and pop
+  protected List<Pair<Term, Assertion>> currentAssertions = new ArrayList<>();
+  protected int assertionsSizeBeforeLastPush = 0;
+
   protected SmtSettings smtSettings;
 
   public Cvc5Visitor(SmtSettings smtSettings)
@@ -245,6 +249,7 @@ public class Cvc5Visitor extends AbstractSmtAstVisitor
   public void visit(Assertion assertion)
   {
     Term term = visit(assertion.getSmtExpr());
+    currentAssertions.add(new Pair<>(term, assertion));
     solver.assertFormula(term);
   }
 
@@ -609,5 +614,31 @@ public class Cvc5Visitor extends AbstractSmtAstVisitor
       case EXISTS: return EXISTS;
       default: throw new UnsupportedOperationException();
     }
+  }
+
+  public void push() throws CVC5ApiException
+  {
+    assertionsSizeBeforeLastPush = currentAssertions.size();
+    solver.push();
+  }
+  public void pop() throws CVC5ApiException
+  {
+    currentAssertions.subList(assertionsSizeBeforeLastPush, currentAssertions.size()).clear();
+    solver.pop();
+  }
+  public List<String> getCoreAssertions(Term[] coreTerms)
+  {
+    List<String> coreAssertions = new ArrayList<>();
+    for (Term t : coreTerms)
+    {
+      for (Pair<Term, Assertion> pair : currentAssertions)
+      {
+        if (pair.first.equals(t))
+        {
+          coreAssertions.add(pair.second.getSymbolicName());
+        }
+      }
+    }
+    return coreAssertions;
   }
 }

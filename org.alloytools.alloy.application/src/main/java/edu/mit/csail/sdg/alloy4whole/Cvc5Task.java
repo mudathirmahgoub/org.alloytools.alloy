@@ -82,10 +82,10 @@ public class Cvc5Task implements WorkerEngine.WorkerTask
         for (int index = 0; index < translation.getCommands().size() - 1; index++)
         {
           // (push)
-          solver.push();
+          cvc5Visitor.push();
           commandResult = solveCommand(index, solver, cvc5Visitor);
           // (pop)
-          solver.pop();
+          cvc5Visitor.pop();
           this.commandResults.add(commandResult);
         }
 
@@ -185,23 +185,32 @@ public class Cvc5Task implements WorkerEngine.WorkerTask
     }
     if (result.isUnsat() && CvcProduceUnsatCores.get())
     {
-      commandResult.unsatCore = prepareUnsatCore(index, duration, solver);
+      commandResult.unsatCore = prepareUnsatCore(index, duration, solver, cvc5Visitor);
     }
     return commandResult;
   }
 
-  private Set<Pos> prepareUnsatCore(int commandIndex, long duration, Solver solver) throws Exception
+  private Set<Pos> prepareUnsatCore(
+      int commandIndex, long duration, Solver solver, Cvc5Visitor cvc5Visitor) throws Exception
   {
     Term[] coreTerms = solver.getUnsatCore();
     String corString =
         Arrays.asList(coreTerms).stream().map(t -> t.toString()).collect(Collectors.joining("\n"));
 
     callbackPlain("cvc5 found an ");
-    Object[] modelMessage = new Object[] {"link", "unsat core", "MSG: " + corString};
+    Object[] modelMessage = new Object[] {"link", "SMT unsat core", "MSG: " + corString};
     workerCallback.callback(modelMessage);
     callbackPlain("\n");
 
-    SmtUnsatCore smtUnsatCore = parseUnsatCore(corString);
+    List<String> coreAssertions = cvc5Visitor.getCoreAssertions(coreTerms);
+    String alloyCore = coreAssertions.stream().map(s -> "|" + s + "|").collect(Collectors.joining("\n"));
+    alloyCore = "(" + alloyCore + ")";
+    callbackPlain("cvc5 found an ");
+    Object[] anotherCore = new Object[] {"link", "Alloy unsat core", "MSG: " + alloyCore};
+    workerCallback.callback(anotherCore);
+    callbackPlain("\n");
+
+    SmtUnsatCore smtUnsatCore = parseUnsatCore(alloyCore);
     AlloyUnsatCore alloyUnsatCore = AlloyUnsatCore.fromSmtUnsatCore(smtUnsatCore);
     Set<Pos> positions = alloyUnsatCore.getPositions();
 
