@@ -17,6 +17,7 @@ public class SmtSettings extends SmtAst
   public static final String TLIMIT = "tlimit";
   public static final String PRODUCE_UNSAT_CORES = "produce-unsat-cores";
   public static final String FINITE_MODEL_FIND = "finite-model-find";
+  public static final String DAG_THRESH = "dag-thresh";
 
   protected SmtSettings()
   {
@@ -62,7 +63,6 @@ public class SmtSettings extends SmtAst
   {
     solverOptions.put(key, value);
   }
-
 
   @Override
   public void accept(SmtAstVisitor visitor)

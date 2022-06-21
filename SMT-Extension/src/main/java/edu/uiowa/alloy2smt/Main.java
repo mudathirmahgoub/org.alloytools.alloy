@@ -76,6 +76,9 @@ public class Main
       Translation translation;
       String defaultOutputFile;
 
+      AlloySettings settings = AlloySettings.Default;
+      settings.putSolverOption(AlloySettings.PRODUCE_UNSAT_CORES, "true");
+      settings.putSolverOption(AlloySettings.DAG_THRESH, "0");
       if (command.hasOption("i"))
       {
         String inputFile = command.getOptionValue("i").trim();
@@ -84,7 +87,8 @@ public class Main
         {
           String alloy =
               new String(Files.readAllBytes(Paths.get(inputFile)), StandardCharsets.UTF_8);
-          translation = Utils.translate(alloy, AlloySettings.Default);
+
+          translation = Utils.translate(alloy, settings);
           defaultOutputFile = OUTPUT_DIR + SEP + new File(inputFile).getName() + ".smt2";
         }
         else
@@ -122,7 +126,7 @@ public class Main
 
       SmtScript optimizedScript = translation.getOptimizedSmtScript();
       outputTranslation(translation, outputFile, optimizedScript);
-      Solve(translation, optimizedScript);
+      Solve(translation, optimizedScript, settings);
     }
     catch (ParseException exception)
     {
@@ -162,10 +166,11 @@ public class Main
     }
   }
 
-  private static void Solve(Translation translation, SmtScript optimizedScript)
+  private static void Solve(
+      Translation translation, SmtScript optimizedScript, AlloySettings settings)
       throws CVC5ApiException
   {
-    TermPrinter printer = optimizedScript.toTermPrinter();
+    TermPrinter printer = optimizedScript.toTermPrinter(settings);
     Solver solver = printer.getSolver();
     for (int i = 0; i < translation.getCommands().size(); i++)
     {
@@ -194,6 +199,11 @@ public class Main
           }
         }
         System.out.println(solver.getModel(sorts.toArray(new Sort[0]), terms));
+      }
+      if (result.isUnsat())
+      {
+        Term[] unsatCore = solver.getUnsatCore();
+        System.out.println("Unsat core: " + Arrays.asList(unsatCore));
       }
       solver.pop();
     }

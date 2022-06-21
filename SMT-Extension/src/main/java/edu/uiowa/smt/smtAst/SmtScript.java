@@ -180,9 +180,9 @@ public class SmtScript extends SmtModel
     return prettyPrinter.getSmtLib();
   }
 
-  public TermPrinter toTermPrinter()
+  public TermPrinter toTermPrinter(SmtSettings settings)
   {
-    TermPrinter printer = new TermPrinter();
+    TermPrinter printer = new TermPrinter(settings);
     printer.visit(this);
     return printer;
   }
