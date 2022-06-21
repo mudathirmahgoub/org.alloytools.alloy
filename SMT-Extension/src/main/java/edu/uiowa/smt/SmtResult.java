@@ -11,7 +11,7 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 
-public class Result
+public class SmtResult
 {
   public String smtProgram;
   public String satResult;
@@ -19,11 +19,11 @@ public class Result
   public SmtModel smtModel;
   private SmtModelVisitor visitor;
 
-  public Result()
+  public SmtResult()
   {
   }
 
-  public Result(String smtProgram, String satResult)
+  public SmtResult(String smtProgram, String satResult)
   {
     this.smtProgram = smtProgram;
     this.satResult = satResult;

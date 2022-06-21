@@ -1,9 +1,9 @@
 package edu.uiowa.alloy2smt.utils;
 
 import edu.mit.csail.sdg.ast.Command;
-import edu.uiowa.smt.Result;
+import edu.uiowa.smt.SmtResult;
 
-public class CommandResult extends Result
+public class CommandResult extends SmtResult
 {
   public final int index;
   public final Command command;

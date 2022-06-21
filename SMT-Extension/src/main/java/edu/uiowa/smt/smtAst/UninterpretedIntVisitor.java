@@ -1,10 +1,10 @@
 package edu.uiowa.smt.smtAst;
 
 import edu.uiowa.smt.AbstractTranslator;
-import edu.uiowa.smt.printers.TermPrinter;
+import edu.uiowa.smt.printers.SmtLibPrinter;
 import io.github.cvc5.Sort;
 
-public class UninterpretedIntVisitor extends TermPrinter
+public class UninterpretedIntVisitor extends SmtLibPrinter
 {
   private boolean uninterpretedIntUsed = false;
 

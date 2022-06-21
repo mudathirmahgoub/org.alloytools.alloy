@@ -11,7 +11,7 @@ import java.util.Map;
 abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
 {
   protected Solver solver = new Solver();
-  protected Map<String, Sort> sortMap = new HashMap<>();
+  protected Map<String, Sort> sortSymbols = new HashMap<>();
   // here we are using a list instead of a map to handle scopes for declared terms.
   // Innermost terms are closest to the end of the list.
   // Out of scope terms should be removed.
@@ -183,16 +183,16 @@ abstract public class AbstractSmtAstVisitor implements SmtAstVisitor
 
   public final Sort getUninterpretedSort(UninterpretedSort uninterpretedSort)
   {
-    if (sortMap.containsKey(uninterpretedSort.getName()))
+    if (sortSymbols.containsKey(uninterpretedSort.getName()))
     {
-      return sortMap.get(uninterpretedSort.getName());
+      return sortSymbols.get(uninterpretedSort.getName());
     }
     else
     {
       try
       {
         Sort sort = solver.declareSort(uninterpretedSort.getName(), 0);
-        sortMap.put(uninterpretedSort.getName(), sort);
+        sortSymbols.put(uninterpretedSort.getName(), sort);
         return sort;
       }
       catch (CVC5ApiException e)

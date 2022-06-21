@@ -54,7 +54,7 @@ public class TermPrinter extends AbstractSmtAstVisitor
         try
         {
           Sort sort = solver.declareSort(smtSort.getName(), 0);
-          sortMap.put(smtSort.getName(), sort);
+          sortSymbols.put(smtSort.getName(), sort);
         }
         catch (CVC5ApiException e)
         {
@@ -107,17 +107,20 @@ public class TermPrinter extends AbstractSmtAstVisitor
   @Override
   public Term visit(SmtQtExpr smtQtExpr)
   {
+    int size = termSymbols.size();
     Kind k = getKind(smtQtExpr.getOp());
     Term[] boundVars = new Term[smtQtExpr.getVariables().size()];
     List<SmtVariable> smtVariables = smtQtExpr.getVariables();
     for (int i = 0; i < smtVariables.size(); i++)
     {
-      visit(smtVariables.get(i));
+      String symbol = TranslatorUtils.sanitizeWithBars(smtVariables.get(i));
       Sort sort = visit(smtVariables.get(i).getSort());
-      boundVars[i] = solver.mkVar(sort, smtVariables.get(i).getName());
+      boundVars[i] = solver.mkVar(sort, symbol);
+      termSymbols.add(new Triplet<>(symbol, smtVariables.get(i), boundVars[i]));
     }
     Term body = visit(smtQtExpr.getExpr());
     Term bvl = solver.mkTerm(VARIABLE_LIST, boundVars);
+    termSymbols.subList(size, termSymbols.size()).clear();
     return solver.mkTerm(k, new Term[] {bvl, body});
   }
 
@@ -191,7 +194,6 @@ public class TermPrinter extends AbstractSmtAstVisitor
   @Override
   public Term visit(Variable variable)
   {
-    String symbol = TranslatorUtils.sanitizeWithBars(variable.getDeclaration());
     return getTerm(variable.getDeclaration());
   }
 
@@ -398,9 +400,10 @@ public class TermPrinter extends AbstractSmtAstVisitor
       }
     }
     // create term for this variable
-    Term term = visit(declaration);
+    // Term term = visit(declaration);
+    throw new RuntimeException(declaration.toString());
     // ToDo: review when there is a collision in names in different scopes
-    return term;
+    //    return term;
   }
 
   @Override
@@ -497,5 +500,15 @@ public class TermPrinter extends AbstractSmtAstVisitor
     {
       throw new UnsupportedOperationException();
     }
+  }
+
+  public List<Triplet<String, Declaration, Term>> getTermSymbols()
+  {
+    return termSymbols;
+  }
+
+  public Map<String, Sort> getSortSymbols()
+  {
+    return sortSymbols;
   }
 }

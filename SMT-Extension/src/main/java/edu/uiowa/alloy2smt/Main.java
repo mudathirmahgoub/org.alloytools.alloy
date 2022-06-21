@@ -12,7 +12,9 @@ import edu.uiowa.alloy2smt.translators.Translation;
 import edu.uiowa.alloy2smt.utils.AlloySettings;
 import edu.uiowa.smt.printers.SmtLibPrinter;
 import edu.uiowa.smt.printers.TermPrinter;
+import edu.uiowa.smt.smtAst.Declaration;
 import edu.uiowa.smt.smtAst.SmtScript;
+import io.github.cvc5.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -20,10 +22,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
-import java.util.Formatter;
-import java.util.Scanner;
-
-import io.github.cvc5.Solver;
+import java.util.*;
 import org.apache.commons.cli.*;
 
 public class Main
@@ -122,17 +121,8 @@ public class Main
       }
 
       SmtScript optimizedScript = translation.getOptimizedSmtScript();
-      TermPrinter printer = optimizedScript.toTermPrinter();
-      Solver solver = printer.getSolver();
-      for (int i = 0; i < translation.getCommands().size(); i++)
-      {
-        solver.push();
-        printer.visit(translation.getOptimizedSmtScript(i));
-        solver.checkSat();
-        solver.pop();
-      }
-
       outputTranslation(translation, outputFile, optimizedScript);
+      Solve(translation, optimizedScript);
     }
     catch (ParseException exception)
     {
@@ -169,6 +159,43 @@ public class Main
         System.out.println("\n" + commandTranslation);
         System.out.println("\nThe SMT-LIB model was generated at: " + outputFile.getAbsolutePath());
       }
+    }
+  }
+
+  private static void Solve(Translation translation, SmtScript optimizedScript)
+      throws CVC5ApiException
+  {
+    TermPrinter printer = optimizedScript.toTermPrinter();
+    Solver solver = printer.getSolver();
+    for (int i = 0; i < translation.getCommands().size(); i++)
+    {
+      solver.push();
+      System.out.println(
+          "-------------------------------------------------------------------------------------------");
+      System.out.println("Solving command: " + translation.getCommands().get(i));
+      printer.visit(translation.getOptimizedSmtScript(i));
+      Result result = solver.checkSat();
+      System.out.println("Sat result: " + result);
+      if (result.isSat())
+      {
+        List<Triplet<String, Declaration, Term>> termSymbols = printer.getTermSymbols();
+        Term[] terms = new Term[termSymbols.size()];
+        for (int j = 0; j < termSymbols.size(); j++)
+        {
+          terms[j] = termSymbols.get(j).third;
+        }
+        Set<Sort> sorts = new HashSet<>();
+        Map<String, Sort> sortSymbols = printer.getSortSymbols();
+        for (Map.Entry<String, Sort> entry : sortSymbols.entrySet())
+        {
+          if (entry.getValue().isUninterpretedSort())
+          {
+            sorts.add(entry.getValue());
+          }
+        }
+        System.out.println(solver.getModel(sorts.toArray(new Sort[0]), terms));
+      }
+      solver.pop();
     }
   }
 }

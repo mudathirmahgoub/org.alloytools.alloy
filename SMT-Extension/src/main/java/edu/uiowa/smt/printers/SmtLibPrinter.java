@@ -24,19 +24,16 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
   public final static String PUSH = "(push 1)";
   public final static String POP = "(pop 1)";
   protected SmtSettings smtSettings;
-  protected TermPrinter termPrinter;
   protected StringBuilder stringBuilder = new StringBuilder();
 
   public SmtLibPrinter(SmtSettings smtSettings)
   {
     this.smtSettings = smtSettings;
-    this.termPrinter = new TermPrinter();
   }
 
   public SmtLibPrinter()
   {
     this.smtSettings = SmtSettings.Default;
-    this.termPrinter = new TermPrinter();
   }
 
   public String getSmtLib()
@@ -102,14 +99,14 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
       this.visit(expr.getB());
       stringBuilder.append(")");
     }
-    return termPrinter.visit(expr);
+    return null;
   }
 
   @Override
   public Sort visit(IntSort intSort)
   {
     stringBuilder.append(intSort.getName());
-    return termPrinter.visit(intSort);
+    return null;
   }
 
   @Override
@@ -123,14 +120,14 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
     stringBuilder.append(") ");
     this.visit(smtQtExpr.getExpr());
     stringBuilder.append(")");
-    return termPrinter.visit(smtQtExpr);
+    return null;
   }
 
   @Override
   public Sort visit(RealSort realSort)
   {
     stringBuilder.append("Real");
-    return termPrinter.visit(realSort);
+    return null;
   }
 
   @Override
@@ -139,14 +136,14 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
     stringBuilder.append("(Set ");
     this.visit(setSort.elementSort);
     stringBuilder.append(")");
-    return termPrinter.visit(setSort);
+    return null;
   }
 
   @Override
   public Sort visit(StringSort stringSort)
   {
     stringBuilder.append("String");
-    return termPrinter.visit(stringSort);
+    return null;
   }
 
   @Override
@@ -160,7 +157,7 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
     }
     this.visit(tupleSort.elementSorts.get(tupleSort.elementSorts.size() - 1));
     stringBuilder.append(")");
-    return termPrinter.visit(tupleSort);
+    return null;
   }
 
   @Override
@@ -169,14 +166,14 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
     stringBuilder.append("(" + unaryExpression.getOp() + " ");
     this.visit(unaryExpression.getExpr());
     stringBuilder.append(")");
-    return termPrinter.visit(unaryExpression);
+    return null;
   }
 
   @Override
   public Sort visit(UninterpretedSort uninterpretedSort)
   {
     stringBuilder.append(uninterpretedSort.getName());
-    return termPrinter.visit(uninterpretedSort);
+    return null;
   }
 
   @Override
@@ -191,14 +188,14 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
     {
       stringBuilder.append("(- " + -value + ")");
     }
-    return termPrinter.visit(intConstant);
+    return null;
   }
 
   @Override
   public Term visit(Variable variable)
   {
     stringBuilder.append(TranslatorUtils.sanitizeWithBars(variable.getDeclaration()));
-    return termPrinter.visit(variable);
+    return null;
   }
 
   @Override
@@ -215,7 +212,7 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
     stringBuilder.append(") ");
     this.visit(functionDeclaration.getSort());
     stringBuilder.append(")\n");
-    return termPrinter.visit(functionDeclaration);
+    return null;
   }
 
   @Override
@@ -234,14 +231,14 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
     this.visit(definition.smtExpr);
     stringBuilder.append(")");
     stringBuilder.append("\n");
-    return termPrinter.visit(definition);
+    return null;
   }
 
   @Override
   public Term visit(BoolConstant constant)
   {
     stringBuilder.append(constant.getValue());
-    return termPrinter.visit(constant);
+    return null;
   }
 
   @Override
@@ -293,7 +290,7 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
       throw new RuntimeException("");
     }
     stringBuilder.append(")");
-    return termPrinter.visit(expr);
+    return null;
   }
 
   @Override
@@ -316,7 +313,7 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
     {
       stringBuilder.append(TranslatorUtils.sanitizeWithBars(expr.getFunction()));
     }
-    return termPrinter.visit(expr);
+    return null;
   }
 
   @Override
@@ -325,14 +322,14 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
     stringBuilder.append("(" + TranslatorUtils.sanitizeWithBars(variable) + " ");
     this.visit(variable.getSort());
     stringBuilder.append(")");
-    return termPrinter.visit(variable);
+    return null;
   }
 
   @Override
   public Sort visit(BoolSort boolSort)
   {
     stringBuilder.append(boolSort.getName());
-    return termPrinter.visit(boolSort);
+    return null;
   }
 
   @Override
@@ -349,7 +346,7 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
     stringBuilder.append(") ");
     this.visit(let.getSmtExpr());
     stringBuilder.append(")");
-    return termPrinter.visit(let);
+    return null;
   }
 
   @Override
@@ -362,7 +359,7 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
     stringBuilder.append(" ");
     this.visit(ite.getElseExpr());
     stringBuilder.append(")");
-    return termPrinter.visit(ite);
+    return null;
   }
 
   @Override
@@ -482,7 +479,7 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
     {
       throw new UnsupportedOperationException();
     }
-    return termPrinter.visit(smtExpr);
+    return null;
   }
 
   @Override
@@ -520,6 +517,6 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
     {
       throw new UnsupportedOperationException();
     }
-    return termPrinter.visit(sort);
+    return null;
   }
 }

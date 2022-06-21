@@ -38,7 +38,7 @@ public class SmtLibPrettyPrinter extends SmtLibPrinter
     this.visit(unaryExpression.getExpr());
     stringBuilder.append(")");
     tabsCount -= 2;
-    return termPrinter.visit(unaryExpression);
+    return null;
   }
 
   @Override
@@ -65,7 +65,7 @@ public class SmtLibPrettyPrinter extends SmtLibPrinter
       this.visit(expr.getB());
       stringBuilder.append(")");
     }
-    return termPrinter.visit(expr);
+    return null;
   }
 
   @Override
@@ -95,7 +95,7 @@ public class SmtLibPrettyPrinter extends SmtLibPrinter
     }
     stringBuilder.append(")");
     tabsCount -= 2;
-    return termPrinter.visit(expr);
+    return null;
   }
 
   @Override
@@ -114,7 +114,7 @@ public class SmtLibPrettyPrinter extends SmtLibPrinter
     this.visit(expr.getExpr());
     stringBuilder.append(")");
     tabsCount -= 2;
-    return termPrinter.visit(expr);
+    return null;
   }
 
   @Override
@@ -140,7 +140,7 @@ public class SmtLibPrettyPrinter extends SmtLibPrinter
     this.visit(let.getSmtExpr());
     stringBuilder.append(")");
     tabsCount -= 2;
-    return termPrinter.visit(let);
+    return null;
   }
 
   @Override
@@ -152,6 +152,6 @@ public class SmtLibPrettyPrinter extends SmtLibPrinter
       stringBuilder.append("; " + smtExpr.getComment() + "\n");
       printTabs();
     }
-    return termPrinter.visit(smtExpr);
+    return null;
   }
 }
