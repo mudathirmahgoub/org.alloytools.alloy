@@ -280,7 +280,6 @@ public class Cvc5Visitor extends AbstractSmtAstVisitor
   {
     FunctionDeclaration f = smtCallExpr.getFunction();
     Term fTerm = getTerm(f);
-    String symbol = TranslatorUtils.sanitizeWithBars(smtCallExpr.getFunction());
     if (smtCallExpr.getArguments().size() > 0)
     {
       Term[] terms = new Term[smtCallExpr.getArguments().size() + 1];
