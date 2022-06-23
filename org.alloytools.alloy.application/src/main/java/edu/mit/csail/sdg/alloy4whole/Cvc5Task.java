@@ -354,14 +354,6 @@ public class Cvc5Task implements WorkerEngine.WorkerTask
     {
       FunctionDefinition definition = (FunctionDefinition) function;
       String name = function.getName();
-      if (name.startsWith("_"))
-      {
-        name = name.substring(1);
-      }
-      if (name.endsWith("_"))
-      {
-        name = name.substring(0, name.length() - 2);
-      }
       functionsMap.put(name, definition);
     }
 

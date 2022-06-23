@@ -59,7 +59,7 @@ boolConstant : True | False;
 
 integerConstant : '-' Integer | Integer ;
 
-uninterpretedConstant : '(' 'as' UninterpretedPrefix Integer Identifier ')';
+uninterpretedConstant : '(' 'as' UninterpretedValue Identifier ')';
 
 emptySet : 'as' 'set.empty' '(' 'Set' sort ')' ;
 
@@ -87,7 +87,7 @@ TernaryOperator : 'ite' ;
 
 MultiArityOperator : 'tuple' | 'set.insert' | 'distinct' | 'or' | 'and' ;
 
-UninterpretedPrefix : '@a';
+UninterpretedValue : '@' Identifier '_' Integer;
 
 Identifier : IdentifierLetter (IdentifierLetter | Digit)* | ('|' .*? '|');
 
