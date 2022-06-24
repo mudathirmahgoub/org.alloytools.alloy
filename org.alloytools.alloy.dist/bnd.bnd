@@ -3,6 +3,7 @@ Main-Class: org.alloytools.alloy.core.infra.Alloy
 JPM-Command: alloy
 
 -buildpath: \
+    ../org.alloytools.alloy.application/lib/cvc5-1.0.1-dev.jar;version=file,\
 	org.alloytools.alloy.application,\
 	org.alloytools.alloy.core,\
 	org.alloytools.alloy.extra,\
@@ -43,7 +44,8 @@ JPM-Command: alloy
     @${repo;com.fasterxml.jackson.core.jackson-annotations},\
     @${repo;com.fasterxml.jackson.core.jackson-databind},\
     @${repo;com.fasterxml.jackson.core.jackson-core},\
-    @${repo;SMT-Extension}, \
+    @${repo;SMT-Extension},\
+    @../org.alloytools.alloy.application/lib/cvc5-1.0.1-dev.jar,\
 	LICENSES
 
 -dependson: *
