@@ -1,5 +1,5 @@
 -buildpath: \
-    ../org.alloytools.alloy.dist/binaries/cvc5-1.0.1-dev.jar;version=file,\
+    lib/cvc5-1.0.1-dev.jar;version=file,\
 	org.apache.commons.cli,\
 	org.alloytools.alloy.core,\
 	com.fasterxml.jackson.core.jackson-annotations,\
