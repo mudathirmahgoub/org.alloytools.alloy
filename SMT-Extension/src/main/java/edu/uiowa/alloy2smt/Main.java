@@ -15,6 +15,7 @@ import edu.uiowa.smt.printers.SmtLibPrinter;
 import edu.uiowa.smt.smtAst.Declaration;
 import edu.uiowa.smt.smtAst.SmtScript;
 import io.github.cvc5.*;
+import io.github.cvc5.modes.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -199,6 +200,20 @@ public class Main
           }
         }
         System.out.println(solver.getModel(sorts.toArray(new Sort[0]), terms));
+        System.out.println(
+                "-------------------------------------------------------------------------------------------");
+        solver.blockModel(BlockModelsMode.LITERALS);
+        Result result2 = solver.checkSat();
+        if(result2.isSat())
+        {
+
+          System.out.println("A second instance was found after blocking models with literals mode:");
+          System.out.println(solver.getModel(sorts.toArray(new Sort[0]), terms));
+        }
+        else if(result2.isUnsat())
+        {
+          System.out.println("No more instances were found after blocking models with literals mode.");
+        }
       }
       if (result.isUnsat())
       {

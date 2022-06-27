@@ -1916,7 +1916,12 @@ public final class SimpleGUI implements ComponentListener, Listener {
             }
             else{
                 try {
-                    task = new Cvc4EnumerationTask(arg[0]);
+                    if(RelationalSolver.get().equals(CVC4)) {
+                        task = new Cvc4EnumerationTask(arg[0]);
+                    }
+                    else{
+                        task = new Cvc5EnumerationTask(arg[0]);
+                    }
                     subrunningTask = 2;
                 } catch (Exception exception) {
                     StringWriter stringWriter = new StringWriter();

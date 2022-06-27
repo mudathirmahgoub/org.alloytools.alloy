@@ -30,6 +30,8 @@ import java.lang.Thread.UncaughtExceptionHandler;
 
 import org.alloytools.alloy.core.AlloyCore;
 
+import javax.swing.*;
+
 /**
  * This class allows you to execute tasks in a subprocess, and receive its
  * outputs via callback.
@@ -230,6 +232,7 @@ public final class WorkerEngine {
                 task.run(callback);
                 callback.done();
             } catch (Throwable ex) {
+                JOptionPane.showMessageDialog(null, ex);
                 callback.callback(ex);
                 callback.fail();
             }

@@ -45,6 +45,8 @@ public class Cvc5Task implements WorkerEngine.WorkerTask
   public static AlloySettings alloySettings = AlloySettings.getInstance();
   public static String lastXmlFile;
 
+  static Cvc5Visitor cvc5Visitor;
+
   Cvc5Task(Map<String, String> alloyFiles,
       String originalFileName,
       int resolutionMode,
@@ -70,7 +72,7 @@ public class Cvc5Task implements WorkerEngine.WorkerTask
       final long endTranslate = System.currentTimeMillis();
 
       SmtScript optimizedScript = translation.getOptimizedSmtScript();
-      Cvc5Visitor cvc5Visitor = optimizedScript.toCvc5(translation.getAlloySettings());
+      cvc5Visitor = optimizedScript.toCvc5(translation.getAlloySettings());
       Solver solver = cvc5Visitor.getSolver();
 
       CommandResult commandResult;
