@@ -63,7 +63,7 @@ public class Cvc4Process
     while ((line = bufferedReader.readLine()) != null)
     {
       stringBuilder.append(line);
-      stringBuilder.append("/n");
+      stringBuilder.append("\n");
     }
     process.destroyForcibly();
     return stringBuilder.toString();
