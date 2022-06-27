@@ -107,8 +107,8 @@ public class Cvc4Process
     command.add(cvc4);
 
     // tell cvc4 the input language is smt2
-    command.add("--lang");
-    command.add("smtlib2.6");
+    command.add("--lang=smtlib2.6");
+    command.add("--block-models=literals");
     //        command.add("--print-success");
 
     processBuilder.command(command);

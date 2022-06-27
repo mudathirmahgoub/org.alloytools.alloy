@@ -1916,7 +1916,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
             }
             else{
                 try {
-                    task = new Cvc4EnumerationTask(arg[1]);
+                    task = new Cvc4EnumerationTask(arg[0]);
                     subrunningTask = 2;
                 } catch (Exception exception) {
                     StringWriter stringWriter = new StringWriter();
