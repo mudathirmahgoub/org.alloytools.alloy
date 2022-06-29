@@ -1,5 +1,6 @@
 package edu.mit.csail.sdg.alloy4whole;
 
+import static edu.mit.csail.sdg.alloy4.A4Preferences.CvcBlockModel;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.CvcFiniteModelFind;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.CvcIncludeCommandScope;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.CvcIntegerSingletonsOnly;
@@ -821,6 +822,7 @@ public class Cvc4Task implements WorkerEngine.WorkerTask
     alloySettings.produceUnsatCore = CvcProduceUnsatCores.get();
     alloySettings.finiteModelFinding = CvcFiniteModelFind.get();
     alloySettings.integerSingletonsOnly = CvcIntegerSingletonsOnly.get();
+    Cvc4Process.blockModelOption = CvcBlockModel.get();
   }
 
   // ToDo: replace this with a call edu.uiowa.smt.Result.parseModel

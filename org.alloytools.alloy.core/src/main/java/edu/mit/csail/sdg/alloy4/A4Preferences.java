@@ -748,6 +748,10 @@ public class A4Preferences {
     public static final BooleanPref CvcProduceUnsatCores = new BooleanPref("CvcProduceUnsatCores", "CVC produce unsat cores", false);
     public static final BooleanPref CvcFiniteModelFind = new BooleanPref("CvcFiniteModelFind", "Finite model find", true);
 
+    public static final String CvcLiterals = "literals";
+    public static final String CvcValues = "values";
+    public static final StringChoicePref CvcBlockModel =
+        new StringChoicePref("Block Model", Arrays.asList(CvcLiterals, CvcValues), CvcLiterals);
     public static final BooleanPref CvcIntegerSingletonsOnly = new BooleanPref("CvcIntegerSingletonsOnly", "CVC integer singletons only", false);
 
     public static final DelayedChoicePref<SatSolver> Solver               = new DelayedChoicePref<SatSolver>("SatSolver2", "Solver", SatSolver.values(), SatSolver.SAT4J) {

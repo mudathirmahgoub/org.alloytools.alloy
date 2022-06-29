@@ -24,10 +24,13 @@ import static edu.mit.csail.sdg.alloy4.A4Preferences.AutoVisualize;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.CoreGranularity;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.CoreMinimization;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.CVC4;
+import static edu.mit.csail.sdg.alloy4.A4Preferences.CvcBlockModel;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.CvcFiniteModelFind;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.CvcIncludeCommandScope;
+import static edu.mit.csail.sdg.alloy4.A4Preferences.CvcLiterals;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.CvcProduceUnsatCores;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.CvcTimeout;
+import static edu.mit.csail.sdg.alloy4.A4Preferences.CvcValues;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.DecomposePref;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.FontName;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.FontSize;
@@ -1529,6 +1532,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
             JMenu relationalSolverMenu = addToMenu(optmenu, RelationalSolver);
             JMenu cvc4TimeoutMenu = addToMenu(optmenu, CvcTimeout);
             List<JMenuItem> cvc4BooleanPreferences = addToMenu(optmenu, CvcIncludeCommandScope, CvcProduceUnsatCores, CvcFiniteModelFind);
+            addToMenu(optmenu, CvcBlockModel);
             //, Cvc4IntegerSingletonsOnly
 
             if (RelationalSolver.get().equals(KODKOD)) {

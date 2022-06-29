@@ -1,5 +1,6 @@
 package edu.mit.csail.sdg.alloy4whole;
 
+import edu.mit.csail.sdg.alloy4.A4Preferences;
 import edu.mit.csail.sdg.alloy4.Util;
 import edu.mit.csail.sdg.alloy4.WorkerEngine;
 import java.io.BufferedReader;
@@ -17,6 +18,7 @@ public class Cvc4Process
   public static final String OS = System.getProperty("os.name");
   public static final String SEP = File.separator;
   public static final String BIN_PATH = SimpleGUI.alloyHome(null) + SEP + "binary" + SEP;
+  public static String blockModelOption = A4Preferences.CvcLiterals;
 
   private Process process;
   private Scanner scanner;
@@ -108,7 +110,7 @@ public class Cvc4Process
 
     // tell cvc4 the input language is smt2
     command.add("--lang=smtlib2.6");
-    command.add("--block-models=literals");
+    command.add("--block-models="  + blockModelOption);
     //        command.add("--print-success");
 
     processBuilder.command(command);
