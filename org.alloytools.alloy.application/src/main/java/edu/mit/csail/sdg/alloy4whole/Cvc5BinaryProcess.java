@@ -150,7 +150,7 @@ public class Cvc5BinaryProcess
   private String receiveOutput() throws IOException
   {
     String line = "";
-    outputStream.write(("(echo success)\n").getBytes());
+    outputStream.write(("(echo \"success\")\n").getBytes());
     outputStream.flush();
 
     StringBuilder output = new StringBuilder();
@@ -159,7 +159,7 @@ public class Cvc5BinaryProcess
     {
       line = scanner.nextLine();
 
-      if (line.equals("success"))
+      if (line.equals("\"success\""))
       {
         return output.toString().trim();
       }
