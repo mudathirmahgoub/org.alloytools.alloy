@@ -20,7 +20,7 @@ public class AlloyUtils
     alloySettings.includeCommandScope = includeScope;
     Translation translation = Utils.translate(alloy, alloySettings);
 
-    Cvc4Task task = new Cvc4Task();
+    Cvc5BinaryTask task = new Cvc5BinaryTask();
     return task.run(translation, includeScope);
   }
 
@@ -29,7 +29,7 @@ public class AlloyUtils
     alloySettings.includeCommandScope = includeScope;
     Translation translation = Utils.translate(alloy, alloySettings);
 
-    Cvc4Task task = new Cvc4Task();
+    Cvc5BinaryTask task = new Cvc5BinaryTask();
     return task.run(translation, includeScope);
   }
 
@@ -37,7 +37,7 @@ public class AlloyUtils
   {
     alloySettings.includeCommandScope = includeScope;
     Translation translation = Utils.translateFromFile(fileName, alloySettings);
-    Cvc4Task task = new Cvc4Task();
+    Cvc5BinaryTask task = new Cvc5BinaryTask();
     CommandResult result = task.run(translation, includeScope, commandIndex);
     
     String smtFile = fileName.replace(".als", "") + "_" + commandIndex + "_" + result.satResult + ".smt2";    
@@ -61,7 +61,7 @@ public class AlloyUtils
   public static CommandResult runAlloyFileTimeout(int timeout, String fileName, boolean includeScope, int commandIndex) throws Exception
   {
     Translation translation = Utils.translateFromFile(fileName, alloySettings);
-    Cvc4Task task = new Cvc4Task();
+    Cvc5BinaryTask task = new Cvc5BinaryTask();
     return task.run(translation, includeScope, commandIndex);
   }
 

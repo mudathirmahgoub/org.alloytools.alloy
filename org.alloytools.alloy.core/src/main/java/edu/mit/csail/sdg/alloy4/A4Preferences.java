@@ -722,10 +722,10 @@ public class A4Preferences {
     public static final BooleanPref                  InferPartialInstance = new BooleanPref("InferPartialInstance", "Infer partial instance");
 
     public static final String KODKOD = "Kodkod";
-    public static final String CVC4 = "CVC4 (experimental)";
-    public static final String cvc5 = "cvc5 (experimental)";
+    public static final String cvc5Binary = "cvc5 binary (experimental)";
+    public static final String cvc5Api = "cvc5 Api (experimental)";
     public static final StringChoicePref RelationalSolver = new StringChoicePref("Relational Solver",
-        Arrays.asList(KODKOD, CVC4, cvc5), KODKOD);
+        Arrays.asList(KODKOD, cvc5Binary, cvc5Api), KODKOD);
     public static final IntChoicePref CvcTimeout = new IntChoicePref("CvcTimeout", "CVC timeout", Arrays.asList(5000, 30000, 60000, 120000, 300000, 600000, 0), 30000)
     {
         @Override

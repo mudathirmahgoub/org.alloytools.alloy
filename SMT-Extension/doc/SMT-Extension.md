@@ -4,7 +4,7 @@ author: Mudathir Mohamed & Cesare Tinelli
 report: http://homepage.divms.uiowa.edu/~mahgoubyahia/pdf/crs.pdf
 ---
 
-# The CVC4 Relational Solver 
+# The cvc5 Relational Solver 
 
 This Alloy Analyzer plugin provides an alternative relational solver that extends the capabilities of the Analyzer with 
 * the ability to prove an Alloy model inconsistent or an assertion valid _regardless signature scope_;
@@ -12,13 +12,13 @@ This Alloy Analyzer plugin provides an alternative relational solver that extend
 
 With this relational solver, signatures have by default *unbounded scope* and integers are not bound by any particular bit width.
 
-The CVC4 Relational Solver uses as backend the SMT solver [CVC4](https://cvc4.github.io) through CVC4's direct support for the theory of finite relations. Because of that, _the relational solver assumes that all user-defined signatures in an Alloy model are finite._ The only builtin signature that is currently supported is `Int` which is interpreted as the (infinite) set of mathematical integers. A later extension may include the builtin signature `String`, interpreted as the set of all strings of Unicode characters.
+The cvc5 Relational Solver uses as backend the SMT solver [cvc5](https://cvc5.github.io) through cvc5's direct support for the theory of finite relations. Because of that, _the relational solver assumes that all user-defined signatures in an Alloy model are finite._ The only builtin signature that is currently supported is `Int` which is interpreted as the (infinite) set of mathematical integers. A later extension may include the builtin signature `String`, interpreted as the set of all strings of Unicode characters.
 
 ## Installation
 
-CVC4 binaries for Windows, macOS and Linux are included in the release alloy_cvc4.zip at https://github.com/CVC4/org.alloytools.alloy/releases . If you prefer to build the CVC4 binary yourself, the latest version of CVC4 can be downloaded from [here](https://cvc4.github.io/downloads.html). 
+cvc5 binaries for Windows, macOS and Linux are included in the release alloy_cvc5.zip at https://github.com/cvc5/org.alloytools.alloy/releases . If you prefer to build the cvc5 binary yourself, the latest version of cvc5 can be downloaded from [here](https://cvc5.github.io/downloads.html). 
 
-To build and run the latest version of alloy_cvc4 in Linux run the commands:
+To build and run the latest version of alloy_cvc5 in Linux run the commands:
 ```cmd
  $ java version           # requires 1.8 (and NOT 1.9, gradle does not run on 1.9)
  java version "1.8.0_144"
@@ -28,7 +28,7 @@ To build and run the latest version of alloy_cvc4 in Linux run the commands:
  $ cd org.alloytools.alloy
  $ ./gradlew assemble
  $ cd org.alloytools.alloy.dist
- $ chmod +x binaries/cvc4_linux
+ $ chmod +x binaries/cvc5_linux
  $ cp binaries/* target
  $ cd target
  $ java -jar org.alloytools.alloy.dist.jar
@@ -37,16 +37,16 @@ To build and run the latest version of alloy_cvc4 in Linux run the commands:
 The build process for macOS is analogous. For Windows, do the following:
 
 
-## CVC4 options 
+## cvc5 options 
 
-The CVC4 Relational Solver can be chosen from the the options menu. 
+The cvc5 Relational Solver can be chosen from the the options menu. 
 
 ![Options](options.png)
 
-**CVC4 timeout.** can also be set there, in seconds. This is the time alloted to CVC4 to solve a particular Alloy command (`run`, `check`, or `execute all`). The default timeout is 30 seconds.  
+**cvc5 timeout.** can also be set there, in seconds. This is the time alloted to cvc5 to solve a particular Alloy command (`run`, `check`, or `execute all`). The default timeout is 30 seconds.  
 
-**CVC4 include scope.** specifies whether to consider or ignore the scope constraints in all commands. _By default the scope is disabled._
-In the following example, the CVC4 Relational Solver returns the empty set for signature `A` when the scope option is disabled. 
+**cvc5 include scope.** specifies whether to consider or ignore the scope constraints in all commands. _By default the scope is disabled._
+In the following example, the cvc5 Relational Solver returns the empty set for signature `A` when the scope option is disabled. 
 
 ```cmd
 sig A {}
@@ -60,7 +60,7 @@ sig A {}
 run {#A = 3} 
 ```
 
-The CVC4 Relational Solver returns 3 elements for signature A. 
+The cvc5 Relational Solver returns 3 elements for signature A. 
 
 **Note:** Cardinality constraints are currently supported only as atomic constraints of the form 
 ```
@@ -70,22 +70,22 @@ The CVC4 Relational Solver returns 3 elements for signature A.
 where `r` is a relational expression, `n` is a numeral and `op` is a builtin arithmetic relational operator (`<`, `>`, `>=`, `=<`, `=`, `!=`)
 
 
-**CVC4 produce unsat core.** Enabling this option will show the unsat core of an inconsistent model or a valid assertion.
+**cvc5 produce unsat core.** Enabling this option will show the unsat core of an inconsistent model or a valid assertion.
 
 
 
 ## Differences with Alloy Semantics
 
-The additional capabilities provided by the CVC4 Relational Solver come at the cost of some departures from the Alloy standard semantics, which results in different behavior in a number of cases. These differences are illustrated below. 
+The additional capabilities provided by the cvc5 Relational Solver come at the cost of some departures from the Alloy standard semantics, which results in different behavior in a number of cases. These differences are illustrated below. 
 
 ### Integer signatures 
 
-The CVC4 Relational Solver conforms to the Alloy type system with the exception of prohibiting the construction of relational terms that mix integer and non-integer elements. For example, it considers the body of following predicate ill-typed although it is well-typed (and always true) in standard Alloy
+The cvc5 Relational Solver conforms to the Alloy type system with the exception of prohibiting the construction of relational terms that mix integer and non-integer elements. For example, it considers the body of following predicate ill-typed although it is well-typed (and always true) in standard Alloy
 ```
 pred p {univ & Int = Int} // Int is a subset of univ
 ```
 
-More precisely, it is not possible to write expressions denoting a set that contains both integers and atoms (i.e., elements of a user-defined signature). Such expressions are rejected by the CVC4 Relational Solver as ill-typed. 
+More precisely, it is not possible to write expressions denoting a set that contains both integers and atoms (i.e., elements of a user-defined signature). Such expressions are rejected by the cvc5 Relational Solver as ill-typed. 
 Example:
 ````
 sig A {}
@@ -94,16 +94,16 @@ sig B {
 }
 ````
 
-Note that terms like `A + Int` are well-typed (and so allowed) in Alloy. _The restriction above is specific to the CVC4 Relational Solver_ although it does not appear to be a major one in common usage. Its rationale is that it greatly facilitates the translation of Alloy models to CVC4 whose type system has only simple types and no subtypes. 
+Note that terms like `A + Int` are well-typed (and so allowed) in Alloy. _The restriction above is specific to the cvc5 Relational Solver_ although it does not appear to be a major one in common usage. Its rationale is that it greatly facilitates the translation of Alloy models to cvc5 whose type system has only simple types and no subtypes. 
 
 One consequence of this restrictions is that, contrary to the standard Alloy semantics, _`univ` is considered to consist only of the union of all the top-level user-defined signatures_ and so it contains no integers. Correspondingly, _`iden` ranges over pairs of atoms only._ 
-For the integers, the CVC4 Relational Solver then adds two new builtin constants: `univInt` and `idenInt` where 
+For the integers, the cvc5 Relational Solver then adds two new builtin constants: `univInt` and `idenInt` where 
 
 1. `univInt` denotes a finite subset of integers that includes all the user-defined subsignatures of `Int` as well as any builtin constants (such as 0,1, and so on) occurring in the model; 
 2. `idenInt` denotes the identity relation over `univInt`. 
 
 
-**Note**: Because of the restriction of the CVC4 Relational Solver to finite sets, the predefined signature `Int` _is currently identified with_ `univInt` when used in a formula. For example, the formula 
+**Note**: Because of the restriction of the cvc5 Relational Solver to finite sets, the predefined signature `Int` _is currently identified with_ `univInt` when used in a formula. For example, the formula 
 ````
 all x : Int | x > 1 implies x > 0
 ````
@@ -129,7 +129,7 @@ fact { all a : A | a !in Int & B }
 ````
 ### Semantics of Integer Operators
 
-The CVC4 Relational Solver interprets the builtin relational constants `plus`, `minus`, `mul`, `div`, and `rem` differently from standard Alloy, and more consistently with Alloy's use of square brackets as syntactic sugar for relational join. Specifically, it uses the following semantics where, because of the restrictions above, `A` and `B` can only be expressions denoting finite sets:
+The cvc5 Relational Solver interprets the builtin relational constants `plus`, `minus`, `mul`, `div`, and `rem` differently from standard Alloy, and more consistently with Alloy's use of square brackets as syntactic sugar for relational join. Specifically, it uses the following semantics where, because of the restrictions above, `A` and `B` can only be expressions denoting finite sets:
 
 | Syntax        | Alt. Syntax | Meaning                              |
 |---------------|----------|-----------------------------------------|
@@ -152,7 +152,7 @@ The CVC4 Relational Solver interprets the builtin relational constants `plus`, `
 run {} for 5 Int, 12 seq
 ````
 
-The result returned from CVC4 Relational Solver is 
+The result returned from cvc5 Relational Solver is 
 ```cmd
 this/A={1, 2}
 this/B={4, 5}
@@ -174,7 +174,7 @@ this/A={1, 2}
 this/B={4, 5}
 this/C={12}
 ```
-When the operands are singletons, the semantics of CVC4 Relational Solver is similar to that of the Kodkod solver (modulo the bit width), as shown in the following example:
+When the operands are singletons, the semantics of cvc5 Relational Solver is similar to that of the Kodkod solver (modulo the bit width), as shown in the following example:
 ```cmd
 sig A, B in Int {} 
 fact { 
@@ -185,13 +185,13 @@ fact {
 }
 run {} for 4 Int, 7 seq
 ```
-CVC4 and Kodkod result:
+cvc5 and Kodkod result:
 ```cmd
 this/A={4}
 this/B={2}
 ```
 
-**Note:** Despite supporting the application of the arithmetic operators to arbitrary finite sets of integers, the CVC4 relation solver targets the case when their arguments are singletons. Performance degrades significantly as the cardinality of the argument sets increases.
+**Note:** Despite supporting the application of the arithmetic operators to arbitrary finite sets of integers, the cvc5 relation solver targets the case when their arguments are singletons. Performance degrades significantly as the cardinality of the argument sets increases.
 
 
 ### Semantics of Integer Comparison
@@ -215,7 +215,7 @@ fact {
 run {} for 4 Int, 7 seq
 ```
 
-The CVC4 Relational Solver finds this model inconsistent because it is not possible for `A` to be simultaneously a singleton and have cardinality 2. In contrast, the Kodkod solver returns the model
+The cvc5 Relational Solver finds this model inconsistent because it is not possible for `A` to be simultaneously a singleton and have cardinality 2. In contrast, the Kodkod solver returns the model
 ```cmd
 this/A={-7, 2}
 this/B={-4, -5, -7, -8, 1}
@@ -235,7 +235,7 @@ run {} for 4 Int, 7 seq
 
 
 ## Unsupported features
-Currently the following Alloy features are not fully supported by CVC4 Relational Solver:
+Currently the following Alloy features are not fully supported by cvc5 Relational Solver:
 - The cardinality operator in expressions (e.g., `sig A,B {r: A} fact {#A + 2 = 3 and #B < #A}`) unless it is used for a direct comparison with an integer constant. So expressions like `#A + 2 = 3 and #B < #A}` are not supported whereas expressions like `#A = 3`, `#A > 2`, `#A >= 2`, `#A < 4`, `#A <= 4`, `4 >= #A` are supported.
 - Running the command line interface of Alloy (only the GUI is supported).
 

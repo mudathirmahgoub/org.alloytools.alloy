@@ -23,14 +23,12 @@ import static edu.mit.csail.sdg.alloy4.A4Preferences.AntiAlias;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.AutoVisualize;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.CoreGranularity;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.CoreMinimization;
-import static edu.mit.csail.sdg.alloy4.A4Preferences.CVC4;
+import static edu.mit.csail.sdg.alloy4.A4Preferences.cvc5Binary;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.CvcBlockModel;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.CvcFiniteModelFind;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.CvcIncludeCommandScope;
-import static edu.mit.csail.sdg.alloy4.A4Preferences.CvcLiterals;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.CvcProduceUnsatCores;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.CvcTimeout;
-import static edu.mit.csail.sdg.alloy4.A4Preferences.CvcValues;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.DecomposePref;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.FontName;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.FontSize;
@@ -56,7 +54,7 @@ import static edu.mit.csail.sdg.alloy4.A4Preferences.Unrolls;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.VerbosityPref;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.WarningNonfatal;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.Welcome;
-import static edu.mit.csail.sdg.alloy4.A4Preferences.cvc5;
+import static edu.mit.csail.sdg.alloy4.A4Preferences.cvc5Api;
 import static edu.mit.csail.sdg.alloy4.OurUtil.menu;
 import static edu.mit.csail.sdg.alloy4.OurUtil.menuItem;
 import static java.awt.event.KeyEvent.VK_A;
@@ -1280,10 +1278,10 @@ public final class SimpleGUI implements ComponentListener, Listener {
             kodkodTask.tempdir = maketemp(frame);
             task = kodkodTask;
         }
-        else if (RelationalSolver.get().equals(CVC4)){
-            task = new Cvc4Task(alloyFiles, opt.originalFilename, resolutionMode, i);
+        else if (RelationalSolver.get().equals(cvc5Binary)){
+            task = new Cvc5BinaryTask(alloyFiles, opt.originalFilename, resolutionMode, i);
         }
-        else if (RelationalSolver.get().equals(cvc5)){
+        else if (RelationalSolver.get().equals(cvc5Api)){
             task = new Cvc5Task(alloyFiles, opt.originalFilename, resolutionMode, i);
         }
         else {
@@ -1530,19 +1528,19 @@ public final class SimpleGUI implements ComponentListener, Listener {
             optmenu.addSeparator();
             // CVC4 options
             JMenu relationalSolverMenu = addToMenu(optmenu, RelationalSolver);
-            JMenu cvc4TimeoutMenu = addToMenu(optmenu, CvcTimeout);
-            List<JMenuItem> cvc4BooleanPreferences = addToMenu(optmenu, CvcIncludeCommandScope, CvcProduceUnsatCores, CvcFiniteModelFind);
+            JMenu cvc5TimeoutMenu = addToMenu(optmenu, CvcTimeout);
+            List<JMenuItem> cvc5BooleanPreferences = addToMenu(optmenu, CvcIncludeCommandScope, CvcProduceUnsatCores, CvcFiniteModelFind);
             addToMenu(optmenu, CvcBlockModel);
             //, Cvc4IntegerSingletonsOnly
 
             if (RelationalSolver.get().equals(KODKOD)) {
-                cvc4TimeoutMenu.setEnabled(false);
-                for (JMenuItem item : cvc4BooleanPreferences) {
+                cvc5TimeoutMenu.setEnabled(false);
+                for (JMenuItem item : cvc5BooleanPreferences) {
                     item.setEnabled(false);
                 }
             } else {
-                cvc4TimeoutMenu.setEnabled(true);
-                for (JMenuItem item : cvc4BooleanPreferences) {
+                cvc5TimeoutMenu.setEnabled(true);
+                for (JMenuItem item : cvc5BooleanPreferences) {
                     item.setEnabled(true);
                 }
             }
@@ -1920,11 +1918,11 @@ public final class SimpleGUI implements ComponentListener, Listener {
             }
             else{
                 try {
-                    if(RelationalSolver.get().equals(CVC4)) {
-                        task = new Cvc4EnumerationTask(arg[0]);
+                    if(RelationalSolver.get().equals(cvc5Binary)) {
+                        task = new Cvc5BinaryEnumerationTask(arg[0]);
                     }
                     else{
-                        task = new Cvc5EnumerationTask(arg[0]);
+                        task = new Cvc5ApiEnumerationTask(arg[0]);
                     }
                     subrunningTask = 2;
                 } catch (Exception exception) {
