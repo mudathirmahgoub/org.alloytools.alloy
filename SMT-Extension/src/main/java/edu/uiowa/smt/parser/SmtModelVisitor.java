@@ -315,7 +315,7 @@ public class SmtModelVisitor extends SmtBaseVisitor<SmtAst>
   {
     SmtSort elementSort = (SmtSort) this.visitSort(ctx.sort());
     SmtSort setSort = new SetSort(elementSort);
-    return SmtUnaryExpr.Op.EMPTYSET.make(setSort);
+    return SmtUnaryExpr.Op.SET_EMPTY.make(setSort);
   }
 
   public SmtAst visitVariable(SmtParser.VariableContext ctx, SmtEnv smtEnv)

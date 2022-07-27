@@ -31,17 +31,17 @@ public class IntConstant extends Constant
 
   public static SmtExpr getSingletonTuple(int value)
   {
-    SmtExpr tuple = new SmtMultiArityExpr(SmtMultiArityExpr.Op.MKTUPLE,
+    SmtExpr tuple = new SmtMultiArityExpr(SmtMultiArityExpr.Op.TUPLE,
         new IntConstant(value));
-    SmtExpr singleton = SmtUnaryExpr.Op.SINGLETON.make(tuple);
+    SmtExpr singleton = SmtUnaryExpr.Op.SET_SINGLETON.make(tuple);
     return singleton;
   }
 
   public static SmtExpr getSingletonTuple(IntConstant intConstant)
   {
-    SmtExpr tuple = new SmtMultiArityExpr(SmtMultiArityExpr.Op.MKTUPLE,
+    SmtExpr tuple = new SmtMultiArityExpr(SmtMultiArityExpr.Op.TUPLE,
         intConstant);
-    SmtExpr singleton = SmtUnaryExpr.Op.SINGLETON.make(tuple);
+    SmtExpr singleton = SmtUnaryExpr.Op.SET_SINGLETON.make(tuple);
     return singleton;
   }
 

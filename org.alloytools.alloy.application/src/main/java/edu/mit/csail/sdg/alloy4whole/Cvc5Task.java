@@ -564,15 +564,15 @@ public class Cvc5Task implements WorkerEngine.WorkerTask
       SmtUnaryExpr unary = (SmtUnaryExpr) smtExpr;
       switch (unary.getOp())
       {
-        case EMPTYSET: return new ArrayList<>();
-        case SINGLETON:
+        case SET_EMPTY: return new ArrayList<>();
+        case SET_SINGLETON:
         {
           SmtExpr unarySmtExpr = unary.getExpr();
           if (unarySmtExpr instanceof SmtMultiArityExpr)
           {
             SmtMultiArityExpr multiArity = (SmtMultiArityExpr) unarySmtExpr;
 
-            if (multiArity.getOp() == SmtMultiArityExpr.Op.MKTUPLE)
+            if (multiArity.getOp() == SmtMultiArityExpr.Op.TUPLE)
             {
               List<Atom> atoms = getAtoms(multiArity, functionsMap);
               Tuple tuple = new Tuple();
@@ -639,8 +639,8 @@ public class Cvc5Task implements WorkerEngine.WorkerTask
       SmtUnaryExpr unary = (SmtUnaryExpr) smtExpr;
       switch (unary.getOp())
       {
-        case EMPTYSET: return new ArrayList<>();
-        case SINGLETON:
+        case SET_EMPTY: return new ArrayList<>();
+        case SET_SINGLETON:
         {
           return getAtoms(unary.getExpr(), functions);
         }
@@ -669,7 +669,7 @@ public class Cvc5Task implements WorkerEngine.WorkerTask
       SmtMultiArityExpr multiArity = (SmtMultiArityExpr) smtExpr;
       switch (multiArity.getOp())
       {
-        case MKTUPLE:
+        case TUPLE:
         {
           for (SmtExpr expr : multiArity.getExprs())
           {

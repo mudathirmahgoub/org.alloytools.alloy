@@ -145,21 +145,21 @@ public class ExprBinaryTranslator
     SmtExpr A = exprTranslator.translateExpr(expr.left, smtEnv);
     SmtExpr B = exprTranslator.translateExpr(expr.right, smtEnv);
 
-    SmtExpr product = SmtBinaryExpr.Op.PRODUCT.make(A, B);
-    SmtExpr subset = SmtBinaryExpr.Op.SUBSET.make(multiplicitySet.getVariable(), product);
+    SmtExpr product = SmtBinaryExpr.Op.RELATION_PRODUCT.make(A, B);
+    SmtExpr subset = SmtBinaryExpr.Op.SET_SUBSET.make(multiplicitySet.getVariable(), product);
 
     SetSort ASort = (SetSort) A.getSort();
     SetSort BSort = (SetSort) B.getSort();
 
     SmtVariable x = new SmtVariable("x", ASort.elementSort, false);
     SmtVariable y = new SmtVariable("y", BSort.elementSort, false);
-    SmtExpr xMemberA = SmtBinaryExpr.Op.MEMBER.make(x.getVariable(), A);
-    SmtExpr yMemberB = SmtBinaryExpr.Op.MEMBER.make(y.getVariable(), B);
+    SmtExpr xMemberA = SmtBinaryExpr.Op.SET_MEMBER.make(x.getVariable(), A);
+    SmtExpr yMemberB = SmtBinaryExpr.Op.SET_MEMBER.make(y.getVariable(), B);
 
     SmtVariable u = new SmtVariable("u", ASort.elementSort, false);
     SmtVariable v = new SmtVariable("v", BSort.elementSort, false);
-    SmtExpr uMemberA = SmtBinaryExpr.Op.MEMBER.make(u.getVariable(), A);
-    SmtExpr vMemberB = SmtBinaryExpr.Op.MEMBER.make(v.getVariable(), B);
+    SmtExpr uMemberA = SmtBinaryExpr.Op.SET_MEMBER.make(u.getVariable(), A);
+    SmtExpr vMemberB = SmtBinaryExpr.Op.SET_MEMBER.make(v.getVariable(), B);
 
     // multiplicitySet subset of A one -> one B
     // and
@@ -173,9 +173,9 @@ public class ExprBinaryTranslator
     SmtExpr xvTuple = getTupleConcatenation(ASort, BSort, x, v);
     SmtExpr uyTuple = getTupleConcatenation(ASort, BSort, u, y);
 
-    SmtExpr xyMember = SmtBinaryExpr.Op.MEMBER.make(xyTuple, multiplicitySet.getVariable());
-    SmtExpr xvMember = SmtBinaryExpr.Op.MEMBER.make(xvTuple, multiplicitySet.getVariable());
-    SmtExpr uyMember = SmtBinaryExpr.Op.MEMBER.make(uyTuple, multiplicitySet.getVariable());
+    SmtExpr xyMember = SmtBinaryExpr.Op.SET_MEMBER.make(xyTuple, multiplicitySet.getVariable());
+    SmtExpr xvMember = SmtBinaryExpr.Op.SET_MEMBER.make(xvTuple, multiplicitySet.getVariable());
+    SmtExpr uyMember = SmtBinaryExpr.Op.SET_MEMBER.make(uyTuple, multiplicitySet.getVariable());
 
     SmtExpr notXV = SmtUnaryExpr.Op.NOT.make(xvMember);
     SmtExpr notUY = SmtUnaryExpr.Op.NOT.make(uyMember);
@@ -221,19 +221,19 @@ public class ExprBinaryTranslator
     SmtExpr A = exprTranslator.translateExpr(expr.left, smtEnv);
     SmtExpr B = exprTranslator.translateExpr(expr.right, smtEnv);
 
-    SmtExpr product = SmtBinaryExpr.Op.PRODUCT.make(A, B);
-    SmtExpr subset = SmtBinaryExpr.Op.SUBSET.make(multiplicitySet.getVariable(), product);
+    SmtExpr product = SmtBinaryExpr.Op.RELATION_PRODUCT.make(A, B);
+    SmtExpr subset = SmtBinaryExpr.Op.SET_SUBSET.make(multiplicitySet.getVariable(), product);
 
     SetSort ASort = (SetSort) A.getSort();
     SetSort BSort = (SetSort) B.getSort();
 
     SmtVariable x = new SmtVariable("x", ASort.elementSort, false);
     SmtVariable y = new SmtVariable("y", BSort.elementSort, false);
-    SmtExpr xMemberA = SmtBinaryExpr.Op.MEMBER.make(x.getVariable(), A);
-    SmtExpr yMemberB = SmtBinaryExpr.Op.MEMBER.make(y.getVariable(), B);
+    SmtExpr xMemberA = SmtBinaryExpr.Op.SET_MEMBER.make(x.getVariable(), A);
+    SmtExpr yMemberB = SmtBinaryExpr.Op.SET_MEMBER.make(y.getVariable(), B);
 
     SmtVariable u = new SmtVariable("u", ASort.elementSort, false);
-    SmtExpr uMemberA = SmtBinaryExpr.Op.MEMBER.make(u.getVariable(), A);
+    SmtExpr uMemberA = SmtBinaryExpr.Op.SET_MEMBER.make(u.getVariable(), A);
 
     // multiplicitySet subset of A one -> some B
     // and
@@ -245,9 +245,9 @@ public class ExprBinaryTranslator
     SmtExpr xyTuple = getTupleConcatenation(ASort, BSort, x, y);
     SmtExpr uyTuple = getTupleConcatenation(ASort, BSort, u, y);
 
-    SmtExpr xyMember = SmtBinaryExpr.Op.MEMBER.make(xyTuple, multiplicitySet.getVariable());
+    SmtExpr xyMember = SmtBinaryExpr.Op.SET_MEMBER.make(xyTuple, multiplicitySet.getVariable());
 
-    SmtExpr uyMember = SmtBinaryExpr.Op.MEMBER.make(uyTuple, multiplicitySet.getVariable());
+    SmtExpr uyMember = SmtBinaryExpr.Op.SET_MEMBER.make(uyTuple, multiplicitySet.getVariable());
 
     SmtExpr notUY = SmtUnaryExpr.Op.NOT.make(uyMember);
 
@@ -285,19 +285,19 @@ public class ExprBinaryTranslator
     SmtExpr A = exprTranslator.translateExpr(expr.left, smtEnv);
     SmtExpr B = exprTranslator.translateExpr(expr.right, smtEnv);
 
-    SmtExpr product = SmtBinaryExpr.Op.PRODUCT.make(A, B);
-    SmtExpr subset = SmtBinaryExpr.Op.SUBSET.make(multiplicitySet.getVariable(), product);
+    SmtExpr product = SmtBinaryExpr.Op.RELATION_PRODUCT.make(A, B);
+    SmtExpr subset = SmtBinaryExpr.Op.SET_SUBSET.make(multiplicitySet.getVariable(), product);
 
     SetSort ASort = (SetSort) A.getSort();
     SetSort BSort = (SetSort) B.getSort();
 
     SmtVariable x = new SmtVariable("x", ASort.elementSort, false);
     SmtVariable y = new SmtVariable("y", BSort.elementSort, false);
-    SmtExpr xMemberA = SmtBinaryExpr.Op.MEMBER.make(x.getVariable(), A);
-    SmtExpr yMemberB = SmtBinaryExpr.Op.MEMBER.make(y.getVariable(), B);
+    SmtExpr xMemberA = SmtBinaryExpr.Op.SET_MEMBER.make(x.getVariable(), A);
+    SmtExpr yMemberB = SmtBinaryExpr.Op.SET_MEMBER.make(y.getVariable(), B);
 
     SmtVariable u = new SmtVariable("u", ASort.elementSort, false);
-    SmtExpr uMemberA = SmtBinaryExpr.Op.MEMBER.make(u.getVariable(), A);
+    SmtExpr uMemberA = SmtBinaryExpr.Op.SET_MEMBER.make(u.getVariable(), A);
 
     // multiplicitySet subset of A one -> set B
     // and
@@ -307,9 +307,9 @@ public class ExprBinaryTranslator
     SmtExpr xyTuple = getTupleConcatenation(ASort, BSort, x, y);
     SmtExpr uyTuple = getTupleConcatenation(ASort, BSort, u, y);
 
-    SmtExpr xyMember = SmtBinaryExpr.Op.MEMBER.make(xyTuple, multiplicitySet.getVariable());
+    SmtExpr xyMember = SmtBinaryExpr.Op.SET_MEMBER.make(xyTuple, multiplicitySet.getVariable());
 
-    SmtExpr uyMember = SmtBinaryExpr.Op.MEMBER.make(uyTuple, multiplicitySet.getVariable());
+    SmtExpr uyMember = SmtBinaryExpr.Op.SET_MEMBER.make(uyTuple, multiplicitySet.getVariable());
 
     SmtExpr notUY = SmtUnaryExpr.Op.NOT.make(uyMember);
 
@@ -341,19 +341,19 @@ public class ExprBinaryTranslator
     SmtExpr A = exprTranslator.translateExpr(expr.left, smtEnv);
     SmtExpr B = exprTranslator.translateExpr(expr.right, smtEnv);
 
-    SmtExpr product = SmtBinaryExpr.Op.PRODUCT.make(A, B);
-    SmtExpr subset = SmtBinaryExpr.Op.SUBSET.make(multiplicitySet.getVariable(), product);
+    SmtExpr product = SmtBinaryExpr.Op.RELATION_PRODUCT.make(A, B);
+    SmtExpr subset = SmtBinaryExpr.Op.SET_SUBSET.make(multiplicitySet.getVariable(), product);
 
     SetSort ASort = (SetSort) A.getSort();
     SetSort BSort = (SetSort) B.getSort();
 
     SmtVariable x = new SmtVariable("x", ASort.elementSort, false);
     SmtVariable y = new SmtVariable("y", BSort.elementSort, false);
-    SmtExpr xMemberA = SmtBinaryExpr.Op.MEMBER.make(x.getVariable(), A);
-    SmtExpr yMemberB = SmtBinaryExpr.Op.MEMBER.make(y.getVariable(), B);
+    SmtExpr xMemberA = SmtBinaryExpr.Op.SET_MEMBER.make(x.getVariable(), A);
+    SmtExpr yMemberB = SmtBinaryExpr.Op.SET_MEMBER.make(y.getVariable(), B);
 
     SmtVariable v = new SmtVariable("v", BSort.elementSort, false);
-    SmtExpr vMemberB = SmtBinaryExpr.Op.MEMBER.make(v.getVariable(), B);
+    SmtExpr vMemberB = SmtBinaryExpr.Op.SET_MEMBER.make(v.getVariable(), B);
 
     // multiplicitySet subset of A some -> one B
     // and
@@ -365,8 +365,8 @@ public class ExprBinaryTranslator
     SmtExpr xyTuple = getTupleConcatenation(ASort, BSort, x, y);
     SmtExpr xvTuple = getTupleConcatenation(ASort, BSort, x, v);
 
-    SmtExpr xyMember = SmtBinaryExpr.Op.MEMBER.make(xyTuple, multiplicitySet.getVariable());
-    SmtExpr xvMember = SmtBinaryExpr.Op.MEMBER.make(xvTuple, multiplicitySet.getVariable());
+    SmtExpr xyMember = SmtBinaryExpr.Op.SET_MEMBER.make(xyTuple, multiplicitySet.getVariable());
+    SmtExpr xvMember = SmtBinaryExpr.Op.SET_MEMBER.make(xvTuple, multiplicitySet.getVariable());
 
     SmtExpr notXV = SmtUnaryExpr.Op.NOT.make(xvMember);
 
@@ -405,19 +405,19 @@ public class ExprBinaryTranslator
     SmtExpr A = exprTranslator.translateExpr(expr.left, smtEnv);
     SmtExpr B = exprTranslator.translateExpr(expr.right, smtEnv);
 
-    SmtExpr product = SmtBinaryExpr.Op.PRODUCT.make(A, B);
-    SmtExpr subset = SmtBinaryExpr.Op.SUBSET.make(multiplicitySet.getVariable(), product);
+    SmtExpr product = SmtBinaryExpr.Op.RELATION_PRODUCT.make(A, B);
+    SmtExpr subset = SmtBinaryExpr.Op.SET_SUBSET.make(multiplicitySet.getVariable(), product);
 
     SetSort ASort = (SetSort) A.getSort();
     SetSort BSort = (SetSort) B.getSort();
 
     SmtVariable x = new SmtVariable("x", ASort.elementSort, false);
     SmtVariable y = new SmtVariable("y", BSort.elementSort, false);
-    SmtExpr xMemberA = SmtBinaryExpr.Op.MEMBER.make(x.getVariable(), A);
-    SmtExpr yMemberB = SmtBinaryExpr.Op.MEMBER.make(y.getVariable(), B);
+    SmtExpr xMemberA = SmtBinaryExpr.Op.SET_MEMBER.make(x.getVariable(), A);
+    SmtExpr yMemberB = SmtBinaryExpr.Op.SET_MEMBER.make(y.getVariable(), B);
 
     SmtVariable v = new SmtVariable("v", BSort.elementSort, false);
-    SmtExpr vMemberB = SmtBinaryExpr.Op.MEMBER.make(v.getVariable(), B);
+    SmtExpr vMemberB = SmtBinaryExpr.Op.SET_MEMBER.make(v.getVariable(), B);
 
     // multiplicitySet subset of A set -> one B
     // and
@@ -427,8 +427,8 @@ public class ExprBinaryTranslator
     SmtExpr xyTuple = getTupleConcatenation(ASort, BSort, x, y);
     SmtExpr xvTuple = getTupleConcatenation(ASort, BSort, x, v);
 
-    SmtExpr xyMember = SmtBinaryExpr.Op.MEMBER.make(xyTuple, multiplicitySet.getVariable());
-    SmtExpr xvMember = SmtBinaryExpr.Op.MEMBER.make(xvTuple, multiplicitySet.getVariable());
+    SmtExpr xyMember = SmtBinaryExpr.Op.SET_MEMBER.make(xyTuple, multiplicitySet.getVariable());
+    SmtExpr xvMember = SmtBinaryExpr.Op.SET_MEMBER.make(xvTuple, multiplicitySet.getVariable());
 
     SmtExpr notXV = SmtUnaryExpr.Op.NOT.make(xvMember);
 
@@ -460,16 +460,16 @@ public class ExprBinaryTranslator
     SmtExpr A = exprTranslator.translateExpr(expr.left, smtEnv);
     SmtExpr B = exprTranslator.translateExpr(expr.right, smtEnv);
 
-    SmtExpr product = SmtBinaryExpr.Op.PRODUCT.make(A, B);
-    SmtExpr subset = SmtBinaryExpr.Op.SUBSET.make(multiplicitySet.getVariable(), product);
+    SmtExpr product = SmtBinaryExpr.Op.RELATION_PRODUCT.make(A, B);
+    SmtExpr subset = SmtBinaryExpr.Op.SET_SUBSET.make(multiplicitySet.getVariable(), product);
 
     SetSort ASort = (SetSort) A.getSort();
     SetSort BSort = (SetSort) B.getSort();
 
     SmtVariable x = new SmtVariable("x", ASort.elementSort, false);
     SmtVariable y = new SmtVariable("y", BSort.elementSort, false);
-    SmtExpr xMemberA = SmtBinaryExpr.Op.MEMBER.make(x.getVariable(), A);
-    SmtExpr yMemberB = SmtBinaryExpr.Op.MEMBER.make(y.getVariable(), B);
+    SmtExpr xMemberA = SmtBinaryExpr.Op.SET_MEMBER.make(x.getVariable(), A);
+    SmtExpr yMemberB = SmtBinaryExpr.Op.SET_MEMBER.make(y.getVariable(), B);
 
     // multiplicitySet subset of A some -> some B
     // and
@@ -479,7 +479,7 @@ public class ExprBinaryTranslator
 
     SmtExpr xyTuple = getTupleConcatenation(ASort, BSort, x, y);
 
-    SmtExpr xyMember = SmtBinaryExpr.Op.MEMBER.make(xyTuple, multiplicitySet.getVariable());
+    SmtExpr xyMember = SmtBinaryExpr.Op.SET_MEMBER.make(xyTuple, multiplicitySet.getVariable());
 
     SmtExpr existsYBody = SmtMultiArityExpr.Op.AND.make(yMemberB, xyMember);
     SmtExpr existsY = SmtQtExpr.Op.EXISTS.make(existsYBody, y);
@@ -507,16 +507,16 @@ public class ExprBinaryTranslator
     SmtExpr A = exprTranslator.translateExpr(expr.left, smtEnv);
     SmtExpr B = exprTranslator.translateExpr(expr.right, smtEnv);
 
-    SmtExpr product = SmtBinaryExpr.Op.PRODUCT.make(A, B);
-    SmtExpr subset = SmtBinaryExpr.Op.SUBSET.make(multiplicitySet.getVariable(), product);
+    SmtExpr product = SmtBinaryExpr.Op.RELATION_PRODUCT.make(A, B);
+    SmtExpr subset = SmtBinaryExpr.Op.SET_SUBSET.make(multiplicitySet.getVariable(), product);
 
     SetSort ASort = (SetSort) A.getSort();
     SetSort BSort = (SetSort) B.getSort();
 
     SmtVariable x = new SmtVariable("x", ASort.elementSort, false);
     SmtVariable y = new SmtVariable("y", BSort.elementSort, false);
-    SmtExpr xMemberA = SmtBinaryExpr.Op.MEMBER.make(x.getVariable(), A);
-    SmtExpr yMemberB = SmtBinaryExpr.Op.MEMBER.make(y.getVariable(), B);
+    SmtExpr xMemberA = SmtBinaryExpr.Op.SET_MEMBER.make(x.getVariable(), A);
+    SmtExpr yMemberB = SmtBinaryExpr.Op.SET_MEMBER.make(y.getVariable(), B);
 
     // multiplicitySet subset of A some -> set B
     // and
@@ -524,7 +524,7 @@ public class ExprBinaryTranslator
 
     SmtExpr xyTuple = getTupleConcatenation(ASort, BSort, x, y);
 
-    SmtExpr xyMember = SmtBinaryExpr.Op.MEMBER.make(xyTuple, multiplicitySet.getVariable());
+    SmtExpr xyMember = SmtBinaryExpr.Op.SET_MEMBER.make(xyTuple, multiplicitySet.getVariable());
 
     SmtExpr existsXBody = SmtMultiArityExpr.Op.AND.make(xMemberA, xyMember);
     SmtExpr existsX = SmtQtExpr.Op.EXISTS.make(existsXBody, x);
@@ -547,16 +547,16 @@ public class ExprBinaryTranslator
     SmtExpr A = exprTranslator.translateExpr(expr.left, smtEnv);
     SmtExpr B = exprTranslator.translateExpr(expr.right, smtEnv);
 
-    SmtExpr product = SmtBinaryExpr.Op.PRODUCT.make(A, B);
-    SmtExpr subset = SmtBinaryExpr.Op.SUBSET.make(multiplicitySet.getVariable(), product);
+    SmtExpr product = SmtBinaryExpr.Op.RELATION_PRODUCT.make(A, B);
+    SmtExpr subset = SmtBinaryExpr.Op.SET_SUBSET.make(multiplicitySet.getVariable(), product);
 
     SetSort ASort = (SetSort) A.getSort();
     SetSort BSort = (SetSort) B.getSort();
 
     SmtVariable x = new SmtVariable("x", ASort.elementSort, false);
     SmtVariable y = new SmtVariable("y", BSort.elementSort, false);
-    SmtExpr xMemberA = SmtBinaryExpr.Op.MEMBER.make(x.getVariable(), A);
-    SmtExpr yMemberB = SmtBinaryExpr.Op.MEMBER.make(y.getVariable(), B);
+    SmtExpr xMemberA = SmtBinaryExpr.Op.SET_MEMBER.make(x.getVariable(), A);
+    SmtExpr yMemberB = SmtBinaryExpr.Op.SET_MEMBER.make(y.getVariable(), B);
 
     // multiplicitySet subset of A set -> some B
     // and
@@ -564,7 +564,7 @@ public class ExprBinaryTranslator
 
     SmtExpr xyTuple = getTupleConcatenation(ASort, BSort, x, y);
 
-    SmtExpr xyMember = SmtBinaryExpr.Op.MEMBER.make(xyTuple, multiplicitySet.getVariable());
+    SmtExpr xyMember = SmtBinaryExpr.Op.SET_MEMBER.make(xyTuple, multiplicitySet.getVariable());
 
     SmtExpr existsYBody = SmtMultiArityExpr.Op.AND.make(yMemberB, xyMember);
     SmtExpr existsY = SmtQtExpr.Op.EXISTS.make(existsYBody, y);
@@ -587,21 +587,21 @@ public class ExprBinaryTranslator
     SmtExpr A = exprTranslator.translateExpr(expr.left, smtEnv);
     SmtExpr B = exprTranslator.translateExpr(expr.right, smtEnv);
 
-    SmtExpr product = SmtBinaryExpr.Op.PRODUCT.make(A, B);
-    SmtExpr subset = SmtBinaryExpr.Op.SUBSET.make(multiplicitySet.getVariable(), product);
+    SmtExpr product = SmtBinaryExpr.Op.RELATION_PRODUCT.make(A, B);
+    SmtExpr subset = SmtBinaryExpr.Op.SET_SUBSET.make(multiplicitySet.getVariable(), product);
 
     SetSort ASort = (SetSort) A.getSort();
     SetSort BSort = (SetSort) B.getSort();
 
     SmtVariable x = new SmtVariable("x", ASort.elementSort, false);
     SmtVariable y = new SmtVariable("y", BSort.elementSort, false);
-    SmtExpr xMemberA = SmtBinaryExpr.Op.MEMBER.make(x.getVariable(), A);
-    SmtExpr yMemberB = SmtBinaryExpr.Op.MEMBER.make(y.getVariable(), B);
+    SmtExpr xMemberA = SmtBinaryExpr.Op.SET_MEMBER.make(x.getVariable(), A);
+    SmtExpr yMemberB = SmtBinaryExpr.Op.SET_MEMBER.make(y.getVariable(), B);
 
     SmtVariable u = new SmtVariable("u", ASort.elementSort, false);
     SmtVariable v = new SmtVariable("v", BSort.elementSort, false);
-    SmtExpr uMemberA = SmtBinaryExpr.Op.MEMBER.make(u.getVariable(), A);
-    SmtExpr vMemberB = SmtBinaryExpr.Op.MEMBER.make(v.getVariable(), B);
+    SmtExpr uMemberA = SmtBinaryExpr.Op.SET_MEMBER.make(u.getVariable(), A);
+    SmtExpr vMemberB = SmtBinaryExpr.Op.SET_MEMBER.make(v.getVariable(), B);
 
     // multiplicitySet subset of A one -> lone B
     // and
@@ -619,9 +619,9 @@ public class ExprBinaryTranslator
     SmtExpr xvTuple = getTupleConcatenation(ASort, BSort, x, v);
     SmtExpr uyTuple = getTupleConcatenation(ASort, BSort, u, y);
 
-    SmtExpr xyMember = SmtBinaryExpr.Op.MEMBER.make(xyTuple, multiplicitySet.getVariable());
-    SmtExpr xvMember = SmtBinaryExpr.Op.MEMBER.make(xvTuple, multiplicitySet.getVariable());
-    SmtExpr uyMember = SmtBinaryExpr.Op.MEMBER.make(uyTuple, multiplicitySet.getVariable());
+    SmtExpr xyMember = SmtBinaryExpr.Op.SET_MEMBER.make(xyTuple, multiplicitySet.getVariable());
+    SmtExpr xvMember = SmtBinaryExpr.Op.SET_MEMBER.make(xvTuple, multiplicitySet.getVariable());
+    SmtExpr uyMember = SmtBinaryExpr.Op.SET_MEMBER.make(uyTuple, multiplicitySet.getVariable());
 
     SmtExpr notXY = SmtUnaryExpr.Op.NOT.make(xyMember);
     SmtExpr notXV = SmtUnaryExpr.Op.NOT.make(xvMember);
@@ -669,8 +669,8 @@ public class ExprBinaryTranslator
     SmtExpr A = exprTranslator.translateExpr(expr.left, smtEnv);
     SmtExpr B = exprTranslator.translateExpr(expr.right, smtEnv);
 
-    SmtExpr product = SmtBinaryExpr.Op.PRODUCT.make(A, B);
-    SmtExpr subset = SmtBinaryExpr.Op.SUBSET.make(multiplicitySet.getVariable(), product);
+    SmtExpr product = SmtBinaryExpr.Op.RELATION_PRODUCT.make(A, B);
+    SmtExpr subset = SmtBinaryExpr.Op.SET_SUBSET.make(multiplicitySet.getVariable(), product);
 
 
     SetSort ASort = (SetSort) A.getSort();
@@ -678,11 +678,11 @@ public class ExprBinaryTranslator
 
     SmtVariable x = new SmtVariable("x", ASort.elementSort, false);
     SmtVariable y = new SmtVariable("y", BSort.elementSort, false);
-    SmtExpr xMemberA = SmtBinaryExpr.Op.MEMBER.make(x.getVariable(), A);
-    SmtExpr yMemberB = SmtBinaryExpr.Op.MEMBER.make(y.getVariable(), B);
+    SmtExpr xMemberA = SmtBinaryExpr.Op.SET_MEMBER.make(x.getVariable(), A);
+    SmtExpr yMemberB = SmtBinaryExpr.Op.SET_MEMBER.make(y.getVariable(), B);
 
     SmtVariable v = new SmtVariable("v", BSort.elementSort, false);
-    SmtExpr vMemberB = SmtBinaryExpr.Op.MEMBER.make(v.getVariable(), B);
+    SmtExpr vMemberB = SmtBinaryExpr.Op.SET_MEMBER.make(v.getVariable(), B);
 
     // multiplicitySet subset of A some -> lone B
     // and
@@ -697,8 +697,8 @@ public class ExprBinaryTranslator
     SmtExpr xyTuple = getTupleConcatenation(ASort, BSort, x, y);
     SmtExpr xvTuple = getTupleConcatenation(ASort, BSort, x, v);
 
-    SmtExpr xyMember = SmtBinaryExpr.Op.MEMBER.make(xyTuple, multiplicitySet.getVariable());
-    SmtExpr xvMember = SmtBinaryExpr.Op.MEMBER.make(xvTuple, multiplicitySet.getVariable());
+    SmtExpr xyMember = SmtBinaryExpr.Op.SET_MEMBER.make(xyTuple, multiplicitySet.getVariable());
+    SmtExpr xvMember = SmtBinaryExpr.Op.SET_MEMBER.make(xvTuple, multiplicitySet.getVariable());
 
     SmtExpr notXY = SmtUnaryExpr.Op.NOT.make(xyMember);
     SmtExpr notXV = SmtUnaryExpr.Op.NOT.make(xvMember);
@@ -738,8 +738,8 @@ public class ExprBinaryTranslator
     SmtExpr A = exprTranslator.translateExpr(expr.left, smtEnv);
     SmtExpr B = exprTranslator.translateExpr(expr.right, smtEnv);
 
-    SmtExpr product = SmtBinaryExpr.Op.PRODUCT.make(A, B);
-    SmtExpr subset = SmtBinaryExpr.Op.SUBSET.make(multiplicitySet.getVariable(), product);
+    SmtExpr product = SmtBinaryExpr.Op.RELATION_PRODUCT.make(A, B);
+    SmtExpr subset = SmtBinaryExpr.Op.SET_SUBSET.make(multiplicitySet.getVariable(), product);
 
 
     SetSort ASort = (SetSort) A.getSort();
@@ -747,11 +747,11 @@ public class ExprBinaryTranslator
 
     SmtVariable x = new SmtVariable("x", ASort.elementSort, false);
     SmtVariable y = new SmtVariable("y", BSort.elementSort, false);
-    SmtExpr xMemberA = SmtBinaryExpr.Op.MEMBER.make(x.getVariable(), A);
-    SmtExpr yMemberB = SmtBinaryExpr.Op.MEMBER.make(y.getVariable(), B);
+    SmtExpr xMemberA = SmtBinaryExpr.Op.SET_MEMBER.make(x.getVariable(), A);
+    SmtExpr yMemberB = SmtBinaryExpr.Op.SET_MEMBER.make(y.getVariable(), B);
 
     SmtVariable v = new SmtVariable("v", BSort.elementSort, false);
-    SmtExpr vMemberB = SmtBinaryExpr.Op.MEMBER.make(v.getVariable(), B);
+    SmtExpr vMemberB = SmtBinaryExpr.Op.SET_MEMBER.make(v.getVariable(), B);
 
     // multiplicitySet subset of A set -> lone B
     // and
@@ -764,8 +764,8 @@ public class ExprBinaryTranslator
     SmtExpr xyTuple = getTupleConcatenation(ASort, BSort, x, y);
     SmtExpr xvTuple = getTupleConcatenation(ASort, BSort, x, v);
 
-    SmtExpr xyMember = SmtBinaryExpr.Op.MEMBER.make(xyTuple, multiplicitySet.getVariable());
-    SmtExpr xvMember = SmtBinaryExpr.Op.MEMBER.make(xvTuple, multiplicitySet.getVariable());
+    SmtExpr xyMember = SmtBinaryExpr.Op.SET_MEMBER.make(xyTuple, multiplicitySet.getVariable());
+    SmtExpr xvMember = SmtBinaryExpr.Op.SET_MEMBER.make(xvTuple, multiplicitySet.getVariable());
 
     SmtExpr notXY = SmtUnaryExpr.Op.NOT.make(xyMember);
     SmtExpr notXV = SmtUnaryExpr.Op.NOT.make(xvMember);
@@ -797,21 +797,21 @@ public class ExprBinaryTranslator
     SmtExpr A = exprTranslator.translateExpr(expr.left, smtEnv);
     SmtExpr B = exprTranslator.translateExpr(expr.right, smtEnv);
 
-    SmtExpr product = SmtBinaryExpr.Op.PRODUCT.make(A, B);
-    SmtExpr subset = SmtBinaryExpr.Op.SUBSET.make(multiplicitySet.getVariable(), product);
+    SmtExpr product = SmtBinaryExpr.Op.RELATION_PRODUCT.make(A, B);
+    SmtExpr subset = SmtBinaryExpr.Op.SET_SUBSET.make(multiplicitySet.getVariable(), product);
 
     SetSort ASort = (SetSort) A.getSort();
     SetSort BSort = (SetSort) B.getSort();
 
     SmtVariable x = new SmtVariable("x", ASort.elementSort, false);
     SmtVariable y = new SmtVariable("y", BSort.elementSort, false);
-    SmtExpr xMemberA = SmtBinaryExpr.Op.MEMBER.make(x.getVariable(), A);
-    SmtExpr yMemberB = SmtBinaryExpr.Op.MEMBER.make(y.getVariable(), B);
+    SmtExpr xMemberA = SmtBinaryExpr.Op.SET_MEMBER.make(x.getVariable(), A);
+    SmtExpr yMemberB = SmtBinaryExpr.Op.SET_MEMBER.make(y.getVariable(), B);
 
     SmtVariable u = new SmtVariable("u", ASort.elementSort, false);
     SmtVariable v = new SmtVariable("v", BSort.elementSort, false);
-    SmtExpr uMemberA = SmtBinaryExpr.Op.MEMBER.make(u.getVariable(), A);
-    SmtExpr vMemberB = SmtBinaryExpr.Op.MEMBER.make(v.getVariable(), B);
+    SmtExpr uMemberA = SmtBinaryExpr.Op.SET_MEMBER.make(u.getVariable(), A);
+    SmtExpr vMemberB = SmtBinaryExpr.Op.SET_MEMBER.make(v.getVariable(), B);
 
     // multiplicitySet subset of A lone -> lone B
     // and
@@ -832,9 +832,9 @@ public class ExprBinaryTranslator
     SmtExpr xvTuple = getTupleConcatenation(ASort, BSort, x, v);
     SmtExpr uyTuple = getTupleConcatenation(ASort, BSort, u, y);
 
-    SmtExpr xyMember = SmtBinaryExpr.Op.MEMBER.make(xyTuple, multiplicitySet.getVariable());
-    SmtExpr xvMember = SmtBinaryExpr.Op.MEMBER.make(xvTuple, multiplicitySet.getVariable());
-    SmtExpr uyMember = SmtBinaryExpr.Op.MEMBER.make(uyTuple, multiplicitySet.getVariable());
+    SmtExpr xyMember = SmtBinaryExpr.Op.SET_MEMBER.make(xyTuple, multiplicitySet.getVariable());
+    SmtExpr xvMember = SmtBinaryExpr.Op.SET_MEMBER.make(xvTuple, multiplicitySet.getVariable());
+    SmtExpr uyMember = SmtBinaryExpr.Op.SET_MEMBER.make(uyTuple, multiplicitySet.getVariable());
 
     SmtExpr notXY = SmtUnaryExpr.Op.NOT.make(xyMember);
     SmtExpr notXV = SmtUnaryExpr.Op.NOT.make(xvMember);
@@ -883,21 +883,21 @@ public class ExprBinaryTranslator
     SmtExpr A = exprTranslator.translateExpr(expr.left, smtEnv);
     SmtExpr B = exprTranslator.translateExpr(expr.right, smtEnv);
 
-    SmtExpr product = SmtBinaryExpr.Op.PRODUCT.make(A, B);
-    SmtExpr subset = SmtBinaryExpr.Op.SUBSET.make(multiplicitySet.getVariable(), product);
+    SmtExpr product = SmtBinaryExpr.Op.RELATION_PRODUCT.make(A, B);
+    SmtExpr subset = SmtBinaryExpr.Op.SET_SUBSET.make(multiplicitySet.getVariable(), product);
 
     SetSort ASort = (SetSort) A.getSort();
     SetSort BSort = (SetSort) B.getSort();
 
     SmtVariable x = new SmtVariable("x", ASort.elementSort, false);
     SmtVariable y = new SmtVariable("y", BSort.elementSort, false);
-    SmtExpr xMemberA = SmtBinaryExpr.Op.MEMBER.make(x.getVariable(), A);
-    SmtExpr yMemberB = SmtBinaryExpr.Op.MEMBER.make(y.getVariable(), B);
+    SmtExpr xMemberA = SmtBinaryExpr.Op.SET_MEMBER.make(x.getVariable(), A);
+    SmtExpr yMemberB = SmtBinaryExpr.Op.SET_MEMBER.make(y.getVariable(), B);
 
     SmtVariable u = new SmtVariable("u", ASort.elementSort, false);
     SmtVariable v = new SmtVariable("v", BSort.elementSort, false);
-    SmtExpr uMemberA = SmtBinaryExpr.Op.MEMBER.make(u.getVariable(), A);
-    SmtExpr vMemberB = SmtBinaryExpr.Op.MEMBER.make(v.getVariable(), B);
+    SmtExpr uMemberA = SmtBinaryExpr.Op.SET_MEMBER.make(u.getVariable(), A);
+    SmtExpr vMemberB = SmtBinaryExpr.Op.SET_MEMBER.make(v.getVariable(), B);
 
     // multiplicitySet subset of A lone -> one B
     // and
@@ -916,9 +916,9 @@ public class ExprBinaryTranslator
     SmtExpr xvTuple = getTupleConcatenation(ASort, BSort, x, v);
     SmtExpr uyTuple = getTupleConcatenation(ASort, BSort, u, y);
 
-    SmtExpr xyMember = SmtBinaryExpr.Op.MEMBER.make(xyTuple, multiplicitySet.getVariable());
-    SmtExpr xvMember = SmtBinaryExpr.Op.MEMBER.make(xvTuple, multiplicitySet.getVariable());
-    SmtExpr uyMember = SmtBinaryExpr.Op.MEMBER.make(uyTuple, multiplicitySet.getVariable());
+    SmtExpr xyMember = SmtBinaryExpr.Op.SET_MEMBER.make(xyTuple, multiplicitySet.getVariable());
+    SmtExpr xvMember = SmtBinaryExpr.Op.SET_MEMBER.make(xvTuple, multiplicitySet.getVariable());
+    SmtExpr uyMember = SmtBinaryExpr.Op.SET_MEMBER.make(uyTuple, multiplicitySet.getVariable());
 
     SmtExpr notXY = SmtUnaryExpr.Op.NOT.make(xyMember);
     SmtExpr notXV = SmtUnaryExpr.Op.NOT.make(xvMember);
@@ -966,8 +966,8 @@ public class ExprBinaryTranslator
     SmtExpr A = exprTranslator.translateExpr(expr.left, smtEnv);
     SmtExpr B = exprTranslator.translateExpr(expr.right, smtEnv);
 
-    SmtExpr product = SmtBinaryExpr.Op.PRODUCT.make(A, B);
-    SmtExpr subset = SmtBinaryExpr.Op.SUBSET.make(multiplicitySet.getVariable(), product);
+    SmtExpr product = SmtBinaryExpr.Op.RELATION_PRODUCT.make(A, B);
+    SmtExpr subset = SmtBinaryExpr.Op.SET_SUBSET.make(multiplicitySet.getVariable(), product);
 
 
     SetSort ASort = (SetSort) A.getSort();
@@ -975,11 +975,11 @@ public class ExprBinaryTranslator
 
     SmtVariable x = new SmtVariable("x", ASort.elementSort, false);
     SmtVariable y = new SmtVariable("y", BSort.elementSort, false);
-    SmtExpr xMemberA = SmtBinaryExpr.Op.MEMBER.make(x.getVariable(), A);
-    SmtExpr yMemberB = SmtBinaryExpr.Op.MEMBER.make(y.getVariable(), B);
+    SmtExpr xMemberA = SmtBinaryExpr.Op.SET_MEMBER.make(x.getVariable(), A);
+    SmtExpr yMemberB = SmtBinaryExpr.Op.SET_MEMBER.make(y.getVariable(), B);
 
     SmtVariable u = new SmtVariable("u", ASort.elementSort, false);
-    SmtExpr uMemberA = SmtBinaryExpr.Op.MEMBER.make(u.getVariable(), A);
+    SmtExpr uMemberA = SmtBinaryExpr.Op.SET_MEMBER.make(u.getVariable(), A);
 
     // multiplicitySet subset of A lone -> some B
     // and
@@ -996,8 +996,8 @@ public class ExprBinaryTranslator
     SmtExpr xyTuple = getTupleConcatenation(ASort, BSort, x, y);
     SmtExpr uyTuple = getTupleConcatenation(ASort, BSort, u, y);
 
-    SmtExpr xyMember = SmtBinaryExpr.Op.MEMBER.make(xyTuple, multiplicitySet.getVariable());
-    SmtExpr uyMember = SmtBinaryExpr.Op.MEMBER.make(uyTuple, multiplicitySet.getVariable());
+    SmtExpr xyMember = SmtBinaryExpr.Op.SET_MEMBER.make(xyTuple, multiplicitySet.getVariable());
+    SmtExpr uyMember = SmtBinaryExpr.Op.SET_MEMBER.make(uyTuple, multiplicitySet.getVariable());
 
     SmtExpr notXY = SmtUnaryExpr.Op.NOT.make(xyMember);
     SmtExpr notUY = SmtUnaryExpr.Op.NOT.make(uyMember);
@@ -1039,19 +1039,19 @@ public class ExprBinaryTranslator
     SmtExpr A = exprTranslator.translateExpr(expr.left, smtEnv);
     SmtExpr B = exprTranslator.translateExpr(expr.right, smtEnv);
 
-    SmtExpr product = SmtBinaryExpr.Op.PRODUCT.make(A, B);
-    SmtExpr subset = SmtBinaryExpr.Op.SUBSET.make(multiplicitySet.getVariable(), product);
+    SmtExpr product = SmtBinaryExpr.Op.RELATION_PRODUCT.make(A, B);
+    SmtExpr subset = SmtBinaryExpr.Op.SET_SUBSET.make(multiplicitySet.getVariable(), product);
 
     SetSort ASort = (SetSort) A.getSort();
     SetSort BSort = (SetSort) B.getSort();
 
     SmtVariable x = new SmtVariable("x", ASort.elementSort, false);
     SmtVariable y = new SmtVariable("y", BSort.elementSort, false);
-    SmtExpr xMemberA = SmtBinaryExpr.Op.MEMBER.make(x.getVariable(), A);
-    SmtExpr yMemberB = SmtBinaryExpr.Op.MEMBER.make(y.getVariable(), B);
+    SmtExpr xMemberA = SmtBinaryExpr.Op.SET_MEMBER.make(x.getVariable(), A);
+    SmtExpr yMemberB = SmtBinaryExpr.Op.SET_MEMBER.make(y.getVariable(), B);
 
     SmtVariable u = new SmtVariable("u", ASort.elementSort, false);
-    SmtExpr uMemberA = SmtBinaryExpr.Op.MEMBER.make(u.getVariable(), A);
+    SmtExpr uMemberA = SmtBinaryExpr.Op.SET_MEMBER.make(u.getVariable(), A);
 
     // multiplicitySet subset of A lone -> set B
     // and
@@ -1065,8 +1065,8 @@ public class ExprBinaryTranslator
     SmtExpr xyTuple = getTupleConcatenation(ASort, BSort, x, y);
     SmtExpr uyTuple = getTupleConcatenation(ASort, BSort, u, y);
 
-    SmtExpr xyMember = SmtBinaryExpr.Op.MEMBER.make(xyTuple, multiplicitySet.getVariable());
-    SmtExpr uyMember = SmtBinaryExpr.Op.MEMBER.make(uyTuple, multiplicitySet.getVariable());
+    SmtExpr xyMember = SmtBinaryExpr.Op.SET_MEMBER.make(xyTuple, multiplicitySet.getVariable());
+    SmtExpr uyMember = SmtBinaryExpr.Op.SET_MEMBER.make(uyTuple, multiplicitySet.getVariable());
 
     SmtExpr notXY = SmtUnaryExpr.Op.NOT.make(xyMember);
     SmtExpr notUY = SmtUnaryExpr.Op.NOT.make(uyMember);
@@ -1097,16 +1097,16 @@ public class ExprBinaryTranslator
     for (int i = 0; i < ((TupleSort) ASort.elementSort).elementSorts.size(); i++)
     {
       IntConstant index = IntConstant.getInstance(i);
-      tupleElements.add(SmtBinaryExpr.Op.TUPSEL.make(index, x.getVariable()));
+      tupleElements.add(SmtBinaryExpr.Op.TUPLE_SELECT.make(index, x.getVariable()));
     }
 
     for (int i = 0; i < ((TupleSort) BSort.elementSort).elementSorts.size(); i++)
     {
       IntConstant index = IntConstant.getInstance(i);
-      tupleElements.add(SmtBinaryExpr.Op.TUPSEL.make(index, y.getVariable()));
+      tupleElements.add(SmtBinaryExpr.Op.TUPLE_SELECT.make(index, y.getVariable()));
     }
 
-    return SmtMultiArityExpr.Op.MKTUPLE.make(tupleElements);
+    return SmtMultiArityExpr.Op.TUPLE.make(tupleElements);
   }
 
   private SmtExpr translateImplies(ExprBinary expr, SmtEnv smtEnv)
@@ -1152,7 +1152,7 @@ public class ExprBinaryTranslator
   {
     SmtExpr A = exprTranslator.translateExpr(expr.left, smtEnv);
     SmtExpr B = exprTranslator.translateExpr(expr.right, smtEnv);
-    SmtExpr product = SmtBinaryExpr.Op.PRODUCT.make(A, B);
+    SmtExpr product = SmtBinaryExpr.Op.RELATION_PRODUCT.make(A, B);
     return product;
   }
 
@@ -1172,11 +1172,11 @@ public class ExprBinaryTranslator
 
       for (int i = 0; i < rightExprArity - 1; ++i)
       {
-        join = SmtBinaryExpr.Op.JOIN.make(join, AbstractTranslator.univAtom.getVariable());
+        join = SmtBinaryExpr.Op.RELATION_JOIN.make(join, AbstractTranslator.univAtom.getVariable());
       }
       for (int i = 0; i < rightExprArity - 1; ++i)
       {
-        join = SmtBinaryExpr.Op.PRODUCT.make(join, AbstractTranslator.univAtom.getVariable());
+        join = SmtBinaryExpr.Op.RELATION_PRODUCT.make(join, AbstractTranslator.univAtom.getVariable());
       }
 
       SmtExpr intersection = SmtBinaryExpr.Op.INTERSECTION.make(join, left);
@@ -1210,11 +1210,11 @@ public class ExprBinaryTranslator
         UninterpretedSort sort = (UninterpretedSort) tuple.elementSorts.get(i);
         if (sort.equals(AbstractTranslator.atomSort))
         {
-          left = SmtBinaryExpr.Op.PRODUCT.make(left, translator.univAtom.getVariable());
+          left = SmtBinaryExpr.Op.RELATION_PRODUCT.make(left, translator.univAtom.getVariable());
         }
         else
         {
-          left = SmtBinaryExpr.Op.PRODUCT.make(left, translator.univInt.getVariable());
+          left = SmtBinaryExpr.Op.RELATION_PRODUCT.make(left, translator.univInt.getVariable());
         }
       }
       SmtBinaryExpr intersection = SmtBinaryExpr.Op.INTERSECTION.make(left, right);
@@ -1244,11 +1244,11 @@ public class ExprBinaryTranslator
         UninterpretedSort sort = (UninterpretedSort) tuple.elementSorts.get(i);
         if (sort.equals(AbstractTranslator.atomSort))
         {
-          right = SmtBinaryExpr.Op.PRODUCT.make(translator.univAtom.getVariable(), right);
+          right = SmtBinaryExpr.Op.RELATION_PRODUCT.make(translator.univAtom.getVariable(), right);
         }
         else
         {
-          right = SmtBinaryExpr.Op.PRODUCT.make(translator.univInt.getVariable(), right);
+          right = SmtBinaryExpr.Op.RELATION_PRODUCT.make(translator.univInt.getVariable(), right);
         }
       }
 
@@ -1288,10 +1288,10 @@ public class ExprBinaryTranslator
   {
     SmtVariable x = new SmtVariable("x", AbstractTranslator.uninterpretedInt, false);
     SmtVariable y = new SmtVariable("y", AbstractTranslator.uninterpretedInt, false);
-    SmtExpr xTuple = new SmtMultiArityExpr(SmtMultiArityExpr.Op.MKTUPLE, x.getVariable());
-    SmtExpr yTuple = new SmtMultiArityExpr(SmtMultiArityExpr.Op.MKTUPLE, y.getVariable());
-    SmtExpr xSingleton = SmtUnaryExpr.Op.SINGLETON.make(xTuple);
-    SmtExpr ySingleton = SmtUnaryExpr.Op.SINGLETON.make(yTuple);
+    SmtExpr xTuple = new SmtMultiArityExpr(SmtMultiArityExpr.Op.TUPLE, x.getVariable());
+    SmtExpr yTuple = new SmtMultiArityExpr(SmtMultiArityExpr.Op.TUPLE, y.getVariable());
+    SmtExpr xSingleton = SmtUnaryExpr.Op.SET_SINGLETON.make(xTuple);
+    SmtExpr ySingleton = SmtUnaryExpr.Op.SET_SINGLETON.make(yTuple);
     SmtExpr xValue = new SmtCallExpr(AbstractTranslator.uninterpretedIntValue, x.getVariable());
     SmtExpr yValue = new SmtCallExpr(AbstractTranslator.uninterpretedIntValue, y.getVariable());
 
@@ -1407,7 +1407,7 @@ public class ExprBinaryTranslator
     SmtSort elementSort = setSort.elementSort;
 
     // shared code
-    SmtExpr emptySet = SmtUnaryExpr.Op.EMPTYSET.make(setSort);
+    SmtExpr emptySet = SmtUnaryExpr.Op.SET_EMPTY.make(setSort);
     SmtExpr isEmpty = SmtBinaryExpr.Op.EQ.make(setExpr, emptySet);
     SmtExpr notEmpty = SmtUnaryExpr.Op.NOT.make(isEmpty);
 
@@ -1451,7 +1451,7 @@ public class ExprBinaryTranslator
 
         List<SmtVariable> vars = generateVariables(n - 1, elementSort);
         SmtExpr cardinalitySet = generateCardinalitySet(vars);
-        SmtExpr subsetExpr = SmtBinaryExpr.Op.SUBSET.make(setExpr, cardinalitySet);
+        SmtExpr subsetExpr = SmtBinaryExpr.Op.SET_SUBSET.make(setExpr, cardinalitySet);
         SmtExpr andExpr = makeDistinct(subsetExpr, vars);
         SmtExpr exists = SmtQtExpr.Op.EXISTS.make(andExpr, vars);
         return exprTranslator.addAuxiliaryVariables(exists, newSmtEnv);
@@ -1473,7 +1473,7 @@ public class ExprBinaryTranslator
 
         List<SmtVariable> vars = generateVariables(n, elementSort);
         SmtExpr cardinalitySet = generateCardinalitySet(vars);
-        SmtExpr subsetExpr = SmtBinaryExpr.Op.SUBSET.make(setExpr, cardinalitySet);
+        SmtExpr subsetExpr = SmtBinaryExpr.Op.SET_SUBSET.make(setExpr, cardinalitySet);
         SmtExpr andExpr = makeDistinct(subsetExpr, vars);
         SmtExpr exists = SmtQtExpr.Op.EXISTS.make(andExpr, vars);
         return exprTranslator.addAuxiliaryVariables(exists, newSmtEnv);
@@ -1494,7 +1494,7 @@ public class ExprBinaryTranslator
 
         List<SmtVariable> vars = generateVariables(n + 1, elementSort);
         SmtExpr cardinalitySet = generateCardinalitySet(vars);
-        SmtExpr subsetExpr = SmtBinaryExpr.Op.SUBSET.make(cardinalitySet, setExpr);
+        SmtExpr subsetExpr = SmtBinaryExpr.Op.SET_SUBSET.make(cardinalitySet, setExpr);
         SmtExpr andExpr = makeDistinct(subsetExpr, vars);
         SmtExpr exists = SmtQtExpr.Op.EXISTS.make(andExpr, vars);
         return exprTranslator.addAuxiliaryVariables(exists, newSmtEnv);
@@ -1516,7 +1516,7 @@ public class ExprBinaryTranslator
 
         List<SmtVariable> vars = generateVariables(n, elementSort);
         SmtExpr cardinalitySet = generateCardinalitySet(vars);
-        SmtExpr subsetExpr = SmtBinaryExpr.Op.SUBSET.make(cardinalitySet, setExpr);
+        SmtExpr subsetExpr = SmtBinaryExpr.Op.SET_SUBSET.make(cardinalitySet, setExpr);
         SmtExpr andExpr = makeDistinct(subsetExpr, vars);
         SmtExpr exists = SmtQtExpr.Op.EXISTS.make(andExpr, vars);
         return exprTranslator.addAuxiliaryVariables(exists, newSmtEnv);
@@ -1546,7 +1546,7 @@ public class ExprBinaryTranslator
   {
     assert (vars.size() >= 1);
 
-    SmtExpr set = SmtUnaryExpr.Op.SINGLETON.make(vars.get(0).getVariable());
+    SmtExpr set = SmtUnaryExpr.Op.SET_SINGLETON.make(vars.get(0).getVariable());
 
     if (vars.size() == 1)
     {
@@ -1587,7 +1587,7 @@ public class ExprBinaryTranslator
       left = TranslatorUtils.makeRelation((Variable) left);
     }
     else if (left instanceof SmtMultiArityExpr &&
-        ((SmtMultiArityExpr) left).getOp() == SmtMultiArityExpr.Op.MKTUPLE)
+        ((SmtMultiArityExpr) left).getOp() == SmtMultiArityExpr.Op.TUPLE)
     {
       left = AlloyUtils.mkSingletonOutOfTuple((SmtMultiArityExpr) left);
     }
@@ -1597,7 +1597,7 @@ public class ExprBinaryTranslator
       right = TranslatorUtils.makeRelation((Variable) right);
     }
     else if (right instanceof SmtMultiArityExpr &&
-        ((SmtMultiArityExpr) right).getOp() == SmtMultiArityExpr.Op.MKTUPLE)
+        ((SmtMultiArityExpr) right).getOp() == SmtMultiArityExpr.Op.TUPLE)
     {
       right = AlloyUtils.mkSingletonOutOfTuple((SmtMultiArityExpr) right);
     }
@@ -1628,16 +1628,16 @@ public class ExprBinaryTranslator
     }
     else if (A.getSort() instanceof SetSort && B.getSort() instanceof SetSort)
     {
-      translation = SmtBinaryExpr.Op.SUBSET.make(A, B);
+      translation = SmtBinaryExpr.Op.SET_SUBSET.make(A, B);
     }
     else if (A.getSort() instanceof TupleSort && B.getSort() instanceof SetSort)
     {
-      translation = SmtBinaryExpr.Op.MEMBER.make(A, B);
+      translation = SmtBinaryExpr.Op.SET_MEMBER.make(A, B);
     }
     else
     {
-      A = SmtMultiArityExpr.Op.MKTUPLE.make(A);
-      translation = SmtBinaryExpr.Op.MEMBER.make(A, B);
+      A = SmtMultiArityExpr.Op.TUPLE.make(A);
+      translation = SmtBinaryExpr.Op.SET_MEMBER.make(A, B);
     }
 
     // auxiliary variables for expression A should be handled before coming here
@@ -1672,10 +1672,10 @@ public class ExprBinaryTranslator
       }
       else
       {
-        SmtExpr choose = SmtUnaryExpr.Op.CHOOSE.make(A);
+        SmtExpr choose = SmtUnaryExpr.Op.SET_CHOOSE.make(A);
         SmtExpr constraint = variable.getConstraint().replace(variable.getVariable(), choose);
         // add a singleton constraint
-        SmtExpr singleton = SmtUnaryExpr.Op.SINGLETON.make(choose);
+        SmtExpr singleton = SmtUnaryExpr.Op.SET_SINGLETON.make(choose);
         SmtExpr equal = SmtBinaryExpr.Op.EQ.make(singleton, A);
         constraint = SmtMultiArityExpr.Op.AND.make(constraint, equal);
         return constraint;
@@ -1691,7 +1691,7 @@ public class ExprBinaryTranslator
     SmtExpr B = exprTranslator.translateExpr(expr.right, smtEnv);
     A = TranslatorUtils.makeRelation(A);
     B = TranslatorUtils.makeRelation(B);
-    SmtBinaryExpr join = SmtBinaryExpr.Op.JOIN.make(A, B);
+    SmtBinaryExpr join = SmtBinaryExpr.Op.RELATION_JOIN.make(A, B);
     return join;
   }
 
@@ -1719,9 +1719,9 @@ public class ExprBinaryTranslator
     SmtVariable y = new SmtVariable("y", AbstractTranslator.uninterpretedInt, false);
     SmtVariable z = new SmtVariable("z", AbstractTranslator.uninterpretedInt, false);
 
-    SmtExpr xTuple = new SmtMultiArityExpr(SmtMultiArityExpr.Op.MKTUPLE, x.getVariable());
-    SmtExpr yTuple = new SmtMultiArityExpr(SmtMultiArityExpr.Op.MKTUPLE, y.getVariable());
-    SmtExpr zTuple = new SmtMultiArityExpr(SmtMultiArityExpr.Op.MKTUPLE, z.getVariable());
+    SmtExpr xTuple = new SmtMultiArityExpr(SmtMultiArityExpr.Op.TUPLE, x.getVariable());
+    SmtExpr yTuple = new SmtMultiArityExpr(SmtMultiArityExpr.Op.TUPLE, y.getVariable());
+    SmtExpr zTuple = new SmtMultiArityExpr(SmtMultiArityExpr.Op.TUPLE, z.getVariable());
 
     SmtExpr xValue = new SmtCallExpr(AbstractTranslator.uninterpretedIntValue, x.getVariable());
     SmtExpr yValue = new SmtCallExpr(AbstractTranslator.uninterpretedIntValue, y.getVariable());
@@ -1752,9 +1752,9 @@ public class ExprBinaryTranslator
     // for all z : uninterpretedInt. x in Result implies
     // exists x, y :uninterpretedInt. x in A and y in B and (x, y, z) in operation
 
-    SmtExpr xMember = SmtBinaryExpr.Op.MEMBER.make(xTuple, A);
-    SmtExpr yMember = SmtBinaryExpr.Op.MEMBER.make(yTuple, B);
-    SmtExpr zMember = SmtBinaryExpr.Op.MEMBER.make(zTuple, resultSmtExpr);
+    SmtExpr xMember = SmtBinaryExpr.Op.SET_MEMBER.make(xTuple, A);
+    SmtExpr yMember = SmtBinaryExpr.Op.SET_MEMBER.make(yTuple, B);
+    SmtExpr zMember = SmtBinaryExpr.Op.SET_MEMBER.make(zTuple, resultSmtExpr);
 
     SmtExpr xyMember = SmtMultiArityExpr.Op.AND.make(xMember, yMember);
     SmtExpr and2 = SmtMultiArityExpr.Op.AND.make(equal, xyMember);
@@ -1786,10 +1786,10 @@ public class ExprBinaryTranslator
     if (A instanceof IntConstant)
     {
       FunctionDeclaration uninterpretedInt = translator.getUninterpretedIntConstant((IntConstant) A);
-      SmtExpr tuple = new SmtMultiArityExpr(SmtMultiArityExpr.Op.MKTUPLE, uninterpretedInt.getVariable());
+      SmtExpr tuple = new SmtMultiArityExpr(SmtMultiArityExpr.Op.TUPLE, uninterpretedInt.getVariable());
       if (translator.alloySettings.integerSingletonsOnly)
       {
-        A = SmtUnaryExpr.Op.SINGLETON.make(tuple);
+        A = SmtUnaryExpr.Op.SET_SINGLETON.make(tuple);
       }
       else
       {

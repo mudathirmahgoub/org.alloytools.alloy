@@ -386,7 +386,7 @@ public class Alloy2SmtTranslator extends AbstractTranslator
           }
           else
           {
-            op = SmtBinaryExpr.Op.SUBSET;
+            op = SmtBinaryExpr.Op.SET_SUBSET;
           }
           scope = commandScope.endingScope;
         }
@@ -398,7 +398,7 @@ public class Alloy2SmtTranslator extends AbstractTranslator
           }
           else
           {
-            op = SmtBinaryExpr.Op.SUBSET;
+            op = SmtBinaryExpr.Op.SET_SUBSET;
           }
 
           if (signature.isTopLevel())
@@ -429,14 +429,14 @@ public class Alloy2SmtTranslator extends AbstractTranslator
           SmtSort sort = signature.type().is_int() ? AbstractTranslator.uninterpretedInt : AbstractTranslator.atomSort;
           SmtVariable firstAtom = new SmtVariable(TranslatorUtils.getFreshName(sort), sort, false);
           declarations.add(firstAtom);
-          SmtExpr firstTuple = new SmtMultiArityExpr(SmtMultiArityExpr.Op.MKTUPLE, firstAtom.getVariable());
-          SmtExpr set = SmtUnaryExpr.Op.SINGLETON.make(firstTuple);
+          SmtExpr firstTuple = new SmtMultiArityExpr(SmtMultiArityExpr.Op.TUPLE, firstAtom.getVariable());
+          SmtExpr set = SmtUnaryExpr.Op.SET_SINGLETON.make(firstTuple);
           for (int i = 1; i < scope; i++)
           {
             SmtVariable declaration = new SmtVariable(TranslatorUtils.getFreshName(sort), sort, false);
             declarations.add(declaration);
-            SmtExpr tuple = new SmtMultiArityExpr(SmtMultiArityExpr.Op.MKTUPLE, declaration.getVariable());
-            SmtExpr singleton = SmtUnaryExpr.Op.SINGLETON.make(tuple);
+            SmtExpr tuple = new SmtMultiArityExpr(SmtMultiArityExpr.Op.TUPLE, declaration.getVariable());
+            SmtExpr singleton = SmtUnaryExpr.Op.SET_SINGLETON.make(tuple);
             set = SmtBinaryExpr.Op.UNION.make(singleton, set);
           }
 

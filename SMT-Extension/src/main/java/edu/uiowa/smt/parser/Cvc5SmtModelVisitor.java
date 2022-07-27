@@ -339,7 +339,7 @@ public class Cvc5SmtModelVisitor extends Cvc5SmtBaseVisitor<SmtAst>
   {
     SmtSort elementSort = (SmtSort) this.visitSort(ctx.sort());
     SmtSort setSort = new SetSort(elementSort);
-    return SmtUnaryExpr.Op.EMPTYSET.make(setSort);
+    return SmtUnaryExpr.Op.SET_EMPTY.make(setSort);
   }
 
   public SmtAst visitVariable(Cvc5SmtParser.VariableContext ctx, SmtEnv smtEnv)

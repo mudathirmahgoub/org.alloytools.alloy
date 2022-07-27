@@ -79,7 +79,7 @@ public class SmtBinaryExpr extends SmtExpr
       case UNION:
       case INTERSECTION:
       case SETMINUS:
-      case SUBSET:
+      case SET_SUBSET:
       {
         if (!A.getSort().equals(B.getSort()))
         {
@@ -88,7 +88,7 @@ public class SmtBinaryExpr extends SmtExpr
       }
       break;
 
-      case MEMBER:
+      case SET_MEMBER:
       {
         if (B instanceof IntConstant)
         {
@@ -109,7 +109,7 @@ public class SmtBinaryExpr extends SmtExpr
       }
       break;
 
-      case JOIN:
+      case RELATION_JOIN:
       {
         if (!(A.getSort() instanceof SetSort &&
             ((SetSort) A.getSort()).elementSort instanceof TupleSort))
@@ -131,7 +131,7 @@ public class SmtBinaryExpr extends SmtExpr
         }
       }
       break;
-      case PRODUCT:
+      case RELATION_PRODUCT:
       {
         if (!(A.getSort() instanceof SetSort &&
             ((SetSort) A.getSort()).elementSort instanceof TupleSort))
@@ -145,7 +145,7 @@ public class SmtBinaryExpr extends SmtExpr
         }
       }
       break;
-      case TUPSEL:
+      case TUPLE_SELECT:
       {
         if (!(A instanceof IntConstant))
         {
@@ -203,14 +203,14 @@ public class SmtBinaryExpr extends SmtExpr
     LTE("<="),
     GT(">"),
     LT("<"),
-    UNION("union"),
-    INTERSECTION("intersection"),
-    SETMINUS("setminus"),
-    MEMBER("member"),
-    SUBSET("subset"),
-    JOIN("join"),
-    PRODUCT("product"),
-    TUPSEL("tupSel");
+    UNION("set.union"),
+    INTERSECTION("set.inter"),
+    SETMINUS("set.minus"),
+    SET_MEMBER("set.member"),
+    SET_SUBSET("set.subset"),
+    RELATION_JOIN("rel.join"),
+    RELATION_PRODUCT("rel.product"),
+    TUPLE_SELECT("tuple.select");
 
     private final String opStr;
 
@@ -250,22 +250,22 @@ public class SmtBinaryExpr extends SmtExpr
           return GT;
         case "<":
           return LT;
-        case "union":
+        case "set.union":
           return UNION;
-        case "intersection":
+        case "set.inter":
           return INTERSECTION;
-        case "setminus":
+        case "set.minus":
           return SETMINUS;
-        case "member":
-          return MEMBER;
-        case "subset":
-          return SUBSET;
-        case "join":
-          return JOIN;
-        case "product":
-          return PRODUCT;
-        case "tupSel":
-          return TUPSEL;
+        case "set.member":
+          return SET_MEMBER;
+        case "set.subset":
+          return SET_SUBSET;
+        case "rel.join":
+          return RELATION_JOIN;
+        case "rel.product":
+          return RELATION_PRODUCT;
+        case "tuple.select":
+          return TUPLE_SELECT;
         default:
           throw new UnsupportedOperationException("Operator " + operator + " is not defined");
       }
@@ -311,11 +311,11 @@ public class SmtBinaryExpr extends SmtExpr
         return A.getSort();
       case SETMINUS:
         return A.getSort();
-      case MEMBER:
+      case SET_MEMBER:
         return AbstractTranslator.boolSort;
-      case SUBSET:
+      case SET_SUBSET:
         return AbstractTranslator.boolSort;
-      case JOIN:
+      case RELATION_JOIN:
       {
         // type checking is handled during construction
 
@@ -341,7 +341,7 @@ public class SmtBinaryExpr extends SmtExpr
 
         return sort;
       }
-      case PRODUCT:
+      case RELATION_PRODUCT:
       {
         // type checking is handled during construction
 
@@ -355,7 +355,7 @@ public class SmtBinaryExpr extends SmtExpr
         SmtSort sort = new SetSort(new TupleSort(newSorts));
         return sort;
       }
-      case TUPSEL:
+      case TUPLE_SELECT:
       {
         int index = Integer.parseInt(((IntConstant) A).getValue());
         TupleSort sort = (TupleSort) B.getSort();

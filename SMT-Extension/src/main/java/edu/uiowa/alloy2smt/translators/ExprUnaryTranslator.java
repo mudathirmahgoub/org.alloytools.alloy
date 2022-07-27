@@ -92,7 +92,7 @@ public class ExprUnaryTranslator
   private SmtExpr translateClosure(ExprUnary exprUnary, SmtEnv smtEnv)
   {
     SmtExpr smtExpr = exprTranslator.translateExpr(exprUnary.sub, smtEnv);
-    SmtUnaryExpr closure = SmtUnaryExpr.Op.TCLOSURE.make(smtExpr);
+    SmtUnaryExpr closure = SmtUnaryExpr.Op.RELATION_TCLOSURE.make(smtExpr);
     return closure;
   }
 
@@ -114,7 +114,7 @@ public class ExprUnaryTranslator
   private SmtExpr translateTranspose(ExprUnary exprUnary, SmtEnv smtEnv)
   {
     SmtExpr smtExpr = exprTranslator.translateExpr(exprUnary.sub, smtEnv);
-    SmtUnaryExpr transpose = SmtUnaryExpr.Op.TRANSPOSE.make(smtExpr);
+    SmtUnaryExpr transpose = SmtUnaryExpr.Op.RELATION_TRANSPOSE.make(smtExpr);
     return transpose;
   }
 
@@ -164,7 +164,7 @@ public class ExprUnaryTranslator
   {
     SmtEnv newSmtEnv = new SmtEnv(smtEnv);
     SmtExpr set = exprTranslator.translateExpr(exprUnary.sub, newSmtEnv);
-    SmtExpr emptySet = SmtUnaryExpr.Op.EMPTYSET.make(set.getSort());
+    SmtExpr emptySet = SmtUnaryExpr.Op.SET_EMPTY.make(set.getSort());
     SmtExpr isEmpty = SmtBinaryExpr.Op.EQ.make(set, emptySet);
     SmtExpr finalSmtExpr = exprTranslator.addAuxiliaryVariables(isEmpty, newSmtEnv);
     return finalSmtExpr;
@@ -174,7 +174,7 @@ public class ExprUnaryTranslator
   {
     SmtEnv newSmtEnv = new SmtEnv(smtEnv);
     SmtExpr set = exprTranslator.translateExpr(exprUnary.sub, newSmtEnv);
-    SmtExpr emptySet = SmtUnaryExpr.Op.EMPTYSET.make(set.getSort());
+    SmtExpr emptySet = SmtUnaryExpr.Op.SET_EMPTY.make(set.getSort());
     SmtExpr equality = SmtBinaryExpr.Op.EQ.make(set, emptySet);
     SmtExpr isNotEmpty = SmtUnaryExpr.Op.NOT.make(equality);
     SmtExpr finalSmtExpr = exprTranslator.addAuxiliaryVariables(isNotEmpty, newSmtEnv);
@@ -187,7 +187,7 @@ public class ExprUnaryTranslator
     SmtExpr set = exprTranslator.translateExpr(exprUnary.sub, newSmtEnv);
     SmtSort sort = ((SetSort) set.getSort()).elementSort;
     SmtVariable variable = new SmtVariable(TranslatorUtils.getFreshName(sort), sort, false);
-    SmtExpr singleton = SmtUnaryExpr.Op.SINGLETON.make(variable.getVariable());
+    SmtExpr singleton = SmtUnaryExpr.Op.SET_SINGLETON.make(variable.getVariable());
     SmtExpr isSingleton = SmtBinaryExpr.Op.EQ.make(set, singleton);
     SmtExpr exists = SmtQtExpr.Op.EXISTS.make(isSingleton, variable);
     SmtExpr finalSmtExpr = exprTranslator.addAuxiliaryVariables(exists, newSmtEnv);
@@ -206,10 +206,10 @@ public class ExprUnaryTranslator
 
     SmtVariable variable = new SmtVariable(TranslatorUtils.getFreshName(elementSort), elementSort, false);
 
-    SmtExpr member = SmtBinaryExpr.Op.MEMBER.make(variable.getVariable(), A);
+    SmtExpr member = SmtBinaryExpr.Op.SET_MEMBER.make(variable.getVariable(), A);
     variable.setConstraint(member);
 
-    SmtExpr singleton = SmtUnaryExpr.Op.SINGLETON.make(variable.getVariable());
+    SmtExpr singleton = SmtUnaryExpr.Op.SET_SINGLETON.make(variable.getVariable());
 
     variable.setConstraint(member);
     smtEnv.addAuxiliaryVariable(variable);
@@ -229,13 +229,13 @@ public class ExprUnaryTranslator
     SetSort setSort = (SetSort) A.getSort();
     SmtSort elementSort = setSort.elementSort;
     SmtVariable setVariable = new SmtVariable(TranslatorUtils.getFreshName(setSort), setSort, false);
-    SmtExpr subset1 = SmtBinaryExpr.Op.SUBSET.make(setVariable.getVariable(), A);
+    SmtExpr subset1 = SmtBinaryExpr.Op.SET_SUBSET.make(setVariable.getVariable(), A);
 
     SmtVariable variable = new SmtVariable(TranslatorUtils.getFreshName(elementSort), elementSort, false);
 
-    SmtExpr singleton = SmtUnaryExpr.Op.SINGLETON.make(variable.getVariable());
+    SmtExpr singleton = SmtUnaryExpr.Op.SET_SINGLETON.make(variable.getVariable());
 
-    SmtExpr subset2 = SmtBinaryExpr.Op.SUBSET.make(setVariable.getVariable(), singleton);
+    SmtExpr subset2 = SmtBinaryExpr.Op.SET_SUBSET.make(setVariable.getVariable(), singleton);
 
     SmtQtExpr exists1 = SmtQtExpr.Op.EXISTS.make(subset2, variable);
     SmtExpr andExpr = SmtMultiArityExpr.Op.AND.make(subset1, exists1);
@@ -256,9 +256,9 @@ public class ExprUnaryTranslator
     SmtExpr A = exprTranslator.translateExpr(expr.sub, smtEnv);
     SetSort setSort = (SetSort) A.getSort();
     SmtVariable setVariable = new SmtVariable(TranslatorUtils.getFreshName(setSort), setSort, false);
-    SmtExpr subset = SmtBinaryExpr.Op.SUBSET.make(setVariable.getVariable(), A);
+    SmtExpr subset = SmtBinaryExpr.Op.SET_SUBSET.make(setVariable.getVariable(), A);
 
-    SmtExpr emptyset = SmtUnaryExpr.Op.EMPTYSET.make(setSort);
+    SmtExpr emptyset = SmtUnaryExpr.Op.SET_EMPTY.make(setSort);
     SmtExpr equal = SmtBinaryExpr.Op.EQ.make(setVariable.getVariable(), emptyset);
     SmtExpr notEmpty = SmtUnaryExpr.Op.NOT.make(equal);
     SmtExpr andExpr = SmtMultiArityExpr.Op.AND.make(subset, notEmpty);
@@ -271,11 +271,11 @@ public class ExprUnaryTranslator
   {
     SmtEnv newSmtEnv = new SmtEnv(smtEnv);
     SmtExpr set = exprTranslator.translateExpr(exprUnary.sub, newSmtEnv);
-    SmtExpr emptySet = SmtUnaryExpr.Op.EMPTYSET.make(set.getSort());
+    SmtExpr emptySet = SmtUnaryExpr.Op.SET_EMPTY.make(set.getSort());
     SmtExpr isEmpty = SmtBinaryExpr.Op.EQ.make(set, emptySet);
     SmtSort sort = ((SetSort) set.getSort()).elementSort;
     SmtVariable variable = new SmtVariable(TranslatorUtils.getFreshName(sort), sort, false);
-    SmtExpr singleton = SmtUnaryExpr.Op.SINGLETON.make(variable.getVariable());
+    SmtExpr singleton = SmtUnaryExpr.Op.SET_SINGLETON.make(variable.getVariable());
     SmtExpr isSingleton = SmtBinaryExpr.Op.EQ.make(set, singleton);
     SmtExpr exists = SmtQtExpr.Op.EXISTS.make(isSingleton, variable);
     SmtExpr or = SmtMultiArityExpr.Op.OR.make(isEmpty, exists);

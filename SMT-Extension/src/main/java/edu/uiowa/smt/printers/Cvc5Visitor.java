@@ -96,7 +96,7 @@ public class Cvc5Visitor extends AbstractSmtAstVisitor
   @Override
   public Term visit(SmtBinaryExpr expr)
   {
-    if (expr.getOp() != SmtBinaryExpr.Op.TUPSEL)
+    if (expr.getOp() != SmtBinaryExpr.Op.TUPLE_SELECT)
     {
       Kind k = getKind(expr.getOp());
       Term A = visit(expr.getA());
@@ -262,7 +262,7 @@ public class Cvc5Visitor extends AbstractSmtAstVisitor
       terms[i] = visit(expr.getExprs().get(i));
     }
 
-    if (expr.getOp() == SmtMultiArityExpr.Op.MKTUPLE)
+    if (expr.getOp() == SmtMultiArityExpr.Op.TUPLE)
     {
       Sort[] sorts = new Sort[expr.getExprs().size()];
       for (int i = 0; i < expr.getExprs().size(); ++i)
@@ -558,13 +558,13 @@ public class Cvc5Visitor extends AbstractSmtAstVisitor
     switch (op)
     {
       case NOT: return NOT;
-      case COMPLEMENT: return SET_COMPLEMENT;
-      case TRANSPOSE: return RELATION_TRANSPOSE;
-      case TCLOSURE: return RELATION_TCLOSURE;
-      case SINGLETON: return SET_SINGLETON;
-      case CHOOSE: return SET_CHOOSE;
-      case UNIVSET: return SET_UNIVERSE;
-      case EMPTYSET: return SET_EMPTY;
+      case SET_COMPLEMENT: return SET_COMPLEMENT;
+      case RELATION_TRANSPOSE: return RELATION_TRANSPOSE;
+      case RELATION_TCLOSURE: return RELATION_TCLOSURE;
+      case SET_SINGLETON: return SET_SINGLETON;
+      case SET_CHOOSE: return SET_CHOOSE;
+      case SET_UNIVERSE: return SET_UNIVERSE;
+      case SET_EMPTY: return SET_EMPTY;
       default: throw new UnsupportedOperationException(op.toString());
     }
   }
@@ -586,10 +586,10 @@ public class Cvc5Visitor extends AbstractSmtAstVisitor
       case UNION: return SET_UNION;
       case INTERSECTION: return SET_INTER;
       case SETMINUS: return SET_MINUS;
-      case MEMBER: return SET_MEMBER;
-      case SUBSET: return SET_SUBSET;
-      case JOIN: return RELATION_JOIN;
-      case PRODUCT: return RELATION_PRODUCT;
+      case SET_MEMBER: return SET_MEMBER;
+      case SET_SUBSET: return SET_SUBSET;
+      case RELATION_JOIN: return RELATION_JOIN;
+      case RELATION_PRODUCT: return RELATION_PRODUCT;
       default: throw new UnsupportedOperationException(op.toString());
     }
   }
@@ -597,7 +597,7 @@ public class Cvc5Visitor extends AbstractSmtAstVisitor
   {
     switch (op)
     {
-      case MKTUPLE: throw new UnsupportedOperationException(op.toString());
+      case TUPLE: throw new UnsupportedOperationException(op.toString());
       case INSERT: return SET_INSERT;
       case DISTINCT: return DISTINCT;
       case OR: return OR;

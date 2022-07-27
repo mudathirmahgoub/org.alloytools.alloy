@@ -64,7 +64,7 @@ public class FieldTranslator
           {
             SmtExpr fieldJ = getFieldExpression(fields, decl.names.get(j).label);
             SmtExpr intersect = SmtBinaryExpr.Op.INTERSECTION.make(fieldI, fieldJ);
-            SmtExpr emptySet = SmtUnaryExpr.Op.EMPTYSET.make(fieldI.getSort());
+            SmtExpr emptySet = SmtUnaryExpr.Op.SET_EMPTY.make(fieldI.getSort());
             SmtExpr equal = SmtBinaryExpr.Op.EQ.make(intersect, emptySet);
             List<Pos> positions = Arrays.asList(decl.names.get(i).pos, decl.names.get(j).pos);
             Assertion disjoint = AlloyUtils.getAssertion(positions,
@@ -92,10 +92,10 @@ public class FieldTranslator
     SetSort setSort = (SetSort) signature.getSort();
     SmtVariable a = new SmtVariable("a", setSort.elementSort, false);
     SmtVariable b = new SmtVariable("b", setSort.elementSort, false);
-    SmtExpr aMember = SmtBinaryExpr.Op.MEMBER.make(a.getVariable(), signature);
-    SmtExpr bMember = SmtBinaryExpr.Op.MEMBER.make(b.getVariable(), signature);
-    SmtExpr aSingleton = SmtUnaryExpr.Op.SINGLETON.make(a.getVariable());
-    SmtExpr bSingleton = SmtUnaryExpr.Op.SINGLETON.make(b.getVariable());
+    SmtExpr aMember = SmtBinaryExpr.Op.SET_MEMBER.make(a.getVariable(), signature);
+    SmtExpr bMember = SmtBinaryExpr.Op.SET_MEMBER.make(b.getVariable(), signature);
+    SmtExpr aSingleton = SmtUnaryExpr.Op.SET_SINGLETON.make(a.getVariable());
+    SmtExpr bSingleton = SmtUnaryExpr.Op.SET_SINGLETON.make(b.getVariable());
 
     SmtExpr members = SmtMultiArityExpr.Op.AND.make(aMember, bMember);
     SmtExpr equal = SmtBinaryExpr.Op.EQ.make(a.getVariable(), b.getVariable());
@@ -112,10 +112,10 @@ public class FieldTranslator
         for (ExprHasName name : decl.names)
         {
           SmtExpr field = getFieldExpression(fields, name.label);
-          SmtExpr aJoin = SmtBinaryExpr.Op.JOIN.make(aSingleton, field);
-          SmtExpr bJoin = SmtBinaryExpr.Op.JOIN.make(bSingleton, field);
+          SmtExpr aJoin = SmtBinaryExpr.Op.RELATION_JOIN.make(aSingleton, field);
+          SmtExpr bJoin = SmtBinaryExpr.Op.RELATION_JOIN.make(bSingleton, field);
           SmtExpr intersect = SmtBinaryExpr.Op.INTERSECTION.make(aJoin, bJoin);
-          SmtExpr emptySet = SmtUnaryExpr.Op.EMPTYSET.make(intersect.getSort());
+          SmtExpr emptySet = SmtUnaryExpr.Op.SET_EMPTY.make(intersect.getSort());
           SmtExpr isEmpty = SmtBinaryExpr.Op.EQ.make(intersect, emptySet);
           consequent = SmtMultiArityExpr.Op.AND.make(consequent, isEmpty);
           positions.add(name.pos);

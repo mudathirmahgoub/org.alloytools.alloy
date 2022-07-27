@@ -43,7 +43,7 @@ public class SmtUnaryExpr extends SmtExpr
         }
       }
       break;
-      case COMPLEMENT:
+      case SET_COMPLEMENT:
       {
         if (!(expr.getSort() instanceof SetSort))
         {
@@ -51,8 +51,8 @@ public class SmtUnaryExpr extends SmtExpr
         }
       }
       break;
-      case TRANSPOSE:
-      case TCLOSURE:
+      case RELATION_TRANSPOSE:
+      case RELATION_TCLOSURE:
       {
         // make sure expr is a set of tuples
         if (!(expr.getSort() instanceof SetSort &&
@@ -68,8 +68,8 @@ public class SmtUnaryExpr extends SmtExpr
         }
       }
       break;
-      case EMPTYSET:
-      case UNIVSET:
+      case SET_EMPTY:
+      case SET_UNIVERSE:
       {
         if (!(expr instanceof SetSort))
         {
@@ -77,7 +77,7 @@ public class SmtUnaryExpr extends SmtExpr
         }
       }
       break;
-      case CHOOSE:
+      case SET_CHOOSE:
       {
         if (!(expr.getSort() instanceof SetSort))
         {
@@ -85,7 +85,7 @@ public class SmtUnaryExpr extends SmtExpr
               this.toString(), expr.getSort()));
         }
       }
-      case SINGLETON:
+      case SET_SINGLETON:
         break;
       default:
         throw new UnsupportedOperationException();
@@ -115,9 +115,9 @@ public class SmtUnaryExpr extends SmtExpr
     {
       case NOT:
         return AbstractTranslator.boolSort;
-      case COMPLEMENT:
+      case SET_COMPLEMENT:
         return expr.getSort();
-      case TRANSPOSE:
+      case RELATION_TRANSPOSE:
       {
         // type checking is handled during construction
         TupleSort oldSort = (TupleSort) ((SetSort) expr.getSort()).elementSort;
@@ -129,15 +129,15 @@ public class SmtUnaryExpr extends SmtExpr
         SetSort sort = new SetSort(new TupleSort(reverse));
         return sort;
       }
-      case TCLOSURE:
+      case RELATION_TCLOSURE:
         return expr.getSort();
-      case SINGLETON:
+      case SET_SINGLETON:
         return new SetSort(expr.getSort());
-      case CHOOSE:
+      case SET_CHOOSE:
         return ((SetSort) expr.getSort()).elementSort;
-      case EMPTYSET:
+      case SET_EMPTY:
         return expr.getSort();
-      case UNIVSET:
+      case SET_UNIVERSE:
         return expr.getSort();
       default:
         throw new UnsupportedOperationException();
@@ -147,7 +147,7 @@ public class SmtUnaryExpr extends SmtExpr
   @Override
   public SmtExpr evaluate(Map<String, FunctionDefinition> functions)
   {
-    if (op == Op.EMPTYSET)
+    if (op == Op.SET_EMPTY)
     {
       if (expr.equals(AbstractTranslator.setOfUninterpretedIntTuple))
       {
@@ -210,13 +210,13 @@ public class SmtUnaryExpr extends SmtExpr
   public enum Op
   {
     NOT("not"),
-    COMPLEMENT("complement"),
-    TRANSPOSE("transpose"),
-    TCLOSURE("tclosure"),
-    SINGLETON("singleton"),
-    CHOOSE("choose"),
-    UNIVSET("as univset"),
-    EMPTYSET("as emptyset");
+    SET_COMPLEMENT("set.complement"),
+    RELATION_TRANSPOSE("rel.transpose"),
+    RELATION_TCLOSURE("rel.tclosure"),
+    SET_SINGLETON("set.singleton"),
+    SET_CHOOSE("set.choose"),
+    SET_UNIVERSE("as set.universe"),
+    SET_EMPTY("as set.empty");
 
     private final String opStr;
 
@@ -231,18 +231,18 @@ public class SmtUnaryExpr extends SmtExpr
       {
         case "not":
           return NOT;
-        case "complement":
-          return COMPLEMENT;
-        case "transpose":
-          return TRANSPOSE;
-        case "tclosure":
-          return TCLOSURE;
-        case "singleton":
-          return SINGLETON;
-        case "as univset":
-          return UNIVSET;
-        case "as emptyset":
-          return EMPTYSET;
+        case "set.complement":
+          return SET_COMPLEMENT;
+        case "rel.transpose":
+          return RELATION_TRANSPOSE;
+        case "rel.tclosure":
+          return RELATION_TCLOSURE;
+        case "set.singleton":
+          return SET_SINGLETON;
+        case "as set.universe":
+          return SET_UNIVERSE;
+        case "as set.empty":
+          return SET_EMPTY;
         default:
           throw new UnsupportedOperationException("Operator " + operator + " is not defined");
       }

@@ -2,7 +2,6 @@ package edu.uiowa.smt.optimizer;
 
 import static org.junit.Assert.*;
 import org.junit.Test;
-import org.junit.Ignore;
 import org.junit.Before;
 
 import edu.uiowa.alloy2smt.utils.AlloyUtils;
@@ -80,8 +79,8 @@ public class SmtOptimizerTests
     SmtExpr five = new IntConstant("5");
     SmtVariable a = new SmtVariable("a", IntSort.getInstance(), false);
     SmtVariable x = new SmtVariable("x", new TupleSort(IntSort.getInstance()), false);
-    SmtExpr tuple = SmtMultiArityExpr.Op.MKTUPLE.make(a.getVariable());
-    SmtExpr tupleSelect = SmtBinaryExpr.Op.TUPSEL.make(zero, x.getVariable());
+    SmtExpr tuple = SmtMultiArityExpr.Op.TUPLE.make(a.getVariable());
+    SmtExpr tupleSelect = SmtBinaryExpr.Op.TUPLE_SELECT.make(zero, x.getVariable());
     SmtExpr equal = SmtBinaryExpr.Op.EQ.make(tupleSelect, five);
     Map<SmtVariable, SmtExpr> variables = new HashMap<>();
     variables.put(x, tuple);
@@ -104,8 +103,8 @@ public class SmtOptimizerTests
     SmtExpr five = new IntConstant("5");
     SmtVariable a = new SmtVariable("a", IntSort.getInstance(), false);
     SmtVariable x = new SmtVariable("x", new TupleSort(IntSort.getInstance()), false);
-    SmtExpr tuple = SmtMultiArityExpr.Op.MKTUPLE.make(a.getVariable());
-    SmtExpr tupleSelect = SmtBinaryExpr.Op.TUPSEL.make(zero, x.getVariable());
+    SmtExpr tuple = SmtMultiArityExpr.Op.TUPLE.make(a.getVariable());
+    SmtExpr tupleSelect = SmtBinaryExpr.Op.TUPLE_SELECT.make(zero, x.getVariable());
     SmtExpr equal = SmtBinaryExpr.Op.EQ.make(tupleSelect, five);
     Map<SmtVariable, SmtExpr> variables = new HashMap<>();
     variables.put(x, tuple);

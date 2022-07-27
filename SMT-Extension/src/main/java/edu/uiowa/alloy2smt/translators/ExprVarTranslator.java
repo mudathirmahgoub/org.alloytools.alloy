@@ -29,15 +29,15 @@ public class ExprVarTranslator
 
       if (variable.getSort() == AbstractTranslator.atomSort)
       {
-        return SmtUnaryExpr.Op.SINGLETON.make(new SmtMultiArityExpr(SmtMultiArityExpr.Op.MKTUPLE, variable));
+        return SmtUnaryExpr.Op.SET_SINGLETON.make(new SmtMultiArityExpr(SmtMultiArityExpr.Op.TUPLE, variable));
       }
       else if (variable.getSort() == AbstractTranslator.intSort)
       {
-        return SmtUnaryExpr.Op.SINGLETON.make(new SmtMultiArityExpr(SmtMultiArityExpr.Op.MKTUPLE, variable));
+        return SmtUnaryExpr.Op.SET_SINGLETON.make(new SmtMultiArityExpr(SmtMultiArityExpr.Op.TUPLE, variable));
       }
       else if (variable.getSort() instanceof TupleSort)
       {
-        return SmtUnaryExpr.Op.SINGLETON.make(variable);
+        return SmtUnaryExpr.Op.SET_SINGLETON.make(variable);
       }
 
       return variable;

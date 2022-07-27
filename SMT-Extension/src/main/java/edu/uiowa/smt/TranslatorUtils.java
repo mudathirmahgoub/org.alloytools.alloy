@@ -141,12 +141,12 @@ public class TranslatorUtils
   {
     List<SmtExpr> smtExprs = Arrays.stream(elements)
                                    .map(Declaration::getVariable).collect(Collectors.toList());
-    return SmtMultiArityExpr.Op.MKTUPLE.make(smtExprs);
+    return SmtMultiArityExpr.Op.TUPLE.make(smtExprs);
   }
 
   public static SmtExpr getTuple(SmtExpr... smtExprs)
   {
-    return new SmtMultiArityExpr(SmtMultiArityExpr.Op.MKTUPLE, smtExprs);
+    return new SmtMultiArityExpr(SmtMultiArityExpr.Op.TUPLE, smtExprs);
   }
 
   public static int getInt(FunctionDefinition definition)
@@ -157,13 +157,13 @@ public class TranslatorUtils
   public static int getInt(SmtExpr smtExpr)
   {
     SmtUnaryExpr unary = (SmtUnaryExpr) smtExpr;
-    if (unary.getOp() == SmtUnaryExpr.Op.EMPTYSET)
+    if (unary.getOp() == SmtUnaryExpr.Op.SET_EMPTY)
     {
       return 0; // zero is equivalent to an empty set
     }
-    assert (SmtUnaryExpr.Op.SINGLETON == unary.getOp());
+    assert (SmtUnaryExpr.Op.SET_SINGLETON == unary.getOp());
     SmtMultiArityExpr tuple = (SmtMultiArityExpr) unary.getExpr();
-    assert (SmtMultiArityExpr.Op.MKTUPLE == tuple.getOp());
+    assert (SmtMultiArityExpr.Op.TUPLE == tuple.getOp());
     IntConstant constant = (IntConstant) tuple.getExprs().get(0);
     return Integer.parseInt(constant.getValue());
   }
@@ -202,13 +202,13 @@ public class TranslatorUtils
     if (smtExpr instanceof SmtUnaryExpr)
     {
       SmtUnaryExpr unary = (SmtUnaryExpr) smtExpr;
-      if (unary.getOp() == SmtUnaryExpr.Op.EMPTYSET)
+      if (unary.getOp() == SmtUnaryExpr.Op.SET_EMPTY)
       {
         return new HashSet<>();
       }
-      assert (SmtUnaryExpr.Op.SINGLETON == unary.getOp());
+      assert (SmtUnaryExpr.Op.SET_SINGLETON == unary.getOp());
       SmtMultiArityExpr tuple = (SmtMultiArityExpr) unary.getExpr();
-      assert (SmtMultiArityExpr.Op.MKTUPLE == tuple.getOp());
+      assert (SmtMultiArityExpr.Op.TUPLE == tuple.getOp());
       UninterpretedConstant constant = (UninterpretedConstant) tuple.getExprs().get(0);
       return new HashSet<>(Collections.singletonList(constant.getName()));
     }
@@ -244,13 +244,13 @@ public class TranslatorUtils
     if (smtExpr instanceof SmtUnaryExpr)
     {
       SmtUnaryExpr unary = (SmtUnaryExpr) smtExpr;
-      if (unary.getOp() == SmtUnaryExpr.Op.EMPTYSET)
+      if (unary.getOp() == SmtUnaryExpr.Op.SET_EMPTY)
       {
         return new HashSet<>();
       }
-      assert (SmtUnaryExpr.Op.SINGLETON == unary.getOp());
+      assert (SmtUnaryExpr.Op.SET_SINGLETON == unary.getOp());
       SmtMultiArityExpr tupleExpression = (SmtMultiArityExpr) unary.getExpr();
-      assert (SmtMultiArityExpr.Op.MKTUPLE == tupleExpression.getOp());
+      assert (SmtMultiArityExpr.Op.TUPLE == tupleExpression.getOp());
       List<String> tuple = new ArrayList<>();
 
       for (SmtExpr expr : tupleExpression.getExprs())
@@ -326,7 +326,7 @@ public class TranslatorUtils
       }
       else
       {
-        SmtExpr tuple = SmtMultiArityExpr.Op.MKTUPLE.make(smtExpr);
+        SmtExpr tuple = SmtMultiArityExpr.Op.TUPLE.make(smtExpr);
         set = SmtMultiArityExpr.Op.INSERT.make(tuple, set);
       }
     }
@@ -337,12 +337,12 @@ public class TranslatorUtils
   {
     if ((smtExpr.getSort() instanceof UninterpretedSort) || smtExpr.getSort() instanceof IntSort)
     {
-      SmtMultiArityExpr tuple = new SmtMultiArityExpr(SmtMultiArityExpr.Op.MKTUPLE, smtExpr);
-      return SmtUnaryExpr.Op.SINGLETON.make(tuple);
+      SmtMultiArityExpr tuple = new SmtMultiArityExpr(SmtMultiArityExpr.Op.TUPLE, smtExpr);
+      return SmtUnaryExpr.Op.SET_SINGLETON.make(tuple);
     }
     else if (smtExpr.getSort() instanceof TupleSort)
     {
-      return SmtUnaryExpr.Op.SINGLETON.make(smtExpr);
+      return SmtUnaryExpr.Op.SET_SINGLETON.make(smtExpr);
     }
     else
     {

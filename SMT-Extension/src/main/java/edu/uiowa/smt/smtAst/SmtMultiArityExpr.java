@@ -34,7 +34,7 @@ public class SmtMultiArityExpr extends SmtExpr
   {
     switch (op)
     {
-      case MKTUPLE:
+      case TUPLE:
       {
         if (exprs.size() == 0)
         {
@@ -147,8 +147,8 @@ public class SmtMultiArityExpr extends SmtExpr
 
   public enum Op
   {
-    MKTUPLE("mkTuple"),
-    INSERT("insert"),
+    TUPLE("tuple"),
+    INSERT("set.insert"),
     DISTINCT("distinct"),
     OR("or"),
     AND("and");
@@ -174,9 +174,9 @@ public class SmtMultiArityExpr extends SmtExpr
     {
       switch (operator)
       {
-        case "mkTuple":
-          return MKTUPLE;
-        case "insert":
+        case "tuple":
+          return TUPLE;
+        case "set.insert":
           return INSERT;
         case "distinct":
           return DISTINCT;
@@ -202,7 +202,7 @@ public class SmtMultiArityExpr extends SmtExpr
   {
     switch (op)
     {
-      case MKTUPLE:
+      case TUPLE:
       {
 
         List<SmtSort> sorts = new ArrayList<>();

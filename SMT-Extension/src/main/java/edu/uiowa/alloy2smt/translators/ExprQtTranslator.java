@@ -106,12 +106,12 @@ public class ExprQtTranslator
     SmtExpr membership = TranslatorUtils.getVariablesConstraints(smtVariables);
 
     List<SmtExpr> quantifiedSmtExprs = smtVariables.stream()
-                                                   .map(v -> SmtBinaryExpr.Op.TUPSEL.make(IntConstant.getInstance(0), v.getVariable()))
+                                                   .map(v -> SmtBinaryExpr.Op.TUPLE_SELECT.make(IntConstant.getInstance(0), v.getVariable()))
                                                    .collect(Collectors.toList());
 
-    SmtExpr tuple = SmtMultiArityExpr.Op.MKTUPLE.make(quantifiedSmtExprs);
+    SmtExpr tuple = SmtMultiArityExpr.Op.TUPLE.make(quantifiedSmtExprs);
 
-    SmtExpr tupleMember = SmtBinaryExpr.Op.MEMBER.make(tuple, smtCallExpr);
+    SmtExpr tupleMember = SmtBinaryExpr.Op.SET_MEMBER.make(tuple, smtCallExpr);
 
     SmtExpr and = SmtMultiArityExpr.Op.AND.make(membership, body);
 
@@ -158,7 +158,7 @@ public class ExprQtTranslator
         case SETOF:
         {
           SmtVariable declaration = new SmtVariable(variableName, setSort, true);
-          SmtExpr subset = SmtBinaryExpr.Op.SUBSET.make(declaration.getVariable(), range);
+          SmtExpr subset = SmtBinaryExpr.Op.SET_SUBSET.make(declaration.getVariable(), range);
           declaration.setConstraint(subset);
           return declaration;
         }
@@ -189,7 +189,7 @@ public class ExprQtTranslator
         case LONE_ARROW_LONE:
         {
           SmtVariable declaration = new SmtVariable(variableName, setSort, true);
-          SmtExpr subset = SmtBinaryExpr.Op.SUBSET.make(declaration.getVariable(), range);
+          SmtExpr subset = SmtBinaryExpr.Op.SET_SUBSET.make(declaration.getVariable(), range);
           declaration.setConstraint(subset);
           return declaration;
         }
@@ -203,7 +203,7 @@ public class ExprQtTranslator
   private SmtVariable getVariableDeclaration(String variableName, SetSort setSort, SmtExpr range)
   {
     SmtVariable declaration = new SmtVariable(variableName, setSort.elementSort, true);
-    SmtExpr member = SmtBinaryExpr.Op.MEMBER.make(declaration.getVariable(), range);
+    SmtExpr member = SmtBinaryExpr.Op.SET_MEMBER.make(declaration.getVariable(), range);
     declaration.setConstraint(member);
     return declaration;
   }
@@ -213,7 +213,7 @@ public class ExprQtTranslator
     if (expr instanceof ExprUnary)
     {
       ExprUnary.Op multiplicityOperator = ((ExprUnary) expr).op;
-      SmtExpr emptySet = SmtUnaryExpr.Op.EMPTYSET.make(setSort);
+      SmtExpr emptySet = SmtUnaryExpr.Op.SET_EMPTY.make(setSort);
       switch (multiplicityOperator)
       {
         case NOOP: // same as ONEOF
@@ -239,7 +239,7 @@ public class ExprQtTranslator
           // either the set is empty or a singleton
           SmtExpr empty = SmtBinaryExpr.Op.EQ.make(variable.getVariable(), emptySet);
           SmtVariable singleElement = new SmtVariable(TranslatorUtils.getFreshName(setSort.elementSort), setSort.elementSort, false);
-          SmtExpr singleton = SmtUnaryExpr.Op.SINGLETON.make(singleElement.getVariable());
+          SmtExpr singleton = SmtUnaryExpr.Op.SET_SINGLETON.make(singleElement.getVariable());
           SmtExpr isSingleton = SmtBinaryExpr.Op.EQ.make(variable.getVariable(), singleton);
           SmtExpr emptyOrSingleton = SmtMultiArityExpr.Op.OR.make(empty, isSingleton);
           SmtExpr exists = SmtQtExpr.Op.EXISTS.make(emptyOrSingleton, singleElement);

@@ -44,7 +44,7 @@ public class SmtLibPrettyPrinter extends SmtLibPrinter
   @Override
   public Term visit(SmtBinaryExpr expr)
   {
-    if (expr.getOp() != SmtBinaryExpr.Op.TUPSEL)
+    if (expr.getOp() != SmtBinaryExpr.Op.TUPLE_SELECT)
     {
       tabsCount++;
       stringBuilder.append("\n");

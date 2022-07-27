@@ -74,7 +74,7 @@ public class DeclTranslator
         sort = setSort.elementSort;
         SmtVariable smtVariable = new SmtVariable(name.label, sort, true);
         assert (set instanceof SmtUnaryExpr);
-        assert (((SmtUnaryExpr) set).getOp() == SmtUnaryExpr.Op.SINGLETON);
+        assert (((SmtUnaryExpr) set).getOp() == SmtUnaryExpr.Op.SET_SINGLETON);
         assert (((SmtUnaryExpr) set).getExpr() instanceof Variable);
         Variable variable = (Variable) ((SmtUnaryExpr) set).getExpr();
         SmtExpr constraint = ((SmtVariable) variable.getDeclaration()).getConstraint();
@@ -96,7 +96,7 @@ public class DeclTranslator
     }
     else
     {
-      SmtExpr subset = SmtBinaryExpr.Op.SUBSET.make(smtVariable.getVariable(), set);
+      SmtExpr subset = SmtBinaryExpr.Op.SET_SUBSET.make(smtVariable.getVariable(), set);
       smtVariable.setConstraint(subset);
     }
     return smtVariable;
@@ -125,12 +125,12 @@ public class DeclTranslator
 
             if (variableJ.getSort() instanceof TupleSort)
             {
-              variableI = SmtUnaryExpr.Op.SINGLETON.make(variableI);
-              variableJ = SmtUnaryExpr.Op.SINGLETON.make(variableJ);
+              variableI = SmtUnaryExpr.Op.SET_SINGLETON.make(variableI);
+              variableJ = SmtUnaryExpr.Op.SET_SINGLETON.make(variableJ);
             }
 
             SmtExpr intersect = SmtBinaryExpr.Op.INTERSECTION.make(variableI, variableJ);
-            SmtExpr emptySet = SmtUnaryExpr.Op.EMPTYSET.make(variableI.getSort());
+            SmtExpr emptySet = SmtUnaryExpr.Op.SET_EMPTY.make(variableI.getSort());
             SmtExpr equal = SmtBinaryExpr.Op.EQ.make(intersect, emptySet);
             disjointConstraints = SmtMultiArityExpr.Op.AND.make(disjointConstraints, equal);
           }

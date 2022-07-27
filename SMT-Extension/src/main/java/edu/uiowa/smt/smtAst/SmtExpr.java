@@ -61,22 +61,22 @@ public abstract class SmtExpr extends SmtAst
 
   public SmtBinaryExpr member(SmtExpr set)
   {
-    return SmtBinaryExpr.Op.MEMBER.make(this, set);
+    return SmtBinaryExpr.Op.SET_MEMBER.make(this, set);
   }
 
   public SmtBinaryExpr subset(SmtExpr set)
   {
-    return SmtBinaryExpr.Op.SUBSET.make(this, set);
+    return SmtBinaryExpr.Op.SET_SUBSET.make(this, set);
   }
 
   public SmtBinaryExpr product(SmtExpr set)
   {
-    return SmtBinaryExpr.Op.PRODUCT.make(this, set);
+    return SmtBinaryExpr.Op.RELATION_PRODUCT.make(this, set);
   }
 
   public SmtBinaryExpr join(SmtExpr set)
   {
-    return SmtBinaryExpr.Op.JOIN.make(this, set);
+    return SmtBinaryExpr.Op.RELATION_JOIN.make(this, set);
   }
 
   public SmtBinaryExpr plus(SmtExpr expr)
@@ -106,7 +106,7 @@ public abstract class SmtExpr extends SmtAst
 
   public SmtUnaryExpr singleton()
   {
-    return SmtUnaryExpr.Op.SINGLETON.make(this);
+    return SmtUnaryExpr.Op.SET_SINGLETON.make(this);
   }
 
   public SmtUnaryExpr not()

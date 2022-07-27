@@ -83,7 +83,7 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
   @Override
   public Term visit(SmtBinaryExpr expr)
   {
-    if (expr.getOp() != SmtBinaryExpr.Op.TUPSEL)
+    if (expr.getOp() != SmtBinaryExpr.Op.TUPLE_SELECT)
     {
       stringBuilder.append("(" + expr.getOp() + " ");
       this.visit(expr.getA());

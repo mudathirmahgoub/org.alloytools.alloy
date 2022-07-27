@@ -50,17 +50,17 @@ public abstract class AbstractTranslator
   public final static FunctionDeclaration idenAtom = new FunctionDeclaration("idenAtom", setOfBinaryAtomSort, false);
   public final static FunctionDeclaration univInt = new FunctionDeclaration("univInt", setOfUninterpretedIntTuple, false);
   public final static FunctionDeclaration idenInt = new FunctionDeclaration("idenInt", setOfUninterpretedIntPairs, false);
-  public final static SmtUnaryExpr intUnivExpr = SmtUnaryExpr.Op.UNIVSET.make(setOfUninterpretedIntTuple);
+  public final static SmtUnaryExpr intUnivExpr = SmtUnaryExpr.Op.SET_UNIVERSE.make(setOfUninterpretedIntTuple);
   public final static FunctionDeclaration uninterpretedIntValue = new FunctionDeclaration(uninterpretedIntValueName, uninterpretedInt, intSort, false);
 
   // special assertions
-  public final static Assertion noneAssertion = new Assertion("", "Empty unary relation definition for Atom", SmtBinaryExpr.Op.EQ.make(atomNone.getVariable(), SmtUnaryExpr.Op.EMPTYSET.make(setOfUnaryAtomSort)));
+  public final static Assertion noneAssertion = new Assertion("", "Empty unary relation definition for Atom", SmtBinaryExpr.Op.EQ.make(atomNone.getVariable(), SmtUnaryExpr.Op.SET_EMPTY.make(setOfUnaryAtomSort)));
 
-  public final static Assertion univAssertion = new Assertion("", "Universe definition for Atom", SmtBinaryExpr.Op.EQ.make(univAtom.getVariable(), SmtUnaryExpr.Op.UNIVSET.make(setOfUnaryAtomSort)));
+  public final static Assertion univAssertion = new Assertion("", "Universe definition for Atom", SmtBinaryExpr.Op.EQ.make(univAtom.getVariable(), SmtUnaryExpr.Op.SET_UNIVERSE.make(setOfUnaryAtomSort)));
 
   public final static Assertion idenAtomAssertion = getIdentityRelation(atomSort, idenAtom);
 
-  public final static Assertion univIntAssertion = new Assertion("", "Universe definition for UninterpretedInt", SmtBinaryExpr.Op.EQ.make(univInt.getVariable(), SmtUnaryExpr.Op.UNIVSET.make(setOfUninterpretedIntTuple)));
+  public final static Assertion univIntAssertion = new Assertion("", "Universe definition for UninterpretedInt", SmtBinaryExpr.Op.EQ.make(univInt.getVariable(), SmtUnaryExpr.Op.SET_UNIVERSE.make(setOfUninterpretedIntTuple)));
 
   public final static Assertion idenIntAssertion = getIdentityRelation(uninterpretedInt, idenInt);
 
@@ -96,15 +96,15 @@ public abstract class AbstractTranslator
     {
       SmtExpr intConstant = ((SmtMultiArityExpr) smtExpr).getExprs().get(0);
       FunctionDeclaration uninterpretedInt = this.getUninterpretedIntConstant((IntConstant) intConstant);
-      SmtExpr tuple = new SmtMultiArityExpr(SmtMultiArityExpr.Op.MKTUPLE, uninterpretedInt.getVariable());
+      SmtExpr tuple = new SmtMultiArityExpr(SmtMultiArityExpr.Op.TUPLE, uninterpretedInt.getVariable());
       return tuple;
     }
     if (smtExpr.getSort().equals(AbstractTranslator.setOfIntSortTuple))
     {
       SmtExpr intConstant = ((SmtMultiArityExpr) ((SmtUnaryExpr) smtExpr).getExpr()).getExprs().get(0);
       FunctionDeclaration uninterpretedInt = this.getUninterpretedIntConstant((IntConstant) intConstant);
-      SmtExpr tuple = new SmtMultiArityExpr(SmtMultiArityExpr.Op.MKTUPLE, uninterpretedInt.getVariable());
-      SmtExpr singleton = SmtUnaryExpr.Op.SINGLETON.make(tuple);
+      SmtExpr tuple = new SmtMultiArityExpr(SmtMultiArityExpr.Op.TUPLE, uninterpretedInt.getVariable());
+      SmtExpr singleton = SmtUnaryExpr.Op.SET_SINGLETON.make(tuple);
       return singleton;
     }
     return smtExpr;
@@ -165,9 +165,9 @@ public abstract class AbstractTranslator
 
     SmtVariable b = new SmtVariable(TranslatorUtils.getFreshName(sort), sort, false);
 
-    SmtMultiArityExpr tupleAB = new SmtMultiArityExpr(SmtMultiArityExpr.Op.MKTUPLE, a.getVariable(), b.getVariable());
+    SmtMultiArityExpr tupleAB = new SmtMultiArityExpr(SmtMultiArityExpr.Op.TUPLE, a.getVariable(), b.getVariable());
 
-    SmtBinaryExpr member = SmtBinaryExpr.Op.MEMBER.make(tupleAB, identity.getVariable());
+    SmtBinaryExpr member = SmtBinaryExpr.Op.SET_MEMBER.make(tupleAB, identity.getVariable());
 
     SmtBinaryExpr equals = SmtBinaryExpr.Op.EQ.make(a.getVariable(), b.getVariable());
 

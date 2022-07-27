@@ -250,11 +250,11 @@ public class SmtRewriter implements ISmtRewriter
 
       // check if the tuple has arity 1
       if (expr instanceof SmtMultiArityExpr &&
-          ((SmtMultiArityExpr) expr).getOp() == SmtMultiArityExpr.Op.MKTUPLE &&
+          ((SmtMultiArityExpr) expr).getOp() == SmtMultiArityExpr.Op.TUPLE &&
           ((SmtMultiArityExpr) expr).getExprs().size() == 1)
       {
         SmtMultiArityExpr makeTuple = (SmtMultiArityExpr) expr;
-        SmtExpr tupleSelect = SmtBinaryExpr.Op.TUPSEL.make(zero, smtVariable.getVariable());
+        SmtExpr tupleSelect = SmtBinaryExpr.Op.TUPLE_SELECT.make(zero, smtVariable.getVariable());
         optimizedBody = optimizedBody.replace(tupleSelect, makeTuple.get(0));
       }
     }
@@ -353,7 +353,7 @@ public class SmtRewriter implements ISmtRewriter
           declarations.add(declaration);
           tupleSmtExprs.add(declaration.getVariable());
         }
-        SmtExpr tuple = SmtMultiArityExpr.Op.MKTUPLE.make(tupleSmtExprs);
+        SmtExpr tuple = SmtMultiArityExpr.Op.TUPLE.make(tupleSmtExprs);
         letVariables.put(variable, tuple);
       }
       else
@@ -562,7 +562,7 @@ public class SmtRewriter implements ISmtRewriter
       return expr;
     }
     SmtExpr a = smtQtExpr.getVariables().get(0).getVariable();
-    SmtExpr aTuple = SmtMultiArityExpr.Op.MKTUPLE.make(a);
+    SmtExpr aTuple = SmtMultiArityExpr.Op.TUPLE.make(a);
     if (!(smtQtExpr.getExpr() instanceof SmtLetExpr))
     {
       return expr;
@@ -592,7 +592,7 @@ public class SmtRewriter implements ISmtRewriter
       return expr;
     }
     SmtBinaryExpr operand1 = (SmtBinaryExpr) implies.getA();
-    if (!(operand1.getOp() == SmtBinaryExpr.Op.MEMBER && operand1.getA().equals(t)))
+    if (!(operand1.getOp() == SmtBinaryExpr.Op.SET_MEMBER && operand1.getA().equals(t)))
     {
       return expr;
     }
@@ -613,8 +613,8 @@ public class SmtRewriter implements ISmtRewriter
       return sExpr;
     }
     SmtExpr f = ((SmtBinaryExpr) sExpr).getB();
-    SmtExpr singletonT = SmtUnaryExpr.Op.SINGLETON.make(t);
-    SmtExpr join = SmtBinaryExpr.Op.JOIN.make(singletonT, f);
+    SmtExpr singletonT = SmtUnaryExpr.Op.SET_SINGLETON.make(t);
+    SmtExpr join = SmtBinaryExpr.Op.RELATION_JOIN.make(singletonT, f);
     if (!sExpr.equals(join))
     {
       return expr;
@@ -634,15 +634,15 @@ public class SmtRewriter implements ISmtRewriter
       return expr;
     }
 
-    SmtExpr choose = SmtUnaryExpr.Op.CHOOSE.make(s);
+    SmtExpr choose = SmtUnaryExpr.Op.SET_CHOOSE.make(s);
     operand1 = (SmtBinaryExpr) and1.get(0);
-    if (!(operand1.getOp() == SmtBinaryExpr.Op.MEMBER && operand1.getA().equals(choose)))
+    if (!(operand1.getOp() == SmtBinaryExpr.Op.SET_MEMBER && operand1.getA().equals(choose)))
     {
       return expr;
     }
 
     SmtBinaryExpr operand2 = (SmtBinaryExpr) and1.get(1);
-    SmtExpr singletonChoose = SmtUnaryExpr.Op.SINGLETON.make(choose);
+    SmtExpr singletonChoose = SmtUnaryExpr.Op.SET_SINGLETON.make(choose);
     SmtExpr equal1 = SmtBinaryExpr.Op.EQ.make(singletonChoose, s);
     if (!operand2.equals(equal1))
     {
@@ -663,22 +663,22 @@ public class SmtRewriter implements ISmtRewriter
     SmtVariable y = new SmtVariable("y", elementSortB, false);
     SmtVariable z = new SmtVariable("z", elementSortB, false);
 
-    SmtExpr xTuple = SmtMultiArityExpr.Op.MKTUPLE.make(x.getVariable());
-    SmtExpr yTuple = SmtMultiArityExpr.Op.MKTUPLE.make(y.getVariable());
-    SmtExpr xyTuple = SmtMultiArityExpr.Op.MKTUPLE.make(x.getVariable(), y.getVariable());
-    SmtExpr xzTuple = SmtMultiArityExpr.Op.MKTUPLE.make(x.getVariable(), z.getVariable());
+    SmtExpr xTuple = SmtMultiArityExpr.Op.TUPLE.make(x.getVariable());
+    SmtExpr yTuple = SmtMultiArityExpr.Op.TUPLE.make(y.getVariable());
+    SmtExpr xyTuple = SmtMultiArityExpr.Op.TUPLE.make(x.getVariable(), y.getVariable());
+    SmtExpr xzTuple = SmtMultiArityExpr.Op.TUPLE.make(x.getVariable(), z.getVariable());
 
-    SmtExpr xyMember = SmtBinaryExpr.Op.MEMBER.make(xyTuple, f);
+    SmtExpr xyMember = SmtBinaryExpr.Op.SET_MEMBER.make(xyTuple, f);
     SmtExpr equal = SmtBinaryExpr.Op.EQ.make(y.getVariable(), z.getVariable());
     SmtExpr notEqual = SmtUnaryExpr.Op.NOT.make(equal);
     SmtExpr and2 = SmtMultiArityExpr.Op.AND.make(xyMember, notEqual);
-    SmtExpr xzMember = SmtBinaryExpr.Op.MEMBER.make(xzTuple, f);
+    SmtExpr xzMember = SmtBinaryExpr.Op.SET_MEMBER.make(xzTuple, f);
     SmtExpr xzNotMember = SmtUnaryExpr.Op.NOT.make(xzMember);
     SmtExpr implies2 = SmtBinaryExpr.Op.IMPLIES.make(and2, xzNotMember);
     SmtExpr forall1 = SmtQtExpr.Op.FORALL.make(implies2, x, y, z);
 
-    SmtExpr xMember = SmtBinaryExpr.Op.MEMBER.make(xTuple, setA);
-    SmtExpr yMember = SmtBinaryExpr.Op.MEMBER.make(yTuple, setB);
+    SmtExpr xMember = SmtBinaryExpr.Op.SET_MEMBER.make(xTuple, setA);
+    SmtExpr yMember = SmtBinaryExpr.Op.SET_MEMBER.make(yTuple, setB);
     SmtExpr and3 = SmtMultiArityExpr.Op.AND.make(yMember, xyMember);
     SmtExpr exist = SmtQtExpr.Op.EXISTS.make(and3, y);
     SmtExpr implies3 = SmtBinaryExpr.Op.IMPLIES.make(xMember, exist);
@@ -721,7 +721,7 @@ public class SmtRewriter implements ISmtRewriter
       return expr;
     }
     SmtExpr a = smtQtExpr.getVariables().get(0).getVariable();
-    SmtExpr aTuple = SmtMultiArityExpr.Op.MKTUPLE.make(a);
+    SmtExpr aTuple = SmtMultiArityExpr.Op.TUPLE.make(a);
     if (!(smtQtExpr.getExpr() instanceof SmtLetExpr))
     {
       return expr;
@@ -751,7 +751,7 @@ public class SmtRewriter implements ISmtRewriter
       return expr;
     }
     SmtBinaryExpr operand1 = (SmtBinaryExpr) implies.getA();
-    if (!(operand1.getOp() == SmtBinaryExpr.Op.MEMBER && operand1.getA().equals(t)))
+    if (!(operand1.getOp() == SmtBinaryExpr.Op.SET_MEMBER && operand1.getA().equals(t)))
     {
       return expr;
     }
@@ -772,15 +772,15 @@ public class SmtRewriter implements ISmtRewriter
       return sExpr;
     }
     SmtExpr f = ((SmtBinaryExpr) sExpr).getB();
-    SmtExpr singletonT = SmtUnaryExpr.Op.SINGLETON.make(t);
-    SmtExpr join = SmtBinaryExpr.Op.JOIN.make(singletonT, f);
+    SmtExpr singletonT = SmtUnaryExpr.Op.SET_SINGLETON.make(t);
+    SmtExpr join = SmtBinaryExpr.Op.RELATION_JOIN.make(singletonT, f);
     if (!sExpr.equals(join))
     {
       return expr;
     }
 
     if (!(let2.getSmtExpr() instanceof SmtBinaryExpr &&
-        ((SmtBinaryExpr) let2.getSmtExpr()).getOp() == SmtBinaryExpr.Op.SUBSET))
+        ((SmtBinaryExpr) let2.getSmtExpr()).getOp() == SmtBinaryExpr.Op.SET_SUBSET))
     {
       return expr;
     }
@@ -812,7 +812,7 @@ public class SmtRewriter implements ISmtRewriter
     if (expr instanceof SmtBinaryExpr)
     {
       SmtBinaryExpr binaryExpr = (SmtBinaryExpr) expr;
-      if (binaryExpr.getOp() != SmtBinaryExpr.Op.PRODUCT)
+      if (binaryExpr.getOp() != SmtBinaryExpr.Op.RELATION_PRODUCT)
       {
         return false;
       }
@@ -875,7 +875,7 @@ public class SmtRewriter implements ISmtRewriter
       return expr;
     }
     SmtVariable x = smtQtExpr.getVariables().get(0);
-    SmtExpr xTuple = SmtMultiArityExpr.Op.MKTUPLE.make(x.getVariable());
+    SmtExpr xTuple = SmtMultiArityExpr.Op.TUPLE.make(x.getVariable());
     if (!(smtQtExpr.getExpr() instanceof SmtLetExpr))
     {
       return expr;
@@ -905,7 +905,7 @@ public class SmtRewriter implements ISmtRewriter
       return expr;
     }
     SmtBinaryExpr operand1 = (SmtBinaryExpr) implies.getA();
-    if (!(operand1.getOp() == SmtBinaryExpr.Op.MEMBER && operand1.getA().equals(t)))
+    if (!(operand1.getOp() == SmtBinaryExpr.Op.SET_MEMBER && operand1.getA().equals(t)))
     {
       return expr;
     }
@@ -926,8 +926,8 @@ public class SmtRewriter implements ISmtRewriter
       return sExpr;
     }
     SmtExpr f = ((SmtBinaryExpr) sExpr).getB();
-    SmtExpr singletonT = SmtUnaryExpr.Op.SINGLETON.make(t);
-    SmtExpr join = SmtBinaryExpr.Op.JOIN.make(singletonT, f);
+    SmtExpr singletonT = SmtUnaryExpr.Op.SET_SINGLETON.make(t);
+    SmtExpr join = SmtBinaryExpr.Op.RELATION_JOIN.make(singletonT, f);
     if (!sExpr.equals(join))
     {
       return expr;
@@ -946,7 +946,7 @@ public class SmtRewriter implements ISmtRewriter
     }
     SmtExpr subset = and1.get(0);
     SmtExpr forall1 = and1.get(1);
-    if (!(subset instanceof SmtBinaryExpr) || ((SmtBinaryExpr) subset).getOp() != SmtBinaryExpr.Op.SUBSET)
+    if (!(subset instanceof SmtBinaryExpr) || ((SmtBinaryExpr) subset).getOp() != SmtBinaryExpr.Op.SET_SUBSET)
     {
       return expr;
     }
@@ -961,7 +961,7 @@ public class SmtRewriter implements ISmtRewriter
     }
 
     SmtBinaryExpr product = (SmtBinaryExpr) ((SmtBinaryExpr) subset).getB();
-    if (product.getOp() != SmtBinaryExpr.Op.PRODUCT)
+    if (product.getOp() != SmtBinaryExpr.Op.RELATION_PRODUCT)
     {
       return expr;
     }
@@ -991,7 +991,7 @@ public class SmtRewriter implements ISmtRewriter
     }
     SmtVariable y = ((SmtQtExpr) forall1).getVariables().get(0);
     Map.Entry<SmtVariable, SmtExpr> entry1 = let3.getLetVariables().entrySet().stream().findFirst().get();
-    if (!entry1.getValue().equals(SmtMultiArityExpr.Op.MKTUPLE.make(y.getVariable())))
+    if (!entry1.getValue().equals(SmtMultiArityExpr.Op.TUPLE.make(y.getVariable())))
     {
       return expr;
     }
@@ -1003,7 +1003,7 @@ public class SmtRewriter implements ISmtRewriter
 
     SmtBinaryExpr implies1 = (SmtBinaryExpr) let3.getSmtExpr();
 
-    if (!implies1.getA().equals(SmtBinaryExpr.Op.MEMBER.make(entry1.getKey().getVariable(), setC)))
+    if (!implies1.getA().equals(SmtBinaryExpr.Op.SET_MEMBER.make(entry1.getKey().getVariable(), setC)))
     {
       return expr;
     }
@@ -1021,7 +1021,7 @@ public class SmtRewriter implements ISmtRewriter
 
     SmtLetExpr let4 = (SmtLetExpr) ((SmtQtExpr) implies1.getB()).getExpr();
     Map.Entry<SmtVariable, SmtExpr> entry2 = let4.getLetVariables().entrySet().stream().findFirst().get();
-    if (!entry2.getValue().equals(SmtMultiArityExpr.Op.MKTUPLE.make(z.getVariable())))
+    if (!entry2.getValue().equals(SmtMultiArityExpr.Op.TUPLE.make(z.getVariable())))
     {
       return expr;
     }
@@ -1033,10 +1033,10 @@ public class SmtRewriter implements ISmtRewriter
       return expr;
     }
     SmtMultiArityExpr and2 = (SmtMultiArityExpr) let4.getSmtExpr();
-    SmtExpr zyTuple = SmtMultiArityExpr.Op.MKTUPLE.make(z.getVariable(), y.getVariable());
+    SmtExpr zyTuple = SmtMultiArityExpr.Op.TUPLE.make(z.getVariable(), y.getVariable());
 
-    if (!(and2.get(0).equals(SmtBinaryExpr.Op.MEMBER.make(zTuple, setB)) &&
-        and2.get(1).equals(SmtBinaryExpr.Op.MEMBER.make(zyTuple, s)) &&
+    if (!(and2.get(0).equals(SmtBinaryExpr.Op.SET_MEMBER.make(zTuple, setB)) &&
+        and2.get(1).equals(SmtBinaryExpr.Op.SET_MEMBER.make(zyTuple, s)) &&
         and2.get(2) instanceof SmtQtExpr &&
         ((SmtQtExpr) and2.get(2)).getOp() == SmtQtExpr.Op.FORALL &&
         ((SmtQtExpr) and2.get(2)).getVariables().size() == 1 &&
@@ -1052,19 +1052,19 @@ public class SmtRewriter implements ISmtRewriter
     SmtLetExpr let5 = (SmtLetExpr) ((SmtQtExpr) and2.get(2)).getExpr();
 
     Map.Entry<SmtVariable, SmtExpr> entry3 = let5.getLetVariables().entrySet().stream().findFirst().get();
-    if (!entry3.getValue().equals(SmtMultiArityExpr.Op.MKTUPLE.make(w.getVariable())))
+    if (!entry3.getValue().equals(SmtMultiArityExpr.Op.TUPLE.make(w.getVariable())))
     {
       return expr;
     }
 
     SmtExpr wTuple = entry3.getKey().getVariable();
     SmtExpr and3 = SmtMultiArityExpr.Op.AND.make(
-        SmtBinaryExpr.Op.MEMBER.make(wTuple, setB),
+        SmtBinaryExpr.Op.SET_MEMBER.make(wTuple, setB),
         SmtUnaryExpr.Op.NOT.make(SmtBinaryExpr.Op.EQ.make(wTuple, zTuple)));
 
-    SmtExpr wyTuple = SmtMultiArityExpr.Op.MKTUPLE.make(w.getVariable(), y.getVariable());
+    SmtExpr wyTuple = SmtMultiArityExpr.Op.TUPLE.make(w.getVariable(), y.getVariable());
 
-    SmtExpr not = SmtUnaryExpr.Op.NOT.make(SmtBinaryExpr.Op.MEMBER.make(wyTuple, s));
+    SmtExpr not = SmtUnaryExpr.Op.NOT.make(SmtBinaryExpr.Op.SET_MEMBER.make(wyTuple, s));
     SmtExpr implies2 = SmtBinaryExpr.Op.IMPLIES.make(and3, not);
     if (!let5.getSmtExpr().equals(implies2))
     {
@@ -1076,23 +1076,23 @@ public class SmtRewriter implements ISmtRewriter
     z = new SmtVariable("z", z.getSort(), false);
     w = new SmtVariable("w", w.getSort(), false);
 
-    xTuple = SmtMultiArityExpr.Op.MKTUPLE.make(x.getVariable());
-    SmtExpr yTuple = SmtMultiArityExpr.Op.MKTUPLE.make(y.getVariable());
-    zTuple = SmtMultiArityExpr.Op.MKTUPLE.make(z.getVariable());
-    wTuple = SmtMultiArityExpr.Op.MKTUPLE.make(w.getVariable());
+    xTuple = SmtMultiArityExpr.Op.TUPLE.make(x.getVariable());
+    SmtExpr yTuple = SmtMultiArityExpr.Op.TUPLE.make(y.getVariable());
+    zTuple = SmtMultiArityExpr.Op.TUPLE.make(z.getVariable());
+    wTuple = SmtMultiArityExpr.Op.TUPLE.make(w.getVariable());
 
-    SmtExpr xzyTuple = SmtMultiArityExpr.Op.MKTUPLE.make(x.getVariable(), z.getVariable(), y.getVariable());
-    SmtExpr xwyTuple = SmtMultiArityExpr.Op.MKTUPLE.make(x.getVariable(), w.getVariable(), y.getVariable());
+    SmtExpr xzyTuple = SmtMultiArityExpr.Op.TUPLE.make(x.getVariable(), z.getVariable(), y.getVariable());
+    SmtExpr xwyTuple = SmtMultiArityExpr.Op.TUPLE.make(x.getVariable(), w.getVariable(), y.getVariable());
 
-    SmtExpr xMember = SmtBinaryExpr.Op.MEMBER.make(xTuple, setA);
-    SmtExpr xzyMember = SmtBinaryExpr.Op.MEMBER.make(xzyTuple, f);
+    SmtExpr xMember = SmtBinaryExpr.Op.SET_MEMBER.make(xTuple, setA);
+    SmtExpr xzyMember = SmtBinaryExpr.Op.SET_MEMBER.make(xzyTuple, f);
 //    SmtExpr exists1 = SmtQtExpr.Op.EXISTS.make(xzyMember, y, z);
 //    SmtExpr and4 = SmtMultiArityExpr.Op.AND.make(xMember, exists1);
 
 
-    SmtExpr yMember = SmtBinaryExpr.Op.MEMBER.make(yTuple, setC);
-    SmtExpr zMember = SmtBinaryExpr.Op.MEMBER.make(zTuple, setB);
-    SmtExpr xwyMember = SmtBinaryExpr.Op.MEMBER.make(xwyTuple, f);
+    SmtExpr yMember = SmtBinaryExpr.Op.SET_MEMBER.make(yTuple, setC);
+    SmtExpr zMember = SmtBinaryExpr.Op.SET_MEMBER.make(zTuple, setB);
+    SmtExpr xwyMember = SmtBinaryExpr.Op.SET_MEMBER.make(xwyTuple, f);
     SmtExpr xwyNotMember = SmtUnaryExpr.Op.NOT.make(xwyMember);
 
     SmtExpr wzEqual = SmtBinaryExpr.Op.EQ.make(w.getVariable(), z.getVariable());
@@ -1166,7 +1166,7 @@ public class SmtRewriter implements ISmtRewriter
       return expr;
     }
     SmtVariable x = smtQtExpr.getVariables().get(0);
-    SmtExpr xTuple = SmtMultiArityExpr.Op.MKTUPLE.make(x.getVariable());
+    SmtExpr xTuple = SmtMultiArityExpr.Op.TUPLE.make(x.getVariable());
     if (!(smtQtExpr.getExpr() instanceof SmtLetExpr))
     {
       return expr;
@@ -1196,7 +1196,7 @@ public class SmtRewriter implements ISmtRewriter
       return expr;
     }
     SmtBinaryExpr operand1 = (SmtBinaryExpr) implies.getA();
-    if (!(operand1.getOp() == SmtBinaryExpr.Op.MEMBER && operand1.getA().equals(t)))
+    if (!(operand1.getOp() == SmtBinaryExpr.Op.SET_MEMBER && operand1.getA().equals(t)))
     {
       return expr;
     }
@@ -1217,8 +1217,8 @@ public class SmtRewriter implements ISmtRewriter
       return sExpr;
     }
     SmtExpr f = ((SmtBinaryExpr) sExpr).getB();
-    SmtExpr singletonT = SmtUnaryExpr.Op.SINGLETON.make(t);
-    SmtExpr join = SmtBinaryExpr.Op.JOIN.make(singletonT, f);
+    SmtExpr singletonT = SmtUnaryExpr.Op.SET_SINGLETON.make(t);
+    SmtExpr join = SmtBinaryExpr.Op.RELATION_JOIN.make(singletonT, f);
     if (!sExpr.equals(join))
     {
       return expr;
@@ -1237,7 +1237,7 @@ public class SmtRewriter implements ISmtRewriter
     }
     SmtExpr subset = and1.get(0);
     SmtExpr forall1 = and1.get(1);
-    if (!(subset instanceof SmtBinaryExpr) || ((SmtBinaryExpr) subset).getOp() != SmtBinaryExpr.Op.SUBSET)
+    if (!(subset instanceof SmtBinaryExpr) || ((SmtBinaryExpr) subset).getOp() != SmtBinaryExpr.Op.SET_SUBSET)
     {
       return expr;
     }
@@ -1252,7 +1252,7 @@ public class SmtRewriter implements ISmtRewriter
     }
 
     SmtBinaryExpr product = (SmtBinaryExpr) ((SmtBinaryExpr) subset).getB();
-    if (product.getOp() != SmtBinaryExpr.Op.PRODUCT)
+    if (product.getOp() != SmtBinaryExpr.Op.RELATION_PRODUCT)
     {
       return expr;
     }
@@ -1282,7 +1282,7 @@ public class SmtRewriter implements ISmtRewriter
     }
     SmtVariable y = ((SmtQtExpr) forall1).getVariables().get(0);
     Map.Entry<SmtVariable, SmtExpr> entry1 = let3.getLetVariables().entrySet().stream().findFirst().get();
-    if (!entry1.getValue().equals(SmtMultiArityExpr.Op.MKTUPLE.make(y.getVariable())))
+    if (!entry1.getValue().equals(SmtMultiArityExpr.Op.TUPLE.make(y.getVariable())))
     {
       return expr;
     }
@@ -1294,7 +1294,7 @@ public class SmtRewriter implements ISmtRewriter
 
     SmtBinaryExpr implies1 = (SmtBinaryExpr) let3.getSmtExpr();
 
-    if (!implies1.getA().equals(SmtBinaryExpr.Op.MEMBER.make(entry1.getKey().getVariable(), setB)))
+    if (!implies1.getA().equals(SmtBinaryExpr.Op.SET_MEMBER.make(entry1.getKey().getVariable(), setB)))
     {
       return expr;
     }
@@ -1312,7 +1312,7 @@ public class SmtRewriter implements ISmtRewriter
 
     SmtLetExpr let4 = (SmtLetExpr) ((SmtQtExpr) implies1.getB()).getExpr();
     Map.Entry<SmtVariable, SmtExpr> entry2 = let4.getLetVariables().entrySet().stream().findFirst().get();
-    if (!entry2.getValue().equals(SmtMultiArityExpr.Op.MKTUPLE.make(z.getVariable())))
+    if (!entry2.getValue().equals(SmtMultiArityExpr.Op.TUPLE.make(z.getVariable())))
     {
       return expr;
     }
@@ -1324,10 +1324,10 @@ public class SmtRewriter implements ISmtRewriter
       return expr;
     }
     SmtMultiArityExpr and2 = (SmtMultiArityExpr) let4.getSmtExpr();
-    SmtExpr yzTuple = SmtMultiArityExpr.Op.MKTUPLE.make(y.getVariable(), z.getVariable());
+    SmtExpr yzTuple = SmtMultiArityExpr.Op.TUPLE.make(y.getVariable(), z.getVariable());
 
-    if (!(and2.get(0).equals(SmtBinaryExpr.Op.MEMBER.make(zTuple, setC)) &&
-        and2.get(1).equals(SmtBinaryExpr.Op.MEMBER.make(yzTuple, s)) &&
+    if (!(and2.get(0).equals(SmtBinaryExpr.Op.SET_MEMBER.make(zTuple, setC)) &&
+        and2.get(1).equals(SmtBinaryExpr.Op.SET_MEMBER.make(yzTuple, s)) &&
         and2.get(2) instanceof SmtQtExpr &&
         ((SmtQtExpr) and2.get(2)).getOp() == SmtQtExpr.Op.FORALL &&
         ((SmtQtExpr) and2.get(2)).getVariables().size() == 1 &&
@@ -1343,19 +1343,19 @@ public class SmtRewriter implements ISmtRewriter
     SmtLetExpr let5 = (SmtLetExpr) ((SmtQtExpr) and2.get(2)).getExpr();
 
     Map.Entry<SmtVariable, SmtExpr> entry3 = let5.getLetVariables().entrySet().stream().findFirst().get();
-    if (!entry3.getValue().equals(SmtMultiArityExpr.Op.MKTUPLE.make(w.getVariable())))
+    if (!entry3.getValue().equals(SmtMultiArityExpr.Op.TUPLE.make(w.getVariable())))
     {
       return expr;
     }
 
     SmtExpr wTuple = entry3.getKey().getVariable();
     SmtExpr and3 = SmtMultiArityExpr.Op.AND.make(
-        SmtBinaryExpr.Op.MEMBER.make(wTuple, setC),
+        SmtBinaryExpr.Op.SET_MEMBER.make(wTuple, setC),
         SmtUnaryExpr.Op.NOT.make(SmtBinaryExpr.Op.EQ.make(wTuple, zTuple)));
 
-    SmtExpr ywTuple = SmtMultiArityExpr.Op.MKTUPLE.make(y.getVariable(), w.getVariable());
+    SmtExpr ywTuple = SmtMultiArityExpr.Op.TUPLE.make(y.getVariable(), w.getVariable());
 
-    SmtExpr not = SmtUnaryExpr.Op.NOT.make(SmtBinaryExpr.Op.MEMBER.make(ywTuple, s));
+    SmtExpr not = SmtUnaryExpr.Op.NOT.make(SmtBinaryExpr.Op.SET_MEMBER.make(ywTuple, s));
     SmtExpr implies2 = SmtBinaryExpr.Op.IMPLIES.make(and3, not);
     if (!let5.getSmtExpr().equals(implies2))
     {
@@ -1367,20 +1367,20 @@ public class SmtRewriter implements ISmtRewriter
     z = new SmtVariable("z", z.getSort(), false);
     w = new SmtVariable("w", w.getSort(), false);
 
-    xTuple = SmtMultiArityExpr.Op.MKTUPLE.make(x.getVariable());
-    SmtExpr yTuple = SmtMultiArityExpr.Op.MKTUPLE.make(y.getVariable());
-    zTuple = SmtMultiArityExpr.Op.MKTUPLE.make(z.getVariable());
-    wTuple = SmtMultiArityExpr.Op.MKTUPLE.make(w.getVariable());
+    xTuple = SmtMultiArityExpr.Op.TUPLE.make(x.getVariable());
+    SmtExpr yTuple = SmtMultiArityExpr.Op.TUPLE.make(y.getVariable());
+    zTuple = SmtMultiArityExpr.Op.TUPLE.make(z.getVariable());
+    wTuple = SmtMultiArityExpr.Op.TUPLE.make(w.getVariable());
 
-    SmtExpr xyzTuple = SmtMultiArityExpr.Op.MKTUPLE.make(x.getVariable(), y.getVariable(), z.getVariable());
-    SmtExpr xywTuple = SmtMultiArityExpr.Op.MKTUPLE.make(x.getVariable(), y.getVariable(), w.getVariable());
+    SmtExpr xyzTuple = SmtMultiArityExpr.Op.TUPLE.make(x.getVariable(), y.getVariable(), z.getVariable());
+    SmtExpr xywTuple = SmtMultiArityExpr.Op.TUPLE.make(x.getVariable(), y.getVariable(), w.getVariable());
 
-    SmtExpr xMember = SmtBinaryExpr.Op.MEMBER.make(xTuple, setA);
-    SmtExpr xyzMember = SmtBinaryExpr.Op.MEMBER.make(xyzTuple, f);
+    SmtExpr xMember = SmtBinaryExpr.Op.SET_MEMBER.make(xTuple, setA);
+    SmtExpr xyzMember = SmtBinaryExpr.Op.SET_MEMBER.make(xyzTuple, f);
 
-    SmtExpr yMember = SmtBinaryExpr.Op.MEMBER.make(yTuple, setB);
-    SmtExpr zMember = SmtBinaryExpr.Op.MEMBER.make(zTuple, setC);
-    SmtExpr xywMember = SmtBinaryExpr.Op.MEMBER.make(xywTuple, f);
+    SmtExpr yMember = SmtBinaryExpr.Op.SET_MEMBER.make(yTuple, setB);
+    SmtExpr zMember = SmtBinaryExpr.Op.SET_MEMBER.make(zTuple, setC);
+    SmtExpr xywMember = SmtBinaryExpr.Op.SET_MEMBER.make(xywTuple, f);
     SmtExpr xywNotMember = SmtUnaryExpr.Op.NOT.make(xywMember);
 
     SmtExpr wzEqual = SmtBinaryExpr.Op.EQ.make(w.getVariable(), z.getVariable());

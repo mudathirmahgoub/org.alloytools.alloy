@@ -94,16 +94,16 @@ public class AlloyUtils
     SmtExpr rightSetSmtExpr = variableToSetMap.get(declaration);
     if (declaration.getSort() instanceof SetSort)
     {
-      return SmtBinaryExpr.Op.SUBSET.make(declaration.getVariable(), rightSetSmtExpr);
+      return SmtBinaryExpr.Op.SET_SUBSET.make(declaration.getVariable(), rightSetSmtExpr);
     }
     if (declaration.getSort() instanceof TupleSort)
     {
-      return SmtBinaryExpr.Op.MEMBER.make(declaration.getVariable(), rightSetSmtExpr);
+      return SmtBinaryExpr.Op.SET_MEMBER.make(declaration.getVariable(), rightSetSmtExpr);
     }
     if ((declaration.getSort() instanceof UninterpretedSort) || (declaration.getSort() instanceof IntSort))
     {
-      SmtExpr tuple = new SmtMultiArityExpr(SmtMultiArityExpr.Op.MKTUPLE, declaration.getVariable());
-      return SmtBinaryExpr.Op.MEMBER.make(tuple, rightSetSmtExpr);
+      SmtExpr tuple = new SmtMultiArityExpr(SmtMultiArityExpr.Op.TUPLE, declaration.getVariable());
+      return SmtBinaryExpr.Op.SET_MEMBER.make(tuple, rightSetSmtExpr);
     }
 
     throw new UnsupportedOperationException(String.format("%s", declaration.getSort()));
@@ -111,14 +111,14 @@ public class AlloyUtils
 
   public static SmtExpr mkSingletonOutOfAtoms(List<SmtExpr> atomExprs)
   {
-    SmtMultiArityExpr tuple = SmtMultiArityExpr.Op.MKTUPLE.make(atomExprs);
-    SmtUnaryExpr singleton = SmtUnaryExpr.Op.SINGLETON.make(tuple);
+    SmtMultiArityExpr tuple = SmtMultiArityExpr.Op.TUPLE.make(atomExprs);
+    SmtUnaryExpr singleton = SmtUnaryExpr.Op.SET_SINGLETON.make(tuple);
     return singleton;
   }
 
   public static SmtExpr mkSingletonOutOfTuple(SmtExpr tupleExpr)
   {
-    SmtUnaryExpr singleton = SmtUnaryExpr.Op.SINGLETON.make(tupleExpr);
+    SmtUnaryExpr singleton = SmtUnaryExpr.Op.SET_SINGLETON.make(tupleExpr);
     return singleton;
   }
 
@@ -134,7 +134,7 @@ public class AlloyUtils
       }
       else
       {
-        smtExprs.add(SmtUnaryExpr.Op.SINGLETON.make(declaration.getVariable()));
+        smtExprs.add(SmtUnaryExpr.Op.SET_SINGLETON.make(declaration.getVariable()));
       }
     }
     return smtExprs;

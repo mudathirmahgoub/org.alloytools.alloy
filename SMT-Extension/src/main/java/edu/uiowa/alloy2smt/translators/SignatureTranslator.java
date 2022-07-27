@@ -218,7 +218,7 @@ public class SignatureTranslator
       String name = TranslatorUtils.getFreshName(AbstractTranslator.atomSort);
       constDecl = new FunctionDeclaration(name, AbstractTranslator.atomSort, false);
     }
-    expr = AlloyUtils.mkSingletonOutOfTuple(new SmtMultiArityExpr(SmtMultiArityExpr.Op.MKTUPLE, constDecl.getVariable()));
+    expr = AlloyUtils.mkSingletonOutOfTuple(new SmtMultiArityExpr(SmtMultiArityExpr.Op.TUPLE, constDecl.getVariable()));
     translator.smtScript.addFunction(constDecl);
 
     SmtBinaryExpr subset = SmtBinaryExpr.Op.EQ.make(signature.getVariable(), expr);
@@ -243,11 +243,11 @@ public class SignatureTranslator
     {
       String name = TranslatorUtils.getFreshName(AbstractTranslator.atomSort);
       constDecl = new FunctionDeclaration(name, AbstractTranslator.atomSort, false);
-      expr = AlloyUtils.mkSingletonOutOfTuple(new SmtMultiArityExpr(SmtMultiArityExpr.Op.MKTUPLE, constDecl.getVariable()));
+      expr = AlloyUtils.mkSingletonOutOfTuple(new SmtMultiArityExpr(SmtMultiArityExpr.Op.TUPLE, constDecl.getVariable()));
     }
     translator.smtScript.addFunction(constDecl);
 
-    SmtBinaryExpr subset = SmtBinaryExpr.Op.SUBSET.make(signature.getVariable(), expr);
+    SmtBinaryExpr subset = SmtBinaryExpr.Op.SET_SUBSET.make(signature.getVariable(), expr);
     Assertion assertion = AlloyUtils.getAssertion(Collections.singletonList(sig.pos), "lone " + sig.label, subset);
     translator.smtScript.addAssertion(assertion);
   }
@@ -269,11 +269,11 @@ public class SignatureTranslator
     {
       String name = TranslatorUtils.getFreshName(AbstractTranslator.atomSort);
       constDecl = new FunctionDeclaration(name, AbstractTranslator.atomSort, false);
-      expr = AlloyUtils.mkSingletonOutOfTuple(new SmtMultiArityExpr(SmtMultiArityExpr.Op.MKTUPLE, constDecl.getVariable()));
+      expr = AlloyUtils.mkSingletonOutOfTuple(new SmtMultiArityExpr(SmtMultiArityExpr.Op.TUPLE, constDecl.getVariable()));
     }
     translator.smtScript.addFunction(constDecl);
 
-    SmtBinaryExpr subset = SmtBinaryExpr.Op.SUBSET.make(expr, signature.getVariable());
+    SmtBinaryExpr subset = SmtBinaryExpr.Op.SET_SUBSET.make(expr, signature.getVariable());
     Assertion assertion = AlloyUtils.getAssertion(Collections.singletonList(sig.pos), "some " + sig.label, subset);
     translator.smtScript.addAssertion(assertion);
   }
@@ -285,7 +285,7 @@ public class SignatureTranslator
     {
       Sig parent = ((Sig.PrimSig) sig).parent;
       FunctionDeclaration parentDeclaration = translator.signaturesMap.get(parent);
-      SmtBinaryExpr subsetExpression = SmtBinaryExpr.Op.SUBSET.make(functionDeclaration.getVariable(), parentDeclaration.getVariable());
+      SmtBinaryExpr subsetExpression = SmtBinaryExpr.Op.SET_SUBSET.make(functionDeclaration.getVariable(), parentDeclaration.getVariable());
       Assertion assertion = AlloyUtils.getAssertion(Collections.singletonList(sig.pos),
           sig.label + " in " + parent.label, subsetExpression);
       translator.smtScript.addAssertion(assertion);
@@ -306,7 +306,7 @@ public class SignatureTranslator
         if (parentSig != Sig.SIGINT)
         {
           FunctionDeclaration parentDeclaration = translator.signaturesMap.get(parentSig);
-          SmtBinaryExpr subset = SmtBinaryExpr.Op.SUBSET.make(functionDeclaration.getVariable(), parentDeclaration.getVariable());
+          SmtBinaryExpr subset = SmtBinaryExpr.Op.SET_SUBSET.make(functionDeclaration.getVariable(), parentDeclaration.getVariable());
           Assertion assertion = AlloyUtils.getAssertion(Collections.singletonList(sig.pos),
               sig.label + " in " + parentSig.label, subset);
           translator.smtScript.addAssertion(assertion);
@@ -324,7 +324,7 @@ public class SignatureTranslator
           union = SmtBinaryExpr.Op.UNION.make(union, smtExpr);
         }
 
-        SmtBinaryExpr subset = SmtBinaryExpr.Op.SUBSET.make(functionDeclaration.getVariable(), union);
+        SmtBinaryExpr subset = SmtBinaryExpr.Op.SET_SUBSET.make(functionDeclaration.getVariable(), union);
         Assertion assertion = AlloyUtils.getAssertion(Collections.singletonList(sig.pos),
             sig.toString(), subset);
         translator.smtScript.addAssertion(assertion);
@@ -525,8 +525,8 @@ public class SignatureTranslator
     FunctionDeclaration firstAtom = new FunctionDeclaration(prefix + "FirstAtom", AbstractTranslator.atomSort, true);
     FunctionDeclaration first = new FunctionDeclaration(prefix + suffix, AbstractTranslator.setOfUnaryAtomSort, true);
 
-    SmtExpr firstSet = SmtUnaryExpr.Op.SINGLETON.make(
-        new SmtMultiArityExpr(SmtMultiArityExpr.Op.MKTUPLE, firstAtom.getVariable()));
+    SmtExpr firstSet = SmtUnaryExpr.Op.SET_SINGLETON.make(
+        new SmtMultiArityExpr(SmtMultiArityExpr.Op.TUPLE, firstAtom.getVariable()));
 
     translator.smtScript.addFunction(firstAtom);
     translator.addFunction(first);
@@ -542,7 +542,7 @@ public class SignatureTranslator
 
     // each element is greater than or equal to the first element
     SmtVariable x = new SmtVariable("x", AbstractTranslator.atomSort, false);
-    SmtExpr member = SmtBinaryExpr.Op.MEMBER.make(new SmtMultiArityExpr(SmtMultiArityExpr.Op.MKTUPLE, x.getVariable()), setSmtExpr);
+    SmtExpr member = SmtBinaryExpr.Op.SET_MEMBER.make(new SmtMultiArityExpr(SmtMultiArityExpr.Op.TUPLE, x.getVariable()), setSmtExpr);
     SmtExpr gte = SmtBinaryExpr.Op.GTE.make(new SmtCallExpr(mapping, x.getVariable()), new SmtCallExpr(mapping, firstAtom.getVariable()));
     SmtExpr implies = SmtBinaryExpr.Op.IMPLIES.make(member, gte);
     SmtExpr forAll = SmtQtExpr.Op.FORALL.make(implies, x);
@@ -558,15 +558,15 @@ public class SignatureTranslator
     FunctionDeclaration lastAtom = new FunctionDeclaration(prefix + "LastAtom", AbstractTranslator.atomSort, true);
     FunctionDeclaration last = new FunctionDeclaration(prefix + suffix, translator.setOfUnaryAtomSort, true);
 
-    SmtExpr lastSet = SmtUnaryExpr.Op.SINGLETON.make(
-        new SmtMultiArityExpr(SmtMultiArityExpr.Op.MKTUPLE, lastAtom.getVariable()));
+    SmtExpr lastSet = SmtUnaryExpr.Op.SET_SINGLETON.make(
+        new SmtMultiArityExpr(SmtMultiArityExpr.Op.TUPLE, lastAtom.getVariable()));
 
     translator.smtScript.addFunction(lastAtom);
     translator.addFunction(last);
 
 
     // last element is a member of the set
-    SmtExpr lastMember = SmtBinaryExpr.Op.MEMBER.make(new SmtMultiArityExpr(SmtMultiArityExpr.Op.MKTUPLE, lastAtom.getVariable()), setSmtExpr);
+    SmtExpr lastMember = SmtBinaryExpr.Op.SET_MEMBER.make(new SmtMultiArityExpr(SmtMultiArityExpr.Op.TUPLE, lastAtom.getVariable()), setSmtExpr);
     translator.smtScript.addAssertion(new Assertion("", "last element is a member", lastMember));
 
     // there is only one last element
@@ -576,7 +576,7 @@ public class SignatureTranslator
 
     // each element is less than or equal to the last element
     SmtVariable x = new SmtVariable("x", AbstractTranslator.atomSort, false);
-    SmtExpr xMember = SmtBinaryExpr.Op.MEMBER.make(new SmtMultiArityExpr(SmtMultiArityExpr.Op.MKTUPLE, x.getVariable()), setSmtExpr);
+    SmtExpr xMember = SmtBinaryExpr.Op.SET_MEMBER.make(new SmtMultiArityExpr(SmtMultiArityExpr.Op.TUPLE, x.getVariable()), setSmtExpr);
     SmtExpr lte = SmtBinaryExpr.Op.LTE.make(new SmtCallExpr(mapping, x.getVariable()), new SmtCallExpr(mapping, lastAtom.getVariable()));
     SmtExpr implies = SmtBinaryExpr.Op.IMPLIES.make(xMember, lte);
     SmtExpr forAll = SmtQtExpr.Op.FORALL.make(implies, x);
@@ -588,9 +588,9 @@ public class SignatureTranslator
 
   private FunctionDefinition getMaxMinDefinition(String prefix, String suffix, SmtVariable set, FunctionDeclaration declaration)
   {
-    SmtExpr tClosure = SmtUnaryExpr.Op.TCLOSURE.make(declaration.getVariable());
+    SmtExpr tClosure = SmtUnaryExpr.Op.RELATION_TCLOSURE.make(declaration.getVariable());
 
-    SmtExpr join = SmtBinaryExpr.Op.JOIN.make(set.getVariable(), tClosure);
+    SmtExpr join = SmtBinaryExpr.Op.RELATION_JOIN.make(set.getVariable(), tClosure);
 
     SmtExpr difference = SmtBinaryExpr.Op.SETMINUS.make(set.getVariable(), join);
 
@@ -600,8 +600,8 @@ public class SignatureTranslator
 
   private FunctionDefinition getPrevsNextsDefinition(String prefix, SmtVariable set1, FunctionDeclaration ord, String suffix)
   {
-    SmtUnaryExpr tClosure = SmtUnaryExpr.Op.TCLOSURE.make(ord.getVariable());
-    SmtBinaryExpr join = SmtBinaryExpr.Op.JOIN.make(set1.getVariable(), tClosure);
+    SmtUnaryExpr tClosure = SmtUnaryExpr.Op.RELATION_TCLOSURE.make(ord.getVariable());
+    SmtBinaryExpr join = SmtBinaryExpr.Op.RELATION_JOIN.make(set1.getVariable(), tClosure);
     String name = prefix + suffix;
     FunctionDefinition definition = new FunctionDefinition(name, translator.setOfUnaryAtomSort, join, true, set1);
     return definition;
@@ -632,13 +632,13 @@ public class SignatureTranslator
     // for all x : x is a member implies intMapping(x) < intMapping (nextMapping(x)) and
     //                                                    x != lastAtom implies nextMapping(x) is a member
 
-    SmtBinaryExpr xMember = SmtBinaryExpr.Op.MEMBER.make(TranslatorUtils.getTuple(x), setSmtExpr);
+    SmtBinaryExpr xMember = SmtBinaryExpr.Op.SET_MEMBER.make(TranslatorUtils.getTuple(x), setSmtExpr);
     SmtBinaryExpr xLessThanNext = SmtBinaryExpr.Op.LT.make(new SmtCallExpr(intMapping, x.getVariable()), new SmtCallExpr(intMapping,
         new SmtCallExpr(mapping, x.getVariable())));
 
     SmtExpr notXEqualsLast = SmtUnaryExpr.Op.NOT.make(
         SmtBinaryExpr.Op.EQ.make(x.getVariable(), lastAtom.getVariable()));
-    SmtExpr nextIsMember = SmtBinaryExpr.Op.MEMBER.make(TranslatorUtils.getTuple(new SmtCallExpr(mapping, x.getVariable())), setSmtExpr);
+    SmtExpr nextIsMember = SmtBinaryExpr.Op.SET_MEMBER.make(TranslatorUtils.getTuple(new SmtCallExpr(mapping, x.getVariable())), setSmtExpr);
 
     SmtExpr impliesNextIsMember = SmtBinaryExpr.Op.IMPLIES.make(notXEqualsLast, nextIsMember);
 
@@ -656,7 +656,7 @@ public class SignatureTranslator
     SmtExpr xEqualsY = SmtBinaryExpr.Op.EQ.make(x.getVariable(), y.getVariable());
     SmtExpr notXEqualsY = SmtUnaryExpr.Op.NOT.make(xEqualsY);
 
-    SmtExpr xyMembers = SmtMultiArityExpr.Op.AND.make(SmtBinaryExpr.Op.MEMBER.make(TranslatorUtils.getTuple(x), setSmtExpr), SmtBinaryExpr.Op.MEMBER.make(TranslatorUtils.getTuple(y), setSmtExpr));
+    SmtExpr xyMembers = SmtMultiArityExpr.Op.AND.make(SmtBinaryExpr.Op.SET_MEMBER.make(TranslatorUtils.getTuple(x), setSmtExpr), SmtBinaryExpr.Op.SET_MEMBER.make(TranslatorUtils.getTuple(y), setSmtExpr));
 
     SmtExpr antecedent = SmtMultiArityExpr.Op.AND.make(notXEqualsY, xyMembers);
 
@@ -675,7 +675,7 @@ public class SignatureTranslator
 
     // for all x, y (x,y) in the next relation iff x, y are members and nextMapping(x) = y
     SmtExpr xy = TranslatorUtils.getTuple(x, y);
-    SmtExpr xyInNext = SmtBinaryExpr.Op.MEMBER.make(xy, ordNext.getVariable());
+    SmtExpr xyInNext = SmtBinaryExpr.Op.SET_MEMBER.make(xy, ordNext.getVariable());
 
     SmtExpr xLessThanY = SmtBinaryExpr.Op.LT.make(new SmtCallExpr(intMapping, x.getVariable()), new SmtCallExpr(intMapping, y.getVariable()));
 
@@ -697,7 +697,7 @@ public class SignatureTranslator
 
     SmtExpr nextFieldSmtExpr = translator.fieldsMap.get(nextField).getVariable();
 
-    SmtExpr join = SmtBinaryExpr.Op.JOIN.make(ordSigSmtExpr, nextFieldSmtExpr);
+    SmtExpr join = SmtBinaryExpr.Op.RELATION_JOIN.make(ordSigSmtExpr, nextFieldSmtExpr);
 
     SmtExpr equality = SmtBinaryExpr.Op.EQ.make(ordNext.getVariable(), join);
 
@@ -706,7 +706,7 @@ public class SignatureTranslator
         new Assertion("", ordNext.getName() + " = " + ordSig.label + "." + nextField.label, equality));
 
     // either (next is an empty set and the ordered set is a singleton) or next is nonempty
-    SmtExpr emptySet = SmtUnaryExpr.Op.EMPTYSET.make(translator.setOfBinaryAtomSort);
+    SmtExpr emptySet = SmtUnaryExpr.Op.SET_EMPTY.make(translator.setOfBinaryAtomSort);
     SmtExpr nextIsEmpty = SmtBinaryExpr.Op.EQ.make(ordNext.getVariable(), emptySet);
     SmtExpr setSingleton = SmtBinaryExpr.Op.EQ.make(setSmtExpr, firstSet);
     SmtExpr nextIsNonempty = SmtUnaryExpr.Op.NOT.make(nextIsEmpty);
@@ -722,7 +722,7 @@ public class SignatureTranslator
   {
     FunctionDeclaration ordPrev = new FunctionDeclaration(prefix + "prev", translator.setOfBinaryAtomSort, true);
 
-    SmtUnaryExpr transpose = SmtUnaryExpr.Op.TRANSPOSE.make(ordNext.getVariable());
+    SmtUnaryExpr transpose = SmtUnaryExpr.Op.RELATION_TRANSPOSE.make(ordNext.getVariable());
 
     SmtBinaryExpr equality = SmtBinaryExpr.Op.EQ.make(ordPrev.getVariable(), transpose);
 
@@ -737,7 +737,7 @@ public class SignatureTranslator
   {
     SmtQtExpr ltExpression =
         SmtQtExpr.Op.FORALL.make(
-            SmtBinaryExpr.Op.IMPLIES.make(SmtMultiArityExpr.Op.AND.make(SmtBinaryExpr.Op.MEMBER.make(TranslatorUtils.getTuple(element1), set1.getVariable()), SmtBinaryExpr.Op.MEMBER.make(TranslatorUtils.getTuple(element2), set2.getVariable())), operator.make(new SmtCallExpr(mapping, element1.getVariable()), new SmtCallExpr(mapping, element1.getVariable()))),
+            SmtBinaryExpr.Op.IMPLIES.make(SmtMultiArityExpr.Op.AND.make(SmtBinaryExpr.Op.SET_MEMBER.make(TranslatorUtils.getTuple(element1), set1.getVariable()), SmtBinaryExpr.Op.SET_MEMBER.make(TranslatorUtils.getTuple(element2), set2.getVariable())), operator.make(new SmtCallExpr(mapping, element1.getVariable()), new SmtCallExpr(mapping, element1.getVariable()))),
             element1, element2
                                 );
 

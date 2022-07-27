@@ -71,7 +71,7 @@ public class ExprCallTranslator
       SmtExpr expr = exprTranslator.translateExpr(exprCall.args.get(i), smtEnv);
       if (function.getSort(i) instanceof TupleSort)
       {
-        expr = SmtUnaryExpr.Op.CHOOSE.make(expr);
+        expr = SmtUnaryExpr.Op.SET_CHOOSE.make(expr);
       }
       arguments.add(expr);
     }

@@ -280,7 +280,7 @@ public class ExprTranslator
         Logger.getLogger(ExprTranslator.class.getName()).log(Level.SEVERE, null, ex);
       }
     }
-    return SmtUnaryExpr.Op.EMPTYSET.make(new SetSort(new TupleSort(sorts)));
+    return SmtUnaryExpr.Op.SET_EMPTY.make(new SetSort(new TupleSort(sorts)));
   }
 
   SmtExpr mkUnaryRelationOutOfAtomsOrTuples(List<SmtExpr> atomOrTupleExprs)
@@ -294,7 +294,7 @@ public class ExprTranslator
         if (((Variable) e).getDeclaration().getSort() == translator.atomSort ||
             ((Variable) e).getDeclaration().getSort() == translator.uninterpretedInt)
         {
-          SmtMultiArityExpr tuple = new SmtMultiArityExpr(SmtMultiArityExpr.Op.MKTUPLE, e);
+          SmtMultiArityExpr tuple = new SmtMultiArityExpr(SmtMultiArityExpr.Op.TUPLE, e);
           atomTupleExprs.add(tuple);
         }
         else if (((Variable) e).getDeclaration().getSort() instanceof TupleSort)
@@ -313,7 +313,7 @@ public class ExprTranslator
     }
 
 
-    SmtUnaryExpr singleton = SmtUnaryExpr.Op.SINGLETON.make(atomTupleExprs.get(0));
+    SmtUnaryExpr singleton = SmtUnaryExpr.Op.SET_SINGLETON.make(atomTupleExprs.get(0));
 
     if (atomTupleExprs.size() > 1)
     {
@@ -336,17 +336,17 @@ public class ExprTranslator
       SmtBinaryExpr binaryExpr = (SmtBinaryExpr) expr;
       switch (binaryExpr.getOp())
       {
-        case PRODUCT:
+        case RELATION_PRODUCT:
         {
           if (binaryExpr.getA().containsExpr(variable))
           {
-            SmtExpr nestedBase = SmtBinaryExpr.Op.JOIN.make(base, binaryExpr.getB());
+            SmtExpr nestedBase = SmtBinaryExpr.Op.RELATION_JOIN.make(base, binaryExpr.getB());
             SmtExpr solution = solveForVariable(variable, binaryExpr.getA(), nestedBase);
             return  solution;
           }
           if (binaryExpr.getB().containsExpr(variable))
           {
-            SmtExpr nestedBase = SmtBinaryExpr.Op.JOIN.make(binaryExpr.getA(), base);
+            SmtExpr nestedBase = SmtBinaryExpr.Op.RELATION_JOIN.make(binaryExpr.getA(), base);
             SmtExpr solution = solveForVariable(variable, binaryExpr.getB(), nestedBase);
             return  solution;
           }
