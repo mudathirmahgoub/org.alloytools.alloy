@@ -1,8 +1,8 @@
 package edu.uiowa.smt;
 
-import edu.uiowa.smt.parser.SmtModelVisitor;
-import edu.uiowa.smt.parser.antlr.SmtLexer;
-import edu.uiowa.smt.parser.antlr.SmtParser;
+import edu.uiowa.smt.parser.Cvc5SmtModelVisitor;
+import edu.uiowa.smt.parser.antlr.Cvc5SmtLexer;
+import edu.uiowa.smt.parser.antlr.Cvc5SmtParser;
 import edu.uiowa.smt.smtAst.SmtModel;
 import edu.uiowa.smt.smtAst.SmtUnsatCore;
 import edu.uiowa.smt.smtAst.SmtValues;
@@ -17,7 +17,7 @@ public class SmtResult
   public String satResult;
   public String model;
   public SmtModel smtModel;
-  private SmtModelVisitor visitor;
+  private Cvc5SmtModelVisitor visitor;
 
   public SmtResult()
   {
@@ -31,10 +31,10 @@ public class SmtResult
 
   public SmtModel parseModel(String model)
   {
-    SmtParser parser = getSmtParser(model);
+    Cvc5SmtParser parser = getCvc5SmtParser(model);
 
     ParseTree tree = parser.model();
-    visitor = new SmtModelVisitor();
+    visitor = new Cvc5SmtModelVisitor();
 
     SmtModel smtModel = (SmtModel) visitor.visit(tree);
 
@@ -47,7 +47,7 @@ public class SmtResult
     {
       throw new RuntimeException("Result.parseValues method should only be called after Result.parseModel is called");
     }
-    SmtParser parser = getSmtParser(values);
+    Cvc5SmtParser parser = getCvc5SmtParser(values);
     ParseTree tree = parser.getValue();
     SmtValues smtValues = (SmtValues) this.visitor.visit(tree);
     return smtValues;
@@ -55,18 +55,18 @@ public class SmtResult
 
   public SmtUnsatCore parseUnsatCore(String core)
   {
-    SmtParser parser = getSmtParser(core);
+    Cvc5SmtParser parser = getCvc5SmtParser(core);
     ParseTree tree = parser.getUnsatCore();
-    SmtModelVisitor visitor = new SmtModelVisitor();
+    Cvc5SmtModelVisitor visitor = new Cvc5SmtModelVisitor();
     SmtUnsatCore smtUnsatCore = (SmtUnsatCore) visitor.visit(tree);
     return smtUnsatCore;
   }
 
-  private SmtParser getSmtParser(String values)
+  private Cvc5SmtParser getCvc5SmtParser(String values)
   {
     CharStream charStream = CharStreams.fromString(values);
-    SmtLexer lexer = new SmtLexer(charStream);
+    Cvc5SmtLexer lexer = new Cvc5SmtLexer(charStream);
     CommonTokenStream tokenStream = new CommonTokenStream(lexer);
-    return new SmtParser(tokenStream);
+    return new Cvc5SmtParser(tokenStream);
   }
 }
