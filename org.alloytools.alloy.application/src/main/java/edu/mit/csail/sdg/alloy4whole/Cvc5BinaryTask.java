@@ -155,9 +155,6 @@ public class Cvc5BinaryTask implements WorkerEngine.WorkerTask
         {
           lastXmlFile = commandResult.xmlFileName;
         }
-
-        // ToDo: review when to destroy the process
-        // cvc4Process.destroy();
       }
       else
       {
@@ -217,7 +214,7 @@ public class Cvc5BinaryTask implements WorkerEngine.WorkerTask
 
     if (!CvcIncludeCommandScope.get())
     {
-      ErrorWarning warning = new ErrorWarning(command.pos, "The scope is ignored by cvc4");
+      ErrorWarning warning = new ErrorWarning(command.pos, "The scope is ignored by cvc5");
       callbackWarning(warning);
     }
 
@@ -255,7 +252,7 @@ public class Cvc5BinaryTask implements WorkerEngine.WorkerTask
     }
     else
     {
-      callbackPlain("No satResult returned from cvc4\n");
+      callbackPlain("No satResult returned from cvc5\n");
       commandResult.result = "";
     }
 
@@ -266,7 +263,7 @@ public class Cvc5BinaryTask implements WorkerEngine.WorkerTask
   {
     String smtCore = cvc5BinaryProcess.sendCommand(SmtLibPrinter.GET_UNSAT_CORE);
 
-    callbackPlain("CVC4 found an ");
+    callbackPlain("cvc5 found an ");
     Object[] modelMessage = new Object[] {"link", "unsat core", "MSG: " + smtCore};
     workerCallback.callback(modelMessage);
     callbackPlain("\n");
@@ -345,7 +342,7 @@ public class Cvc5BinaryTask implements WorkerEngine.WorkerTask
   }
 
   /**
-   * gets a model from cvc4 if the satResult is sat and saves it into a new xml
+   * gets a model from cvc5 if the satResult is sat and saves it into a new xml
    * file and return its path
    *
    * @param commandIndex the index of the sat command
@@ -357,7 +354,7 @@ public class Cvc5BinaryTask implements WorkerEngine.WorkerTask
   {
     String smtModel = cvc5BinaryProcess.sendCommand(SmtLibPrinter.GET_MODEL);
 
-    callbackPlain("CVC4 found a ");
+    callbackPlain("cvc5 found a ");
     Object[] modelMessage = new Object[] {"link", "model", "MSG: " + smtModel};
     workerCallback.callback(modelMessage);
     callbackPlain("\n");

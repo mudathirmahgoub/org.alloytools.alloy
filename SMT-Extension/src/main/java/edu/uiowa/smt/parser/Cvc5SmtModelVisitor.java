@@ -22,22 +22,6 @@ import java.util.stream.Collectors;
 public class Cvc5SmtModelVisitor extends Cvc5SmtBaseVisitor<SmtAst>
 {
   private SmtEnv root = new SmtEnv();
-
-  private static final Map<String, String> cvc5ToCvc4 = new HashMap<String, String>() {
-    {
-      put("as set.empty", "as emptyset");
-      put("set.singleton", "singleton");
-      put("set.complement", "complement");
-      put("rel.transpose", "transpose");
-      put("set.union", "union");
-      put("set.inter", "intersection");
-      put("set.insert", "insert");
-      put("tuple", "mkTuple");
-      put("=", "=");
-      put("ite", "ite");
-    };
-  };
-
   @Override
   public SmtAst visitModel(Cvc5SmtParser.ModelContext ctx)
   {
@@ -208,7 +192,7 @@ public class Cvc5SmtModelVisitor extends Cvc5SmtBaseVisitor<SmtAst>
   public SmtAst visitUnaryExpression(Cvc5SmtParser.UnaryExpressionContext ctx, SmtEnv smtEnv)
   {
     SmtExpr smtExpr = (SmtExpr) this.visitExpression(ctx.expression(), smtEnv);
-    SmtUnaryExpr.Op operator = SmtUnaryExpr.Op.getOp(cvc5ToCvc4.get(ctx.UnaryOperator().getText()));
+    SmtUnaryExpr.Op operator = SmtUnaryExpr.Op.getOp(ctx.UnaryOperator().getText());
     return operator.make(smtExpr);
   }
 
@@ -217,7 +201,7 @@ public class Cvc5SmtModelVisitor extends Cvc5SmtBaseVisitor<SmtAst>
     SmtExpr left = (SmtExpr) this.visitExpression(ctx.expression(0), smtEnv);
     SmtExpr right = (SmtExpr) this.visitExpression(ctx.expression(1), smtEnv);
 
-    SmtBinaryExpr.Op operator = SmtBinaryExpr.Op.getOp(cvc5ToCvc4.get(ctx.BinaryOperator().getText()));
+    SmtBinaryExpr.Op operator = SmtBinaryExpr.Op.getOp(ctx.BinaryOperator().getText());
     return operator.make(left, right);
   }
 
@@ -241,7 +225,7 @@ public class Cvc5SmtModelVisitor extends Cvc5SmtBaseVisitor<SmtAst>
             .map(expression -> (SmtExpr) this.visitExpression(expression, smtEnv))
             .collect(Collectors.toList());
     String opText = ctx.MultiArityOperator().getText();
-    SmtMultiArityExpr.Op operator = SmtMultiArityExpr.Op.getOp(cvc5ToCvc4.get(opText));
+    SmtMultiArityExpr.Op operator = SmtMultiArityExpr.Op.getOp(opText);
 
     return operator.make(smtExprs);
   }
@@ -260,7 +244,7 @@ public class Cvc5SmtModelVisitor extends Cvc5SmtBaseVisitor<SmtAst>
     newSmtEnv.putAll(variables);
     SmtExpr smtExpr = (SmtExpr) this.visitExpression(ctx.expression(), newSmtEnv);
 
-    SmtQtExpr.Op operator = SmtQtExpr.Op.getOp(cvc5ToCvc4.get(ctx.Quantifier().getText()));
+    SmtQtExpr.Op operator = SmtQtExpr.Op.getOp(ctx.Quantifier().getText());
     return operator.make(smtExpr, smtVariables);
   }
 

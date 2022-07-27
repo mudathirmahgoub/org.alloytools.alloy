@@ -1348,7 +1348,7 @@ public class ExprBinaryTranslator
 
   private SmtExpr translateCardinality(ExprBinary expr, SmtBinaryExpr.Op op, SmtEnv smtEnv)
   {
-    // CVC4 doesn't support comparison  between 2 cardinality expressions
+    // cvc5 doesn't support comparison  between 2 cardinality expressions
     if
     (expr.left instanceof ExprUnary &&
         ((ExprUnary) expr.left).op == ExprUnary.Op.CARDINALITY &&
@@ -1356,7 +1356,7 @@ public class ExprBinaryTranslator
         ((ExprUnary) expr.right).op == ExprUnary.Op.CARDINALITY
     )
     {
-      throw new UnsupportedOperationException("CVC4 doesn't support comparision between 2 cardinality expressions.");
+      throw new UnsupportedOperationException("cvc5 doesn't support comparison between 2 cardinality expressions.");
     }
 
     if
@@ -1371,7 +1371,7 @@ public class ExprBinaryTranslator
                     ((ExprConstant) expr.left).op == ExprConstant.Op.NUMBER)))
     )
     {
-      throw new UnsupportedOperationException("CVC4 only supports cardinality with constant numbers");
+      throw new UnsupportedOperationException("cvc5 only supports cardinality with constant numbers");
     }
 
 

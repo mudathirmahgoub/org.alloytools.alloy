@@ -52,7 +52,7 @@ public class ExprUnaryTranslator
       case LONE:
         return translateLone(exprUnary, smtEnv);
       case CARDINALITY:
-        throw new UnsupportedOperationException("CVC4 doesn't support cardinality operator with finite relations!");
+        throw new UnsupportedOperationException("cvc5 doesn't support cardinality operator with finite relations!");
       case TRANSPOSE:
         return translateTranspose(exprUnary, smtEnv);
       case CLOSURE:

@@ -96,7 +96,7 @@ public class SmtModel extends SmtAst
     {
       throw new UnsupportedOperationException();
     }
-    // make sure this is a cvc4 model
+    // make sure this is a cvc5 model
     for (FunctionDeclaration declaration : this.functions)
     {
       if (!(declaration instanceof FunctionDefinition))
