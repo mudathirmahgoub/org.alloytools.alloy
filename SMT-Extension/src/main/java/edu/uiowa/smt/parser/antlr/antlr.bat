@@ -1,1 +1,1 @@
-java -jar antlr-4.7.2-complete.jar Smt.g4 -visitor -package edu.uiowa.smt.parser.antlr
+java -jar antlr-4.7.2-complete.jar Cvc5Smt.g4 -visitor -package edu.uiowa.smt.parser.antlr
