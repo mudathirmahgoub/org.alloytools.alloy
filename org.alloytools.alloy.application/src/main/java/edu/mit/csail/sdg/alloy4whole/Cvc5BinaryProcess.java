@@ -110,7 +110,7 @@ public class Cvc5BinaryProcess
 
     // tell cvc5 the input language is smt2
     command.add("--lang=smtlib2.6");
-    command.add("--block-models="  + blockModelOption);
+    //  command.add("--block-models="  + blockModelOption);
     //        command.add("--print-success");
 
     processBuilder.command(command);
