@@ -18,7 +18,6 @@ public class Cvc5BinaryProcess
   public static final String OS = System.getProperty("os.name");
   public static final String SEP = File.separator;
   public static final String BIN_PATH = SimpleGUI.alloyHome(null) + SEP + "binary" + SEP;
-  public static String blockModelOption = A4Preferences.CvcLiterals;
 
   private Process process;
   private Scanner scanner;
@@ -110,8 +109,6 @@ public class Cvc5BinaryProcess
 
     // tell cvc5 the input language is smt2
     command.add("--lang=smtlib2.6");
-    //  command.add("--block-models="  + blockModelOption);
-    //        command.add("--print-success");
 
     processBuilder.command(command);
 

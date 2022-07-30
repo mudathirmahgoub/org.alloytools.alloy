@@ -2,6 +2,7 @@ package edu.mit.csail.sdg.alloy4whole;
 
 import static edu.mit.csail.sdg.alloy4.A4Preferences.ImplicitThis;
 
+import edu.mit.csail.sdg.alloy4.A4Preferences;
 import edu.mit.csail.sdg.alloy4.Version;
 import edu.mit.csail.sdg.alloy4.WorkerEngine;
 import edu.mit.csail.sdg.alloy4whole.instances.AlloySolution;
@@ -67,7 +68,8 @@ public class Cvc5BinaryEnumerationTask implements WorkerEngine.WorkerTask
       }
 
       // (block-model)
-      Cvc5BinaryTask.cvc5BinaryProcess.sendCommand(SmtLibPrinter.BLOCK_MODEL);
+      String blockModel = "(block-model :" + A4Preferences.CvcBlockModel.get() + ")";
+      Cvc5BinaryTask.cvc5BinaryProcess.sendCommand(blockModel);
       // (check-sat)
       String result = Cvc5BinaryTask.cvc5BinaryProcess.sendCommand(SmtLibPrinter.CHECK_SAT);
       if (result != null)

@@ -2,6 +2,7 @@ package edu.mit.csail.sdg.alloy4whole;
 
 import static edu.mit.csail.sdg.alloy4.A4Preferences.ImplicitThis;
 
+import edu.mit.csail.sdg.alloy4.A4Preferences;
 import edu.mit.csail.sdg.alloy4.Version;
 import edu.mit.csail.sdg.alloy4.WorkerEngine;
 import edu.mit.csail.sdg.alloy4whole.instances.AlloySolution;
@@ -74,7 +75,14 @@ public class Cvc5ApiEnumerationTask implements WorkerEngine.WorkerTask
       Solver solver = Cvc5Task.cvc5Visitor.getSolver();
 
       // (block-model)
-      solver.blockModel(BlockModelsMode.LITERALS);
+      if(A4Preferences.CvcBlockModel.get().equals(A4Preferences.CvcLiterals))
+      {
+        solver.blockModel(BlockModelsMode.LITERALS);
+      }
+      else
+      {
+        solver.blockModel(BlockModelsMode.VALUES);
+      }
       // (check-sat)
       Result result = solver.checkSat();
 

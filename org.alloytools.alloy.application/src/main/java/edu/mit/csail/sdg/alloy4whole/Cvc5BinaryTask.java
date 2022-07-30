@@ -818,7 +818,6 @@ public class Cvc5BinaryTask implements WorkerEngine.WorkerTask
     alloySettings.produceUnsatCore = CvcProduceUnsatCores.get();
     alloySettings.finiteModelFinding = CvcFiniteModelFind.get();
     alloySettings.integerSingletonsOnly = CvcIntegerSingletonsOnly.get();
-    Cvc5BinaryProcess.blockModelOption = CvcBlockModel.get();
   }
 
   // ToDo: replace this with a call edu.uiowa.smt.Result.parseModel
