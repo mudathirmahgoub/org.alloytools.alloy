@@ -48,29 +48,6 @@ public class Cvc5ApiEnumerationTask implements WorkerEngine.WorkerTask
         return;
       }
 
-      // read the solution from the xml file
-      alloySolution = AlloySolution.readFromXml(xmlFileName);
-      alloyFiles = alloySolution.getAlloyFiles();
-      if (alloySolution.instances.size() == 0)
-      {
-        throw new Exception("No instance found in the file " + xmlFileName);
-      }
-      // read the command from the only instance in the file
-      String command = alloySolution.instances.get(0).command;
-      originalFileName = alloySolution.instances.get(0).fileName;
-
-      translation = translateToSMT();
-
-      // find the index of the matching command
-      List<Command> commands = translation.getCommands();
-      for (commandIndex = 0; commandIndex < commands.size(); commandIndex++)
-      {
-        if (command.equals(commands.get(commandIndex).toString()))
-        {
-          break;
-        }
-      }
-
       Solver solver = Cvc5ApiTask.cvc5ApiVisitor.getSolver();
 
       // (block-model)
