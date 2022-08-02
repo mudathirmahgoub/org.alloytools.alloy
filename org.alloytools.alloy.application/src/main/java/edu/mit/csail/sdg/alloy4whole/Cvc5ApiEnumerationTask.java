@@ -14,14 +14,13 @@ import edu.uiowa.smt.smtAst.Declaration;
 import edu.uiowa.smt.smtAst.SmtModel;
 import io.github.cvc5.*;
 import io.github.cvc5.modes.*;
-
-import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
 import java.util.List;
+import javax.swing.*;
 
 public class Cvc5ApiEnumerationTask implements WorkerEngine.WorkerTask
 {
@@ -42,7 +41,7 @@ public class Cvc5ApiEnumerationTask implements WorkerEngine.WorkerTask
   {
     try
     {
-      if (!xmlFileName.equals(Cvc5Task.lastXmlFile))
+      if (!xmlFileName.equals(Cvc5ApiTask.lastXmlFile))
       {
         workerCallback.callback(new Object[] {
             "pop", "You can only enumerate the solutions of the last executed command."});
@@ -72,10 +71,10 @@ public class Cvc5ApiEnumerationTask implements WorkerEngine.WorkerTask
         }
       }
 
-      Solver solver = Cvc5Task.cvc5Visitor.getSolver();
+      Solver solver = Cvc5ApiTask.cvc5Visitor.getSolver();
 
       // (block-model)
-      if(A4Preferences.CvcBlockModel.get().equals(A4Preferences.CvcLiterals))
+      if (A4Preferences.CvcBlockModel.get().equals(A4Preferences.CvcLiterals))
       {
         solver.blockModel(BlockModelsMode.LITERALS);
       }
@@ -117,15 +116,15 @@ public class Cvc5ApiEnumerationTask implements WorkerEngine.WorkerTask
   private Translation translateToSMT() throws IOException
   {
     int resolutionMode = (Version.experimental && ImplicitThis.get()) ? 2 : 1;
-    Cvc5Task.setAlloySettings();
+    Cvc5ApiTask.setAlloySettings();
     Translation translation =
-        Utils.translate(alloyFiles, originalFileName, resolutionMode, Cvc5Task.alloySettings);
+        Utils.translate(alloyFiles, originalFileName, resolutionMode, Cvc5ApiTask.alloySettings);
     return translation;
   }
 
   private void prepareInstance(int commandIndex) throws Exception
   {
-    Cvc5Visitor cvc5Visitor = Cvc5Task.cvc5Visitor;
+    Cvc5Visitor cvc5Visitor = Cvc5ApiTask.cvc5Visitor;
     List<Triplet<String, Declaration, Term>> termSymbols = cvc5Visitor.getTermSymbols();
     Term[] terms = new Term[termSymbols.size()];
     for (int j = 0; j < termSymbols.size(); j++)
@@ -145,13 +144,13 @@ public class Cvc5ApiEnumerationTask implements WorkerEngine.WorkerTask
     String smtModel = solver.getModel(sorts.toArray(new Sort[0]), terms);
     Command command = translation.getCommands().get(commandIndex);
 
-    SmtModel model = Cvc5Task.parseModel(smtModel);
+    SmtModel model = Cvc5ApiTask.parseModel(smtModel);
 
     File xmlFile = new File(xmlFileName);
 
     String xmlFilePath = xmlFile.getAbsolutePath();
 
-    Cvc5Task.writeModelToAlloyXmlFile(
+    Cvc5ApiTask.writeModelToAlloyXmlFile(
         translation, model, xmlFilePath, originalFileName, command, alloySolution.getAlloyFiles());
   }
 }
