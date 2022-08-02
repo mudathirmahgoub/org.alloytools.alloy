@@ -9,7 +9,7 @@
 package edu.uiowa.smt.smtAst;
 
 import edu.uiowa.smt.AbstractTranslator;
-import edu.uiowa.smt.printers.Cvc5Visitor;
+import edu.uiowa.smt.printers.Cvc5ApiVisitor;
 import edu.uiowa.smt.printers.SmtLibPrettyPrinter;
 import java.math.BigInteger;
 import java.util.*;
@@ -180,11 +180,11 @@ public class SmtScript extends SmtModel
     return prettyPrinter.getSmtLib();
   }
 
-  public Cvc5Visitor toCvc5(SmtSettings settings)
+  public Cvc5ApiVisitor toCvc5(SmtSettings settings)
   {
-    Cvc5Visitor cvc5Visitor = new Cvc5Visitor(settings);
-    cvc5Visitor.visit(this);
-    return cvc5Visitor;
+    Cvc5ApiVisitor cvc5ApiVisitor = new Cvc5ApiVisitor(settings);
+    cvc5ApiVisitor.visit(this);
+    return cvc5ApiVisitor;
   }
 
   public String print(SmtSettings settings)

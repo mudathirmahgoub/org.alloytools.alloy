@@ -18,7 +18,7 @@ import edu.uiowa.smt.AbstractTranslator;
 import edu.uiowa.smt.parser.Cvc5SmtModelVisitor;
 import edu.uiowa.smt.parser.antlr.Cvc5SmtLexer;
 import edu.uiowa.smt.parser.antlr.Cvc5SmtParser;
-import edu.uiowa.smt.printers.Cvc5Visitor;
+import edu.uiowa.smt.printers.Cvc5ApiVisitor;
 import edu.uiowa.smt.smtAst.*;
 import io.github.cvc5.*;
 import java.io.*;
@@ -45,7 +45,7 @@ public class Cvc5ApiTask implements WorkerEngine.WorkerTask
   public static AlloySettings alloySettings = AlloySettings.getInstance();
   public static String lastXmlFile;
 
-  static Cvc5Visitor cvc5Visitor;
+  static Cvc5ApiVisitor cvc5ApiVisitor;
 
   Cvc5ApiTask(Map<String, String> alloyFiles,
               String originalFileName,
@@ -72,8 +72,8 @@ public class Cvc5ApiTask implements WorkerEngine.WorkerTask
       final long endTranslate = System.currentTimeMillis();
 
       SmtScript optimizedScript = translation.getOptimizedSmtScript();
-      cvc5Visitor = optimizedScript.toCvc5(translation.getAlloySettings());
-      Solver solver = cvc5Visitor.getSolver();
+      cvc5ApiVisitor = optimizedScript.toCvc5(translation.getAlloySettings());
+      Solver solver = cvc5ApiVisitor.getSolver();
 
       CommandResult commandResult;
 
@@ -84,15 +84,15 @@ public class Cvc5ApiTask implements WorkerEngine.WorkerTask
         for (int index = 0; index < translation.getCommands().size() - 1; index++)
         {
           // (push)
-          cvc5Visitor.push();
-          commandResult = solveCommand(index, solver, cvc5Visitor);
+          cvc5ApiVisitor.push();
+          commandResult = solveCommand(index, solver, cvc5ApiVisitor);
           // (pop)
-          cvc5Visitor.pop();
+          cvc5ApiVisitor.pop();
           this.commandResults.add(commandResult);
         }
 
         // solve the last command without push and pop to view multiple models if sat
-        commandResult = solveCommand(translation.getCommands().size() - 1, solver, cvc5Visitor);
+        commandResult = solveCommand(translation.getCommands().size() - 1, solver, cvc5ApiVisitor);
         this.commandResults.add(commandResult);
 
         // display a summary of the results
@@ -101,7 +101,7 @@ public class Cvc5ApiTask implements WorkerEngine.WorkerTask
       else // execute only the target command
       {
         // solve the target command without push and pop to view multiple models if sat
-        commandResult = solveCommand(targetCommandIndex, solver, cvc5Visitor);
+        commandResult = solveCommand(targetCommandIndex, solver, cvc5ApiVisitor);
       }
 
       if (commandResult != null && commandResult.xmlFileName != null)
@@ -152,10 +152,10 @@ public class Cvc5ApiTask implements WorkerEngine.WorkerTask
     }
   }
 
-  private CommandResult solveCommand(int index, Solver solver, Cvc5Visitor cvc5Visitor)
+  private CommandResult solveCommand(int index, Solver solver, Cvc5ApiVisitor cvc5ApiVisitor)
       throws Exception
   {
-    cvc5Visitor.visit(translation.getOptimizedSmtScript(index));
+    cvc5ApiVisitor.visit(translation.getOptimizedSmtScript(index));
     Command command = translation.getCommands().get(index);
 
     callbackBold("Executing " + command + "\n");
@@ -183,17 +183,17 @@ public class Cvc5ApiTask implements WorkerEngine.WorkerTask
 
     if (result.isSat())
     {
-      commandResult.xmlFileName = prepareInstance(index, duration, solver, cvc5Visitor);
+      commandResult.xmlFileName = prepareInstance(index, duration, solver, cvc5ApiVisitor);
     }
     if (result.isUnsat() && CvcProduceUnsatCores.get())
     {
-      commandResult.unsatCore = prepareUnsatCore(index, duration, solver, cvc5Visitor);
+      commandResult.unsatCore = prepareUnsatCore(index, duration, solver, cvc5ApiVisitor);
     }
     return commandResult;
   }
 
   private Set<Pos> prepareUnsatCore(
-      int commandIndex, long duration, Solver solver, Cvc5Visitor cvc5Visitor) throws Exception
+      int commandIndex, long duration, Solver solver, Cvc5ApiVisitor cvc5ApiVisitor) throws Exception
   {
     Term[] coreTerms = solver.getUnsatCore();
     String corString =
@@ -204,7 +204,7 @@ public class Cvc5ApiTask implements WorkerEngine.WorkerTask
     workerCallback.callback(modelMessage);
     callbackPlain("\n");
 
-    List<String> coreAssertions = cvc5Visitor.getCoreAssertions(coreTerms);
+    List<String> coreAssertions = cvc5ApiVisitor.getCoreAssertions(coreTerms);
     String alloyCore = coreAssertions.stream().map(s -> "|" + s + "|").collect(Collectors.joining("\n"));
     alloyCore = "(" + alloyCore + ")";
     callbackPlain("cvc5 found an ");
@@ -287,16 +287,16 @@ public class Cvc5ApiTask implements WorkerEngine.WorkerTask
    * @throws Exception
    */
   private String prepareInstance(
-      int commandIndex, long duration, Solver solver, Cvc5Visitor cvc5Visitor) throws Exception
+      int commandIndex, long duration, Solver solver, Cvc5ApiVisitor cvc5ApiVisitor) throws Exception
   {
-    List<Triplet<String, Declaration, Term>> termSymbols = cvc5Visitor.getTermSymbols();
+    List<Triplet<String, Declaration, Term>> termSymbols = cvc5ApiVisitor.getTermSymbols();
     Term[] terms = new Term[termSymbols.size()];
     for (int j = 0; j < termSymbols.size(); j++)
     {
       terms[j] = termSymbols.get(j).third;
     }
     Set<Sort> sorts = new HashSet<>();
-    Map<String, Sort> sortSymbols = cvc5Visitor.getSortSymbols();
+    Map<String, Sort> sortSymbols = cvc5ApiVisitor.getSortSymbols();
     for (Map.Entry<String, Sort> entry : sortSymbols.entrySet())
     {
       if (entry.getValue().isUninterpretedSort())

@@ -9,7 +9,7 @@ import edu.mit.csail.sdg.alloy4whole.instances.AlloySolution;
 import edu.mit.csail.sdg.ast.Command;
 import edu.uiowa.alloy2smt.Utils;
 import edu.uiowa.alloy2smt.translators.Translation;
-import edu.uiowa.smt.printers.Cvc5Visitor;
+import edu.uiowa.smt.printers.Cvc5ApiVisitor;
 import edu.uiowa.smt.smtAst.Declaration;
 import edu.uiowa.smt.smtAst.SmtModel;
 import io.github.cvc5.*;
@@ -71,7 +71,7 @@ public class Cvc5ApiEnumerationTask implements WorkerEngine.WorkerTask
         }
       }
 
-      Solver solver = Cvc5ApiTask.cvc5Visitor.getSolver();
+      Solver solver = Cvc5ApiTask.cvc5ApiVisitor.getSolver();
 
       // (block-model)
       if (A4Preferences.CvcBlockModel.get().equals(A4Preferences.CvcLiterals))
@@ -124,15 +124,15 @@ public class Cvc5ApiEnumerationTask implements WorkerEngine.WorkerTask
 
   private void prepareInstance(int commandIndex) throws Exception
   {
-    Cvc5Visitor cvc5Visitor = Cvc5ApiTask.cvc5Visitor;
-    List<Triplet<String, Declaration, Term>> termSymbols = cvc5Visitor.getTermSymbols();
+    Cvc5ApiVisitor cvc5ApiVisitor = Cvc5ApiTask.cvc5ApiVisitor;
+    List<Triplet<String, Declaration, Term>> termSymbols = cvc5ApiVisitor.getTermSymbols();
     Term[] terms = new Term[termSymbols.size()];
     for (int j = 0; j < termSymbols.size(); j++)
     {
       terms[j] = termSymbols.get(j).third;
     }
     Set<Sort> sorts = new HashSet<>();
-    Map<String, Sort> sortSymbols = cvc5Visitor.getSortSymbols();
+    Map<String, Sort> sortSymbols = cvc5ApiVisitor.getSortSymbols();
     for (Map.Entry<String, Sort> entry : sortSymbols.entrySet())
     {
       if (entry.getValue().isUninterpretedSort())
@@ -140,7 +140,7 @@ public class Cvc5ApiEnumerationTask implements WorkerEngine.WorkerTask
         sorts.add(entry.getValue());
       }
     }
-    Solver solver = cvc5Visitor.getSolver();
+    Solver solver = cvc5ApiVisitor.getSolver();
     String smtModel = solver.getModel(sorts.toArray(new Sort[0]), terms);
     Command command = translation.getCommands().get(commandIndex);
 

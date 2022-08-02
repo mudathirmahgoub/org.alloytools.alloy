@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class Cvc5Visitor extends AbstractSmtAstVisitor
+public class Cvc5ApiVisitor extends AbstractSmtAstVisitor
 {
   protected Solver solver = new Solver();
   protected Map<String, Sort> sortSymbols = new HashMap<>();
@@ -33,12 +33,12 @@ public class Cvc5Visitor extends AbstractSmtAstVisitor
 
   protected SmtSettings smtSettings;
 
-  public Cvc5Visitor(SmtSettings smtSettings)
+  public Cvc5ApiVisitor(SmtSettings smtSettings)
   {
     this.smtSettings = smtSettings;
   }
 
-  public Cvc5Visitor()
+  public Cvc5ApiVisitor()
   {
     this.smtSettings = SmtSettings.Default;
   }
