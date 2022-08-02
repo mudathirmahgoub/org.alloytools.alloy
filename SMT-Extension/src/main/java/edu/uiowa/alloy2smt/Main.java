@@ -32,6 +32,8 @@ public class Main
   public static final String OUTPUT_DIR = System.getProperty("java.io.tmpdir");
   public static final String DEFAULT_OUTPUT_FILE = "output.smt2";
 
+  public static final BlockModelsMode blockModelsMode = BlockModelsMode.LITERALS;
+
   public static boolean isValidInputFilePath(String path)
   {
     File inputFile = new File(path);
@@ -201,18 +203,19 @@ public class Main
         }
         System.out.println(solver.getModel(sorts.toArray(new Sort[0]), terms));
         System.out.println(
-                "-------------------------------------------------------------------------------------------");
-        solver.blockModel(BlockModelsMode.LITERALS);
+            "-------------------------------------------------------------------------------------------");
+        solver.blockModel(blockModelsMode);
         Result result2 = solver.checkSat();
-        if(result2.isSat())
+        if (result2.isSat())
         {
-
-          System.out.println("A second instance was found after blocking models with literals mode:");
+          System.out.println("A second instance was found after blocking models with "
+              + blockModelsMode + " mode:");
           System.out.println(solver.getModel(sorts.toArray(new Sort[0]), terms));
         }
-        else if(result2.isUnsat())
+        else if (result2.isUnsat())
         {
-          System.out.println("No more instances were found after blocking models with literals mode.");
+          System.out.println("No more instances were found after blocking models with "
+              + blockModelsMode + " mode.");
         }
       }
       if (result.isUnsat())
