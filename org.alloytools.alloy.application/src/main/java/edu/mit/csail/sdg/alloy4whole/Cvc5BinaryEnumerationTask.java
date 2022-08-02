@@ -88,7 +88,7 @@ public class Cvc5BinaryEnumerationTask implements WorkerEngine.WorkerTask
                     + "Note: due to symmetry breaking and other optimizations,\n"
                     + "some equivalent solutions may have been omitted."});
             break;
-          default: workerCallback.callback(new Object[] {"pop", "cvc5 solver returned unknown."});
+          default: workerCallback.callback(new Object[] {"pop", "cvc5 returned: " + result});
         }
       }
     }
