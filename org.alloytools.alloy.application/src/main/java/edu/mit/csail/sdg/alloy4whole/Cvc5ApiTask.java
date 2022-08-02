@@ -30,7 +30,7 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 
-public class Cvc5Task implements WorkerEngine.WorkerTask
+public class Cvc5ApiTask implements WorkerEngine.WorkerTask
 {
   public static final String tempDirectory = System.getProperty("java.io.tmpdir");
 
@@ -47,10 +47,10 @@ public class Cvc5Task implements WorkerEngine.WorkerTask
 
   static Cvc5Visitor cvc5Visitor;
 
-  Cvc5Task(Map<String, String> alloyFiles,
-      String originalFileName,
-      int resolutionMode,
-      int targetCommandIndex)
+  Cvc5ApiTask(Map<String, String> alloyFiles,
+              String originalFileName,
+              int resolutionMode,
+              int targetCommandIndex)
   {
     this.alloyFiles = alloyFiles;
     this.originalFileName = originalFileName;

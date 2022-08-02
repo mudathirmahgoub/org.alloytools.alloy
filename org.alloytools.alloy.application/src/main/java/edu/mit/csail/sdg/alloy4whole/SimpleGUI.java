@@ -1282,7 +1282,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
             task = new Cvc5BinaryTask(alloyFiles, opt.originalFilename, resolutionMode, i);
         }
         else if (RelationalSolver.get().equals(cvc5Api)){
-            task = new Cvc5Task(alloyFiles, opt.originalFilename, resolutionMode, i);
+            task = new Cvc5ApiTask(alloyFiles, opt.originalFilename, resolutionMode, i);
         }
         else {
             throw new RuntimeException("Relation solver unspecified");
