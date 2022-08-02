@@ -72,7 +72,7 @@ public class Cvc5ApiTask implements WorkerEngine.WorkerTask
       final long endTranslate = System.currentTimeMillis();
 
       SmtScript optimizedScript = translation.getOptimizedSmtScript();
-      cvc5ApiVisitor = optimizedScript.toCvc5(translation.getAlloySettings());
+      cvc5ApiVisitor = optimizedScript.toCvc5Api(translation.getAlloySettings());
       Solver solver = cvc5ApiVisitor.getSolver();
 
       CommandResult commandResult;
@@ -199,7 +199,7 @@ public class Cvc5ApiTask implements WorkerEngine.WorkerTask
     String corString =
         Arrays.asList(coreTerms).stream().map(t -> t.toString()).collect(Collectors.joining("\n"));
 
-    callbackPlain("cvc5 found an ");
+    callbackPlain("cvc5 Api found an ");
     Object[] modelMessage = new Object[] {"link", "SMT unsat core", "MSG: " + corString};
     workerCallback.callback(modelMessage);
     callbackPlain("\n");
@@ -207,7 +207,7 @@ public class Cvc5ApiTask implements WorkerEngine.WorkerTask
     List<String> coreAssertions = cvc5ApiVisitor.getCoreAssertions(coreTerms);
     String alloyCore = coreAssertions.stream().map(s -> "|" + s + "|").collect(Collectors.joining("\n"));
     alloyCore = "(" + alloyCore + ")";
-    callbackPlain("cvc5 found an ");
+    callbackPlain("cvc5 Api found an ");
     Object[] anotherCore = new Object[] {"link", "Alloy unsat core", "MSG: " + alloyCore};
     workerCallback.callback(anotherCore);
     callbackPlain("\n");
@@ -306,7 +306,7 @@ public class Cvc5ApiTask implements WorkerEngine.WorkerTask
     }
     String smtModel = solver.getModel(sorts.toArray(new Sort[0]), terms);
 
-    callbackPlain("cvc5 found a ");
+    callbackPlain("cvc5 Api found a ");
     Object[] modelMessage = new Object[] {"link", "model", "MSG: " + smtModel};
     workerCallback.callback(modelMessage);
     callbackPlain("\n");

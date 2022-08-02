@@ -101,7 +101,7 @@ public class Cvc5ApiEnumerationTask implements WorkerEngine.WorkerTask
       }
       else
       {
-        workerCallback.callback(new Object[] {"pop", "cvc5 solver returned unknown."});
+        workerCallback.callback(new Object[] {"pop", "cvc5 Api solver returned unknown."});
       }
     }
     catch (Exception exception)

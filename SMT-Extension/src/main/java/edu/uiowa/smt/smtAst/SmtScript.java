@@ -180,7 +180,7 @@ public class SmtScript extends SmtModel
     return prettyPrinter.getSmtLib();
   }
 
-  public Cvc5ApiVisitor toCvc5(SmtSettings settings)
+  public Cvc5ApiVisitor toCvc5Api(SmtSettings settings)
   {
     Cvc5ApiVisitor cvc5ApiVisitor = new Cvc5ApiVisitor(settings);
     cvc5ApiVisitor.visit(this);

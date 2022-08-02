@@ -173,7 +173,7 @@ public class Main
       Translation translation, SmtScript optimizedScript, AlloySettings settings)
       throws CVC5ApiException
   {
-    Cvc5ApiVisitor cvc5ApiVisitor = optimizedScript.toCvc5(settings);
+    Cvc5ApiVisitor cvc5ApiVisitor = optimizedScript.toCvc5Api(settings);
     Solver solver = cvc5ApiVisitor.getSolver();
     for (int i = 0; i < translation.getCommands().size(); i++)
     {
