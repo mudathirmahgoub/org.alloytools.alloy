@@ -615,16 +615,6 @@ public class Cvc5ApiVisitor extends AbstractSmtAstVisitor
     }
   }
 
-  public void push() throws CVC5ApiException
-  {
-    assertionsSizeBeforeLastPush = currentAssertions.size();
-    solver.push();
-  }
-  public void pop() throws CVC5ApiException
-  {
-    currentAssertions.subList(assertionsSizeBeforeLastPush, currentAssertions.size()).clear();
-    solver.pop();
-  }
   public List<String> getCoreAssertions(Term[] coreTerms)
   {
     List<String> coreAssertions = new ArrayList<>();

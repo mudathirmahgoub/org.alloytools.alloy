@@ -78,10 +78,10 @@ public class Cvc5ApiTask implements WorkerEngine.WorkerTask
         for (int index = 0; index < translation.getCommands().size() - 1; index++)
         {
           // (push)
-          cvc5ApiVisitor.push();
+          solver.push();
           commandResult = solveCommand(index, solver, cvc5ApiVisitor);
           // (pop)
-          cvc5ApiVisitor.pop();
+          solver.pop();
           this.commandResults.add(commandResult);
         }
 
@@ -207,7 +207,17 @@ public class Cvc5ApiTask implements WorkerEngine.WorkerTask
     callbackPlain("\n");
 
     SmtUnsatCore smtUnsatCore = parseUnsatCore(alloyCore);
-    AlloyUnsatCore alloyUnsatCore = AlloyUnsatCore.fromSmtUnsatCore(smtUnsatCore);
+    AlloyUnsatCore alloyUnsatCore;
+    try
+    {
+      alloyUnsatCore = AlloyUnsatCore.fromSmtUnsatCore(smtUnsatCore);
+    }
+    catch (Exception e)
+    {
+      // could not parse alloy unsat core
+      return new HashSet<>();
+    }
+
     Set<Pos> positions = alloyUnsatCore.getPositions();
 
     String coreMessage = getCoreMessage(positions);
