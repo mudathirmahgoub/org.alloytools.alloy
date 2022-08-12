@@ -77,11 +77,9 @@ public class Cvc5ApiTask implements WorkerEngine.WorkerTask
         // surround each command except the last one with (push) and (pop)
         for (int index = 0; index < translation.getCommands().size() - 1; index++)
         {
-          // (push)
-          solver.push();
+          cvc5ApiVisitor.push();
           commandResult = solveCommand(index, solver, cvc5ApiVisitor);
-          // (pop)
-          solver.pop();
+          cvc5ApiVisitor.pop();
           this.commandResults.add(commandResult);
         }
 

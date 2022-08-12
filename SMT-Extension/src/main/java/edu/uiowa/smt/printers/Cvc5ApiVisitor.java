@@ -630,4 +630,15 @@ public class Cvc5ApiVisitor extends AbstractSmtAstVisitor
     }
     return coreAssertions;
   }
+
+  public void push() throws CVC5ApiException
+  {
+    assertionsSizeBeforeLastPush = currentAssertions.size();
+    solver.push();
+  }
+  public void pop() throws CVC5ApiException
+  {
+    currentAssertions.subList(assertionsSizeBeforeLastPush, currentAssertions.size()).clear();
+    solver.pop();
+  }
 }
