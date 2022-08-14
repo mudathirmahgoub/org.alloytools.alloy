@@ -48,6 +48,8 @@ public class Cvc5ApiEnumerationTask implements WorkerEngine.WorkerTask
         return;
       }
 
+      Object[] javaCodeMessage = new Object[] {"link", "java code", "MSG: " + Cvc5ApiTask.cvc5ApiVisitor.getJavaCode()};
+      workerCallback.callback(javaCodeMessage);
 
       // (block-model)
       if (A4Preferences.CvcBlockModel.get().equals(A4Preferences.CvcLiterals))
@@ -58,6 +60,7 @@ public class Cvc5ApiEnumerationTask implements WorkerEngine.WorkerTask
       {
         Cvc5ApiTask.cvc5ApiVisitor.blockModel(BlockModelsMode.VALUES);
       }
+
       // (check-sat)
       Result result = Cvc5ApiTask.cvc5ApiVisitor.checkSat();
 
