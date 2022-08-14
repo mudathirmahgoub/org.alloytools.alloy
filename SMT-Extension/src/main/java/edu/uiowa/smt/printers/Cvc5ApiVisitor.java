@@ -970,10 +970,26 @@ public class Cvc5ApiVisitor extends AbstractSmtAstVisitor
         writer.write("    // terms" + Integer.toHexString(terms.hashCode()) + "[" + i
             + "] = " + terms[i] + "\n");
       }
-      String model = solver.getModel(new Sort[0], terms);
+
+      Set<Sort> sorts = new HashSet<>();
+      String sortsString = "Set<Sort> sorts{} = new HashSet<>();\n";
+
+      for (Map.Entry<String, Sort> entry : sortSymbols.entrySet())
+      {
+        if (entry.getValue().isUninterpretedSort())
+        {
+          sorts.add(entry.getValue());
+          sortsString +=
+              "sorts{}.add(sort" + Integer.toHexString(entry.getValue().hashCode()) + ");\n";
+        }
+      }
+
+      sortsString = sortsString.replace("{}", Integer.toHexString(sorts.hashCode()));
+      writer.write(sortsString);
+      String model = solver.getModel(sorts.toArray(new Sort[0]), terms);
       writer.write("String model" + Integer.toHexString(model.hashCode())
-          + " = solver.getModel(new Sort[0], terms" + Integer.toHexString(terms.hashCode())
-          + ");\n");
+          + " = solver.getModel(sorts" + Integer.toHexString(sorts.hashCode())
+          + ".toArray(new Sort[0]), terms" + Integer.toHexString(terms.hashCode()) + ");\n");
       writer.write("System.out.println(model" + Integer.toHexString(model.hashCode()) + ");\n");
       return model;
     }
