@@ -192,6 +192,7 @@ import edu.mit.csail.sdg.translator.A4SolutionReader;
 import edu.mit.csail.sdg.translator.A4Tuple;
 import edu.mit.csail.sdg.translator.A4TupleSet;
 import kodkod.engine.fol2sat.HigherOrderDeclException;
+import io.github.cvc5.*;
 
 /**
  * Simple graphical interface for accessing various features of the analyzer.
@@ -213,6 +214,8 @@ import kodkod.engine.fol2sat.HigherOrderDeclException;
  *           binaries; added the option to select the decompose strategy
  */
 public final class SimpleGUI implements ComponentListener, Listener {
+
+    public static final Solver solver = new Solver();
 
     MacUtil macUtil;
 

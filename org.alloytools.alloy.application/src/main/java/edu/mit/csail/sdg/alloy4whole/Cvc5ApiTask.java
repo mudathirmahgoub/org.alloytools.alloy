@@ -66,8 +66,8 @@ public class Cvc5ApiTask implements WorkerEngine.WorkerTask
       this.workerCallback = workerCallback;
       translation = translateToSMT();
       SmtScript optimizedScript = translation.getOptimizedSmtScript();
-      cvc5ApiVisitor = optimizedScript.toCvc5Api(translation.getAlloySettings());
-      Solver solver = cvc5ApiVisitor.getSolver();
+      cvc5ApiVisitor = optimizedScript.toCvc5Api(translation.getAlloySettings(), SimpleGUI.solver);
+
 
       CommandResult commandResult;
 
@@ -78,13 +78,13 @@ public class Cvc5ApiTask implements WorkerEngine.WorkerTask
         for (int index = 0; index < translation.getCommands().size() - 1; index++)
         {
           cvc5ApiVisitor.push();
-          commandResult = solveCommand(index, solver, cvc5ApiVisitor);
+          commandResult = solveCommand(index, cvc5ApiVisitor);
           cvc5ApiVisitor.pop();
           this.commandResults.add(commandResult);
         }
 
         // solve the last command without push and pop to view multiple models if sat
-        commandResult = solveCommand(translation.getCommands().size() - 1, solver, cvc5ApiVisitor);
+        commandResult = solveCommand(translation.getCommands().size() - 1, cvc5ApiVisitor);
         this.commandResults.add(commandResult);
 
         // display a summary of the results
@@ -93,7 +93,7 @@ public class Cvc5ApiTask implements WorkerEngine.WorkerTask
       else // execute only the target command
       {
         // solve the target command without push and pop to view multiple models if sat
-        commandResult = solveCommand(targetCommandIndex, solver, cvc5ApiVisitor);
+        commandResult = solveCommand(targetCommandIndex, cvc5ApiVisitor);
       }
 
       if (commandResult != null && commandResult.xmlFileName != null)
@@ -144,7 +144,7 @@ public class Cvc5ApiTask implements WorkerEngine.WorkerTask
     }
   }
 
-  private CommandResult solveCommand(int index, Solver solver, Cvc5ApiVisitor cvc5ApiVisitor)
+  private CommandResult solveCommand(int index, Cvc5ApiVisitor cvc5ApiVisitor)
       throws Exception
   {
     cvc5ApiVisitor.visit(translation.getOptimizedSmtScript(index));
@@ -159,8 +159,7 @@ public class Cvc5ApiTask implements WorkerEngine.WorkerTask
     }
 
     final long startSolve = System.currentTimeMillis();
-
-    Result result = solver.checkSat();
+    Result result = cvc5ApiVisitor.checkSat();
 
     final long endSolve = System.currentTimeMillis();
     long duration = (endSolve - startSolve);
@@ -175,19 +174,19 @@ public class Cvc5ApiTask implements WorkerEngine.WorkerTask
 
     if (result.isSat())
     {
-      commandResult.xmlFileName = prepareInstance(index, duration, solver, cvc5ApiVisitor);
+      commandResult.xmlFileName = prepareInstance(index, duration, cvc5ApiVisitor);
     }
     if (result.isUnsat() && CvcProduceUnsatCores.get())
     {
-      commandResult.unsatCore = prepareUnsatCore(index, duration, solver, cvc5ApiVisitor);
+      commandResult.unsatCore = prepareUnsatCore(index, duration, cvc5ApiVisitor);
     }
     return commandResult;
   }
 
   private Set<Pos> prepareUnsatCore(
-      int commandIndex, long duration, Solver solver, Cvc5ApiVisitor cvc5ApiVisitor) throws Exception
+      int commandIndex, long duration, Cvc5ApiVisitor cvc5ApiVisitor) throws Exception
   {
-    Term[] coreTerms = solver.getUnsatCore();
+    Term[] coreTerms = cvc5ApiVisitor.getUnsatCore();
     String corString =
         Arrays.asList(coreTerms).stream().map(t -> t.toString()).collect(Collectors.joining("\n"));
 
@@ -289,7 +288,7 @@ public class Cvc5ApiTask implements WorkerEngine.WorkerTask
    * @throws Exception
    */
   private String prepareInstance(
-      int commandIndex, long duration, Solver solver, Cvc5ApiVisitor cvc5ApiVisitor) throws Exception
+      int commandIndex, long duration, Cvc5ApiVisitor cvc5ApiVisitor) throws Exception
   {
     List<Triplet<String, Declaration, Term>> termSymbols = cvc5ApiVisitor.getTermSymbols();
     Term[] terms = new Term[termSymbols.size()];
@@ -306,7 +305,7 @@ public class Cvc5ApiTask implements WorkerEngine.WorkerTask
         sorts.add(entry.getValue());
       }
     }
-    String smtModel = solver.getModel(sorts.toArray(new Sort[0]), terms);
+    String smtModel = cvc5ApiVisitor.getModel();
 
     callbackPlain("cvc5 Api found a ");
     Object[] modelMessage = new Object[] {"link", "model", "MSG: " + smtModel};

@@ -48,19 +48,18 @@ public class Cvc5ApiEnumerationTask implements WorkerEngine.WorkerTask
         return;
       }
 
-      Solver solver = Cvc5ApiTask.cvc5ApiVisitor.getSolver();
 
       // (block-model)
       if (A4Preferences.CvcBlockModel.get().equals(A4Preferences.CvcLiterals))
       {
-        solver.blockModel(BlockModelsMode.LITERALS);
+        Cvc5ApiTask.cvc5ApiVisitor.blockModel(BlockModelsMode.LITERALS);
       }
       else
       {
-        solver.blockModel(BlockModelsMode.VALUES);
+        Cvc5ApiTask.cvc5ApiVisitor.blockModel(BlockModelsMode.VALUES);
       }
       // (check-sat)
-      Result result = solver.checkSat();
+      Result result = Cvc5ApiTask.cvc5ApiVisitor.checkSat();
 
       if (result.isSat())
       {
@@ -117,8 +116,8 @@ public class Cvc5ApiEnumerationTask implements WorkerEngine.WorkerTask
         sorts.add(entry.getValue());
       }
     }
-    Solver solver = cvc5ApiVisitor.getSolver();
-    String smtModel = solver.getModel(sorts.toArray(new Sort[0]), terms);
+
+    String smtModel = cvc5ApiVisitor.getModel();
     Command command = translation.getCommands().get(commandIndex);
 
     SmtModel model = Cvc5ApiTask.parseModel(smtModel);

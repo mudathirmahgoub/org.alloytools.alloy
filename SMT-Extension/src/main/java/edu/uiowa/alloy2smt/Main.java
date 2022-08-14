@@ -173,16 +173,15 @@ public class Main
       Translation translation, SmtScript optimizedScript, AlloySettings settings)
       throws CVC5ApiException
   {
-    Cvc5ApiVisitor cvc5ApiVisitor = optimizedScript.toCvc5Api(settings);
-    Solver solver = cvc5ApiVisitor.getSolver();
+    Cvc5ApiVisitor cvc5ApiVisitor = optimizedScript.toCvc5Api(settings, new Solver());
     for (int i = 0; i < translation.getCommands().size(); i++)
     {
-      solver.push();
+      cvc5ApiVisitor.push();
       System.out.println(
           "-------------------------------------------------------------------------------------------");
       System.out.println("Solving command: " + translation.getCommands().get(i));
       cvc5ApiVisitor.visit(translation.getOptimizedSmtScript(i));
-      Result result = solver.checkSat();
+      Result result = cvc5ApiVisitor.checkSat();
       System.out.println("Sat result: " + result);
       if (result.isSat())
       {
@@ -201,16 +200,16 @@ public class Main
             sorts.add(entry.getValue());
           }
         }
-        System.out.println(solver.getModel(sorts.toArray(new Sort[0]), terms));
+        System.out.println(cvc5ApiVisitor.getModel());
         System.out.println(
             "-------------------------------------------------------------------------------------------");
-        solver.blockModel(blockModelsMode);
-        Result result2 = solver.checkSat();
+        cvc5ApiVisitor.blockModel(blockModelsMode);
+        Result result2 = cvc5ApiVisitor.checkSat();
         if (result2.isSat())
         {
           System.out.println("A second instance was found after blocking models with "
               + blockModelsMode + " mode:");
-          System.out.println(solver.getModel(sorts.toArray(new Sort[0]), terms));
+          System.out.println(cvc5ApiVisitor.getModel());
         }
         else if (result2.isUnsat())
         {
@@ -220,10 +219,10 @@ public class Main
       }
       if (result.isUnsat())
       {
-        Term[] unsatCore = solver.getUnsatCore();
+        Term[] unsatCore = cvc5ApiVisitor.getUnsatCore();
         System.out.println("Unsat core: " + Arrays.asList(unsatCore));
       }
-      solver.pop();
+      cvc5ApiVisitor.pop();
     }
   }
 }

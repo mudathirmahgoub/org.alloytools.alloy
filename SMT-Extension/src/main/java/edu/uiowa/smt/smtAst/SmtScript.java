@@ -13,6 +13,7 @@ import edu.uiowa.smt.printers.Cvc5ApiVisitor;
 import edu.uiowa.smt.printers.SmtLibPrettyPrinter;
 import java.math.BigInteger;
 import java.util.*;
+import io.github.cvc5.*;
 
 public class SmtScript extends SmtModel
 {
@@ -180,9 +181,9 @@ public class SmtScript extends SmtModel
     return prettyPrinter.getSmtLib();
   }
 
-  public Cvc5ApiVisitor toCvc5Api(SmtSettings settings)
+  public Cvc5ApiVisitor toCvc5Api(SmtSettings settings, Solver solver)
   {
-    Cvc5ApiVisitor cvc5ApiVisitor = new Cvc5ApiVisitor(settings);
+    Cvc5ApiVisitor cvc5ApiVisitor = new Cvc5ApiVisitor(settings, solver);
     cvc5ApiVisitor.visit(this);
     return cvc5ApiVisitor;
   }
