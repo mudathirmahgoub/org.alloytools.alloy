@@ -312,11 +312,11 @@ public class Cvc5ApiTask implements WorkerEngine.WorkerTask
     workerCallback.callback(modelMessage);
     callbackPlain("\n");
 
-    //        callbackPlain(smtModel + "\n");
+    Object[] javaCodeMessage = new Object[] {"link", "java code", "MSG: " + cvc5ApiVisitor.getJavaCode()};
+    workerCallback.callback(javaCodeMessage);
+    callbackPlain("\n");
 
     Command command = translation.getCommands().get(commandIndex);
-
-    //        smtModel= showInputDialog(smtModel);
 
     SmtModel model = parseModel(smtModel);
 

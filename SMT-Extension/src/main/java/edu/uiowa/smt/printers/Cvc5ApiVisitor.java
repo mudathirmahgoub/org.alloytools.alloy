@@ -24,7 +24,17 @@ public class Cvc5ApiVisitor extends AbstractSmtAstVisitor
   static
   {
     stringBuilder = new StringBuilder();
-    stringBuilder.append("Solver solver = new Solver();");
+    stringBuilder.append("import static io.github.cvc5.Kind.*;\n"
+        + "\n"
+        + "import io.github.cvc5.*;\n"
+        + "import java.util.HashSet;\n"
+        + "import java.util.Set;\n"
+        + "\n"
+        + "public class Main\n"
+        + "{\n"
+        + "  public static void main(String[] args) throws CVC5ApiException\n"
+        + "  {\n"
+        + "    Solver solver = new Solver();");
   }
 
   protected Map<String, Sort> sortSymbols = new HashMap<>();
@@ -70,7 +80,7 @@ public class Cvc5ApiVisitor extends AbstractSmtAstVisitor
         try
         {
           Sort sort = solver.declareSort(smtSort.getName(), 0);
-          stringBuilder.append("Sort sort" + Integer.toHexString(sort.hashCode())
+          stringBuilder.append("    Sort sort" + Integer.toHexString(sort.hashCode())
               + " = solver.declareSort(\"" + smtSort.getName() + "\", 0);\n");
 
           sortSymbols.put(smtSort.getName(), sort);
@@ -108,10 +118,10 @@ public class Cvc5ApiVisitor extends AbstractSmtAstVisitor
       Term A = visit(expr.getA());
       Term B = visit(expr.getB());
       Term ret = solver.mkTerm(k, A, B);
-      stringBuilder.append("Term term" + Integer.toHexString(ret.hashCode()) + "  = solver.mkTerm("
-          + k + ", term" + Integer.toHexString(A.hashCode()) + ", term"
-          + Integer.toHexString(B.hashCode()) + ");");
-      stringBuilder.append("    //" + ret + ");");
+      stringBuilder.append("    Term term" + Integer.toHexString(ret.hashCode())
+          + "  = solver.mkTerm(" + k + ", term" + Integer.toHexString(A.hashCode()) + ", term"
+          + Integer.toHexString(B.hashCode()) + ");\n");
+      stringBuilder.append("    //" + ret + ");\n");
       return ret;
     }
     else
@@ -137,7 +147,7 @@ public class Cvc5ApiVisitor extends AbstractSmtAstVisitor
     int size = termSymbols.size();
     Kind k = getKind(smtQtExpr.getOp());
     Term[] boundVars = new Term[smtQtExpr.getVariables().size()];
-    stringBuilder.append("Term[] boundVars" + Integer.toHexString(boundVars.hashCode())
+    stringBuilder.append("    Term[] boundVars" + Integer.toHexString(boundVars.hashCode())
         + " = new Term[" + smtQtExpr.getVariables().size() + "];\n");
     List<SmtVariable> smtVariables = smtQtExpr.getVariables();
     for (int i = 0; i < smtVariables.size(); i++)
@@ -145,17 +155,17 @@ public class Cvc5ApiVisitor extends AbstractSmtAstVisitor
       String symbol = TranslatorUtils.sanitizeWithBars(smtVariables.get(i));
       Sort sort = visit(smtVariables.get(i).getSort());
       Term term = solver.mkVar(sort, symbol);
-      stringBuilder.append("Term term" + Integer.toHexString(term.hashCode())
+      stringBuilder.append("    Term term" + Integer.toHexString(term.hashCode())
           + " = solver.mkVar(sort" + Integer.toHexString(sort.hashCode()) + ", \"" + symbol
           + "\");\n");
       boundVars[i] = term;
-      stringBuilder.append("boundVars" + Integer.toHexString(boundVars.hashCode()) + "[" + i
+      stringBuilder.append("    boundVars" + Integer.toHexString(boundVars.hashCode()) + "[" + i
           + "] = term" + Integer.toHexString(term.hashCode()) + ";\n");
       termSymbols.add(new Triplet<>(symbol, smtVariables.get(i), boundVars[i]));
     }
     Term body = visit(smtQtExpr.getExpr());
     Term bvl = solver.mkTerm(VARIABLE_LIST, boundVars);
-    stringBuilder.append("Term term" + Integer.toHexString(bvl.hashCode())
+    stringBuilder.append("    Term term" + Integer.toHexString(bvl.hashCode())
         + " = solver.mkTerm(VARIABLE_LIST, boundVars" + Integer.toHexString(boundVars.hashCode())
         + ");\n");
     stringBuilder.append("    // " + bvl + ");\n");
@@ -163,9 +173,9 @@ public class Cvc5ApiVisitor extends AbstractSmtAstVisitor
 
     Term ret = solver.mkTerm(k, new Term[] {bvl, body});
 
-    stringBuilder.append("Term term" + Integer.toHexString(ret.hashCode()) + "  = solver.mkTerm("
-        + k + ", new Term[] { term" + Integer.toHexString(bvl.hashCode()) + ", term"
-        + Integer.toHexString(body.hashCode()) + "});\n");
+    stringBuilder.append("    Term term" + Integer.toHexString(ret.hashCode())
+        + "  = solver.mkTerm(" + k + ", new Term[] { term" + Integer.toHexString(bvl.hashCode())
+        + ", term" + Integer.toHexString(body.hashCode()) + "});\n");
     stringBuilder.append("    // " + ret + ");\n");
     return ret;
   }
@@ -181,7 +191,7 @@ public class Cvc5ApiVisitor extends AbstractSmtAstVisitor
   {
     Sort sort = visit(setSort.elementSort);
     Sort ret = solver.mkSetSort(sort);
-    stringBuilder.append("Sort sort" + Integer.toHexString(ret.hashCode())
+    stringBuilder.append("    Sort sort" + Integer.toHexString(ret.hashCode())
         + "  = solver.mkSetSort(sort" + Integer.toHexString(sort.hashCode()) + ");\n");
     return ret;
   }
@@ -190,17 +200,17 @@ public class Cvc5ApiVisitor extends AbstractSmtAstVisitor
   public Sort visit(TupleSort tupleSort)
   {
     Sort[] sorts = new Sort[tupleSort.elementSorts.size()];
-    stringBuilder.append("Sort[] sorts" + Integer.toHexString(sorts.hashCode()) + " = new Sort["
+    stringBuilder.append("    Sort[] sorts" + Integer.toHexString(sorts.hashCode()) + " = new Sort["
         + tupleSort.elementSorts.size() + "];\n");
     for (int i = 0; i < tupleSort.elementSorts.size(); ++i)
     {
       sorts[i] = visit(tupleSort.elementSorts.get(i));
-      stringBuilder.append("sorts" + Integer.toHexString(sorts.hashCode()) + "[" + i + "] = sort"
-          + Integer.toHexString(sorts[i].hashCode()) + ";\n");
+      stringBuilder.append("    sorts" + Integer.toHexString(sorts.hashCode()) + "[" + i
+          + "] = sort" + Integer.toHexString(sorts[i].hashCode()) + ";\n");
     }
     Sort ret = solver.mkTupleSort(sorts);
 
-    stringBuilder.append("Sort sort" + Integer.toHexString(ret.hashCode())
+    stringBuilder.append("    Sort sort" + Integer.toHexString(ret.hashCode())
         + " = solver.mkTupleSort(sorts" + Integer.toHexString(sorts.hashCode()) + ");\n");
     return ret;
   }
@@ -215,7 +225,7 @@ public class Cvc5ApiVisitor extends AbstractSmtAstVisitor
     {
       Sort sort = visit(expr.getSort());
       term = solver.mkEmptySet(sort);
-      stringBuilder.append("Term term" + Integer.toHexString(term.hashCode())
+      stringBuilder.append("    Term term" + Integer.toHexString(term.hashCode())
           + "  = solver.mkEmptySet(sort" + Integer.toHexString(sort.hashCode()) + ");\n");
       stringBuilder.append("    // " + term + ");\n");
     }
@@ -223,15 +233,15 @@ public class Cvc5ApiVisitor extends AbstractSmtAstVisitor
     {
       Sort sort = visit(expr.getSort());
       term = solver.mkUniverseSet(sort);
-      stringBuilder.append("Term term" + Integer.toHexString(term.hashCode())
+      stringBuilder.append("    Term term" + Integer.toHexString(term.hashCode())
           + "  = solver.mkUniverseSet(sort" + Integer.toHexString(sort.hashCode()) + ");\n");
       stringBuilder.append("    // " + term + ");\n");
     }
     else
     {
       Term ret = solver.mkTerm(k, term);
-      stringBuilder.append("Term term" + Integer.toHexString(ret.hashCode()) + "  = solver.mkTerm("
-          + k + ", term" + Integer.toHexString(term.hashCode()) + ");\n");
+      stringBuilder.append("    Term term" + Integer.toHexString(ret.hashCode())
+          + "  = solver.mkTerm(" + k + ", term" + Integer.toHexString(term.hashCode()) + ");\n");
       stringBuilder.append("    // " + ret + ");\n");
       term = ret;
     }
@@ -250,8 +260,8 @@ public class Cvc5ApiVisitor extends AbstractSmtAstVisitor
   {
     int value = Integer.parseInt(intConstant.getValue());
     Term ret = solver.mkInteger(value);
-    stringBuilder.append("Term term" + Integer.toHexString(ret.hashCode()) + " = solver.mkInteger("
-        + value + ");\n");
+    stringBuilder.append("    Term term" + Integer.toHexString(ret.hashCode())
+        + " = solver.mkInteger(" + value + ");\n");
     stringBuilder.append("    // " + ret + ");\n");
     return ret;
   }
@@ -268,18 +278,18 @@ public class Cvc5ApiVisitor extends AbstractSmtAstVisitor
     String symbol = TranslatorUtils.sanitizeWithBars(declaration);
     List<SmtSort> inputSorts = declaration.getInputSorts();
     Sort[] sorts = new Sort[inputSorts.size()];
-    stringBuilder.append("Sort[] sorts" + Integer.toHexString(sorts.hashCode()) + " = new Sort["
+    stringBuilder.append("    Sort[] sorts" + Integer.toHexString(sorts.hashCode()) + " = new Sort["
         + inputSorts.size() + "];\n");
     for (int i = 0; i < inputSorts.size(); i++)
     {
       sorts[i] = visit(inputSorts.get(i));
-      stringBuilder.append("sorts" + Integer.toHexString(sorts.hashCode()) + "[" + i + "] = sort"
-          + Integer.toHexString(sorts[i].hashCode()) + ";\n");
+      stringBuilder.append("    sorts" + Integer.toHexString(sorts.hashCode()) + "[" + i
+          + "] = sort" + Integer.toHexString(sorts[i].hashCode()) + ";\n");
     }
 
     Sort sort = visit(declaration.getSort());
     Term term = solver.declareFun(symbol, sorts, sort);
-    stringBuilder.append("Term term" + Integer.toHexString(term.hashCode())
+    stringBuilder.append("    Term term" + Integer.toHexString(term.hashCode())
         + " = solver.declareFun(\"" + symbol + "\", sorts" + Integer.toHexString(sorts.hashCode())
         + ", sort" + Integer.toHexString(sort.hashCode()) + ");\n");
     stringBuilder.append("    // solver.declareFun(symbol, sorts, sort); term: " + term + "\n");
@@ -293,21 +303,21 @@ public class Cvc5ApiVisitor extends AbstractSmtAstVisitor
     String symbol = TranslatorUtils.sanitizeWithBars(definition);
     Term[] terms = new Term[definition.inputVariables.size()];
 
-    stringBuilder.append("Term[] terms" + Integer.toHexString(terms.hashCode()) + " = new Term["
+    stringBuilder.append("    Term[] terms" + Integer.toHexString(terms.hashCode()) + " = new Term["
         + definition.inputVariables.size() + "];\n");
 
     for (int i = 0; i < definition.inputVariables.size(); i++)
     {
       terms[i] = visit(definition.inputVariables.get(i));
-      stringBuilder.append("terms" + Integer.toHexString(terms.hashCode()) + "[" + i + "] = term"
-          + Integer.toHexString(terms[i].hashCode()) + ";\n");
+      stringBuilder.append("    terms" + Integer.toHexString(terms.hashCode()) + "[" + i
+          + "] = term" + Integer.toHexString(terms[i].hashCode()) + ";\n");
       stringBuilder.append("    // " + terms[i] + "\n");
     }
 
     Sort sort = visit(definition.getSort());
     Term body = visit(definition.smtExpr);
     Term term = solver.defineFun(symbol, terms, sort, body);
-    stringBuilder.append("Term term" + Integer.toHexString(term.hashCode())
+    stringBuilder.append("    Term term" + Integer.toHexString(term.hashCode())
         + " = solver.defineFun(\"" + symbol + "\", terms" + Integer.toHexString(terms.hashCode())
         + ", sort" + Integer.toHexString(sort.hashCode()) + ", term"
         + Integer.toHexString(body.hashCode()) + ");\n");
@@ -322,8 +332,8 @@ public class Cvc5ApiVisitor extends AbstractSmtAstVisitor
   {
     Term ret = solver.mkBoolean(boolConstant.getBooleanValue());
 
-    stringBuilder.append("Term term" + Integer.toHexString(ret.hashCode()) + " = solver.mkBoolean("
-        + boolConstant.getBooleanValue() + ");\n");
+    stringBuilder.append("    Term term" + Integer.toHexString(ret.hashCode())
+        + " = solver.mkBoolean(" + boolConstant.getBooleanValue() + ");\n");
     stringBuilder.append("    // " + ret + "\n");
 
     return ret;
@@ -345,13 +355,13 @@ public class Cvc5ApiVisitor extends AbstractSmtAstVisitor
   public Term visit(SmtMultiArityExpr expr)
   {
     Term[] terms = new Term[expr.getExprs().size()];
-    stringBuilder.append("Term[] terms" + Integer.toHexString(terms.hashCode()) + " = new Term["
+    stringBuilder.append("    Term[] terms" + Integer.toHexString(terms.hashCode()) + " = new Term["
         + expr.getExprs().size() + "];\n");
     for (int i = 0; i < expr.getExprs().size(); ++i)
     {
       terms[i] = visit(expr.getExprs().get(i));
-      stringBuilder.append("terms" + Integer.toHexString(terms.hashCode()) + "[" + i + "] = term"
-          + Integer.toHexString(terms[i].hashCode()) + ";\n");
+      stringBuilder.append("    terms" + Integer.toHexString(terms.hashCode()) + "[" + i
+          + "] = term" + Integer.toHexString(terms[i].hashCode()) + ";\n");
       stringBuilder.append("    // terms" + Integer.toHexString(terms.hashCode()) + "[" + i
           + "] = " + terms[i] + "\n");
     }
@@ -359,16 +369,16 @@ public class Cvc5ApiVisitor extends AbstractSmtAstVisitor
     if (expr.getOp() == SmtMultiArityExpr.Op.TUPLE)
     {
       Sort[] sorts = new Sort[expr.getExprs().size()];
-      stringBuilder.append("Sort[] sorts" + Integer.toHexString(sorts.hashCode()) + " = new Sort["
-          + expr.getExprs().size() + "];\n");
+      stringBuilder.append("    Sort[] sorts" + Integer.toHexString(sorts.hashCode())
+          + " = new Sort[" + expr.getExprs().size() + "];\n");
       for (int i = 0; i < expr.getExprs().size(); ++i)
       {
         sorts[i] = visit(expr.getExprs().get(i).getSort());
-        stringBuilder.append("sorts" + Integer.toHexString(sorts.hashCode()) + "[" + i + "] = sort"
-            + Integer.toHexString(sorts[i].hashCode()) + ";\n");
+        stringBuilder.append("    sorts" + Integer.toHexString(sorts.hashCode()) + "[" + i
+            + "] = sort" + Integer.toHexString(sorts[i].hashCode()) + ";\n");
       }
       Term ret = solver.mkTuple(sorts, terms);
-      stringBuilder.append("Term term" + Integer.toHexString(ret.hashCode())
+      stringBuilder.append("    Term term" + Integer.toHexString(ret.hashCode())
           + " = solver.mkTuple(sorts" + Integer.toHexString(sorts.hashCode()) + ", terms"
           + Integer.toHexString(terms.hashCode()) + ");\n");
       stringBuilder.append("    // " + ret + ");\n");
@@ -377,8 +387,8 @@ public class Cvc5ApiVisitor extends AbstractSmtAstVisitor
     Kind k = getKind(expr.getOp());
     Term ret = solver.mkTerm(k, terms);
 
-    stringBuilder.append("Term term" + Integer.toHexString(ret.hashCode()) + " = solver.mkTerm(" + k
-        + ", terms" + Integer.toHexString(terms.hashCode()) + ");\n");
+    stringBuilder.append("    Term term" + Integer.toHexString(ret.hashCode()) + " = solver.mkTerm("
+        + k + ", terms" + Integer.toHexString(terms.hashCode()) + ");\n");
     stringBuilder.append("    // " + ret + ");\n");
     return ret;
   }
@@ -391,21 +401,21 @@ public class Cvc5ApiVisitor extends AbstractSmtAstVisitor
     if (smtCallExpr.getArguments().size() > 0)
     {
       Term[] terms = new Term[smtCallExpr.getArguments().size() + 1];
-      stringBuilder.append("Term[] terms" + Integer.toHexString(terms.hashCode()) + " = new Term["
-          + (smtCallExpr.getArguments().size() + 1) + "];\n");
+      stringBuilder.append("    Term[] terms" + Integer.toHexString(terms.hashCode())
+          + " = new Term[" + (smtCallExpr.getArguments().size() + 1) + "];\n");
       terms[0] = fTerm;
-      stringBuilder.append("terms" + Integer.toHexString(terms.hashCode()) + "[0] = term"
+      stringBuilder.append("    terms" + Integer.toHexString(terms.hashCode()) + "[0] = term"
           + Integer.toHexString(fTerm.hashCode()) + ";\n");
       for (int i = 0; i < smtCallExpr.getArguments().size(); ++i)
       {
         Term term = visit(smtCallExpr.getArguments().get(i));
         terms[i + 1] = term;
-        stringBuilder.append("terms" + Integer.toHexString(terms.hashCode()) + "[" + (i + 1)
+        stringBuilder.append("    terms" + Integer.toHexString(terms.hashCode()) + "[" + (i + 1)
             + "] = term" + Integer.toHexString(term.hashCode()) + ";\n");
       }
 
       Term term = solver.mkTerm(APPLY_UF, terms);
-      stringBuilder.append("Term term" + Integer.toHexString(term.hashCode())
+      stringBuilder.append("    Term term" + Integer.toHexString(term.hashCode())
           + " = solver.mkTerm(APPLY_UF, terms" + Integer.toHexString(terms.hashCode()) + ");\n");
       stringBuilder.append("    // " + term + ");\n");
       return term;
@@ -422,8 +432,9 @@ public class Cvc5ApiVisitor extends AbstractSmtAstVisitor
     String symbol = TranslatorUtils.sanitizeWithBars(variable);
     Sort sort = visit(variable.getSort());
     Term ret = solver.mkVar(sort, symbol);
-    stringBuilder.append("Term term" + Integer.toHexString(ret.hashCode()) + " = solver.mkVar(sort"
-        + Integer.toHexString(sort.hashCode()) + ", \"" + symbol + "\");\n");
+    stringBuilder.append("    Term term" + Integer.toHexString(ret.hashCode())
+        + " = solver.mkVar(sort" + Integer.toHexString(sort.hashCode()) + ", \"" + symbol
+        + "\");\n");
     stringBuilder.append("    // " + ret + ");\n");
     return ret;
   }
@@ -447,7 +458,7 @@ public class Cvc5ApiVisitor extends AbstractSmtAstVisitor
       Term body = visit(letVar.getValue());
       Sort sort = visit(letVar.getValue().getSort());
       Term term = solver.defineFun(symbol, new Term[0], sort, body);
-      stringBuilder.append("Term term" + Integer.toHexString(term.hashCode())
+      stringBuilder.append("    Term term" + Integer.toHexString(term.hashCode())
           + " = solver.defineFun(\"" + symbol + "\", new Term[0], sort"
           + Integer.toHexString(sort.hashCode()) + ", term" + Integer.toHexString(body.hashCode())
           + ");\n");
@@ -468,7 +479,7 @@ public class Cvc5ApiVisitor extends AbstractSmtAstVisitor
     Term thenTerm = visit(ite.getThenExpr());
     Term elseTerm = visit(ite.getElseExpr());
     Term ret = solver.mkTerm(ITE, condition, thenTerm, elseTerm);
-    stringBuilder.append("Term term" + Integer.toHexString(ret.hashCode())
+    stringBuilder.append("    Term term" + Integer.toHexString(ret.hashCode())
         + " = solver.mkTerm(ITE, term" + Integer.toHexString(condition.hashCode()) + ", term"
         + Integer.toHexString(thenTerm.hashCode()) + ", term"
         + Integer.toHexString(elseTerm.hashCode()) + ");\n");
@@ -491,7 +502,7 @@ public class Cvc5ApiVisitor extends AbstractSmtAstVisitor
       try
       {
         solver.setLogic(logic);
-        stringBuilder.append("solver.setLogic(\"" + logic + "\");\n");
+        stringBuilder.append("    solver.setLogic(\"" + logic + "\");\n");
         Map<String, String> options = smtSettings.getSolverOptions();
         for (Map.Entry<String, String> entry : options.entrySet())
         {
@@ -667,11 +678,11 @@ public class Cvc5ApiVisitor extends AbstractSmtAstVisitor
   public Term tupleSelect(Term tuple, int index)
   {
     Term projection = tuple.getSort().getDatatype().getConstructor(0).getSelector(index).getTerm();
-    stringBuilder.append("Term term" + Integer.toHexString(projection.hashCode())
+    stringBuilder.append("    Term term" + Integer.toHexString(projection.hashCode())
         + " = tuple.getSort().getDatatype().getConstructor(0).getSelector(" + index
         + ").getTerm();\n");
     Term ret = solver.mkTerm(APPLY_SELECTOR, projection, tuple);
-    stringBuilder.append("Term term" + Integer.toHexString(ret.hashCode())
+    stringBuilder.append("    Term term" + Integer.toHexString(ret.hashCode())
         + " = solver.mkTerm(APPLY_SELECTOR,  term" + Integer.toHexString(projection.hashCode())
         + ", term" + Integer.toHexString(tuple.hashCode()) + ");\n");
     stringBuilder.append(
@@ -782,13 +793,13 @@ public class Cvc5ApiVisitor extends AbstractSmtAstVisitor
   {
     assertionsSizeBeforeLastPush = currentAssertions.size();
     solver.push();
-    stringBuilder.append("solver.push();\n");
+    stringBuilder.append("    solver.push();\n");
   }
   public void pop() throws CVC5ApiException
   {
     currentAssertions.subList(assertionsSizeBeforeLastPush, currentAssertions.size()).clear();
     solver.pop();
-    stringBuilder.append("solver.pop();\n");
+    stringBuilder.append("    solver.pop();\n");
   }
   public Result checkSat() throws CVC5ApiException
   {
@@ -800,13 +811,13 @@ public class Cvc5ApiVisitor extends AbstractSmtAstVisitor
   public String getModel() throws CVC5ApiException
   {
     Term[] terms = new Term[termSymbols.size()];
-    stringBuilder.append("Term[] terms" + Integer.toHexString(terms.hashCode()) + " = new Term["
+    stringBuilder.append("    Term[] terms" + Integer.toHexString(terms.hashCode()) + " = new Term["
         + termSymbols.size() + "];\n");
     for (int i = 0; i < termSymbols.size(); i++)
     {
       terms[i] = termSymbols.get(i).third;
-      stringBuilder.append("terms" + Integer.toHexString(terms.hashCode()) + "[" + i + "] = term"
-          + Integer.toHexString(terms[i].hashCode()) + ";\n");
+      stringBuilder.append("    terms" + Integer.toHexString(terms.hashCode()) + "[" + i
+          + "] = term" + Integer.toHexString(terms[i].hashCode()) + ";\n");
       stringBuilder.append("    // terms" + Integer.toHexString(terms.hashCode()) + "[" + i
           + "] = " + terms[i] + "\n");
     }
@@ -827,7 +838,7 @@ public class Cvc5ApiVisitor extends AbstractSmtAstVisitor
     sortsString = sortsString.replace("{}", Integer.toHexString(sorts.hashCode()));
     stringBuilder.append(sortsString);
     String model = solver.getModel(sorts.toArray(new Sort[0]), terms);
-    stringBuilder.append("String model" + Integer.toHexString(model.hashCode())
+    stringBuilder.append("    String model" + Integer.toHexString(model.hashCode())
         + " = solver.getModel(sorts" + Integer.toHexString(sorts.hashCode())
         + ".toArray(new Sort[0]), terms" + Integer.toHexString(terms.hashCode()) + ");\n");
     stringBuilder.append(
@@ -837,12 +848,17 @@ public class Cvc5ApiVisitor extends AbstractSmtAstVisitor
 
   public void blockModel(BlockModelsMode blockModelsMode) throws CVC5ApiException
   {
-    stringBuilder.append("solver.blockModel(BlockModelsMode." + blockModelsMode + ");\n");
+    stringBuilder.append("    solver.blockModel(BlockModelsMode." + blockModelsMode + ");\n");
     solver.blockModel(blockModelsMode);
   }
 
   public Term[] getUnsatCore() throws CVC5ApiException
   {
     return solver.getUnsatCore();
+  }
+
+  public String getJavaCode()
+  {
+    return stringBuilder + "  }\n}\n";
   }
 }
