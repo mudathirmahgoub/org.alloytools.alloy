@@ -159,6 +159,11 @@ public class Cvc5ApiTask implements WorkerEngine.WorkerTask
     }
 
     final long startSolve = System.currentTimeMillis();
+
+    Object[] javaCodeMessage = new Object[] {"link", "java code", "MSG: " + cvc5ApiVisitor.getJavaCode()};
+    workerCallback.callback(javaCodeMessage);
+    callbackPlain("\n");
+
     Result result = cvc5ApiVisitor.checkSat();
 
     final long endSolve = System.currentTimeMillis();
@@ -201,6 +206,10 @@ public class Cvc5ApiTask implements WorkerEngine.WorkerTask
     callbackPlain("cvc5 Api found an ");
     Object[] anotherCore = new Object[] {"link", "Alloy unsat core", "MSG: " + alloyCore};
     workerCallback.callback(anotherCore);
+    callbackPlain("\n");
+
+    Object[] javaCodeMessage = new Object[] {"link", "java code", "MSG: " + cvc5ApiVisitor.getJavaCode()};
+    workerCallback.callback(javaCodeMessage);
     callbackPlain("\n");
 
     SmtUnsatCore smtUnsatCore = parseUnsatCore(alloyCore);

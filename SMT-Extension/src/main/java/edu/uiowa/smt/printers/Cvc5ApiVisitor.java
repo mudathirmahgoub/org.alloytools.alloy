@@ -137,7 +137,7 @@ public class Cvc5ApiVisitor extends AbstractSmtAstVisitor
   {
     Sort ret = solver.getIntegerSort();
     stringBuilder.append(
-        "Sort sort" + Integer.toHexString(ret.hashCode()) + " = solver.getIntegerSort();\n");
+        "    Sort sort" + Integer.toHexString(ret.hashCode()) + " = solver.getIntegerSort();\n");
     return ret;
   }
 
@@ -347,7 +347,7 @@ public class Cvc5ApiVisitor extends AbstractSmtAstVisitor
     solver.assertFormula(term);
 
     stringBuilder.append(
-        "solver.assertFormula(term" + Integer.toHexString(term.hashCode()) + ");\n");
+        "    solver.assertFormula(term" + Integer.toHexString(term.hashCode()) + ");\n");
     stringBuilder.append("    // solver.assertFormula(term); term: " + term + "\n");
   }
 
@@ -444,7 +444,7 @@ public class Cvc5ApiVisitor extends AbstractSmtAstVisitor
   {
     Sort ret = solver.getBooleanSort();
     stringBuilder.append(
-        "Sort sort" + Integer.toHexString(ret.hashCode()) + " = solver.getBooleanSort();\n");
+        "    Sort sort" + Integer.toHexString(ret.hashCode()) + " = solver.getBooleanSort();\n");
     return ret;
   }
 
@@ -508,7 +508,7 @@ public class Cvc5ApiVisitor extends AbstractSmtAstVisitor
         {
           solver.setOption(entry.getKey(), entry.getValue());
           stringBuilder.append(
-              "solver.setOption(\"" + entry.getKey() + "\", \"" + entry.getValue() + "\");\n");
+              "    solver.setOption(\"" + entry.getKey() + "\", \"" + entry.getValue() + "\");\n");
         }
       }
       catch (CVC5ApiException e)
@@ -805,7 +805,9 @@ public class Cvc5ApiVisitor extends AbstractSmtAstVisitor
   {
     Result result = solver.checkSat();
     stringBuilder.append(
-        "Result result" + Integer.toHexString(result.hashCode()) + " = solver.checkSat();\n");
+        "    Result result" + Integer.toHexString(result.hashCode()) + " = solver.checkSat();\n");
+    stringBuilder.append(
+        "    System.out.println(result" + Integer.toHexString(result.hashCode()) + ");\n");
     return result;
   }
   public String getModel() throws CVC5ApiException
@@ -842,7 +844,7 @@ public class Cvc5ApiVisitor extends AbstractSmtAstVisitor
         + " = solver.getModel(sorts" + Integer.toHexString(sorts.hashCode())
         + ".toArray(new Sort[0]), terms" + Integer.toHexString(terms.hashCode()) + ");\n");
     stringBuilder.append(
-        "System.out.println(model" + Integer.toHexString(model.hashCode()) + ");\n");
+        "    System.out.println(model" + Integer.toHexString(model.hashCode()) + ");\n");
     return model;
   }
 
@@ -854,7 +856,17 @@ public class Cvc5ApiVisitor extends AbstractSmtAstVisitor
 
   public Term[] getUnsatCore() throws CVC5ApiException
   {
-    return solver.getUnsatCore();
+    Term[] terms = solver.getUnsatCore();
+    stringBuilder.append("    System.out.println(\"unsat core:\");\n");
+    stringBuilder.append("        Term[] terms" + Integer.toHexString(terms.hashCode())
+        + " = solver.getUnsatCore();\n");
+    stringBuilder.append("        for(int i = 0; i < terms" + Integer.toHexString(terms.hashCode())
+        + ".length; i++)\n");
+    stringBuilder.append("    {\n");
+    stringBuilder.append(
+        "          System.out.println(terms" + Integer.toHexString(terms.hashCode()) + "[i]);\n");
+    stringBuilder.append("    }\n");
+    return terms;
   }
 
   public String getJavaCode()
