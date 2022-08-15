@@ -66,7 +66,7 @@ public class Cvc5ApiTask implements WorkerEngine.WorkerTask
       this.workerCallback = workerCallback;
       translation = translateToSMT();
       SmtScript optimizedScript = translation.getOptimizedSmtScript();
-      cvc5ApiVisitor = optimizedScript.toCvc5Api(translation.getAlloySettings(), SimpleGUI.solver);
+      cvc5ApiVisitor = optimizedScript.toCvc5Api(translation.getAlloySettings(), new Solver());
 
 
       CommandResult commandResult;

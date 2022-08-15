@@ -215,8 +215,6 @@ import io.github.cvc5.*;
  */
 public final class SimpleGUI implements ComponentListener, Listener {
 
-    public static final Solver solver = new Solver();
-
     MacUtil macUtil;
 
     /**

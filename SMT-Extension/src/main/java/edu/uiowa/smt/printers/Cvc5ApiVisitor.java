@@ -14,28 +14,14 @@ import edu.uiowa.smt.TranslatorUtils;
 import edu.uiowa.smt.smtAst.*;
 import io.github.cvc5.*;
 import io.github.cvc5.modes.*;
+
+import javax.swing.*;
 import java.util.*;
 
 public class Cvc5ApiVisitor extends AbstractSmtAstVisitor
 {
   protected final Solver solver;
-  private static final StringBuilder stringBuilder;
-
-  static
-  {
-    stringBuilder = new StringBuilder();
-    stringBuilder.append("import static io.github.cvc5.Kind.*;\n"
-        + "\n"
-        + "import io.github.cvc5.*;\n"
-        + "import java.util.HashSet;\n"
-        + "import java.util.Set;\n"
-        + "\n"
-        + "public class Main\n"
-        + "{\n"
-        + "  public static void main(String[] args) throws CVC5ApiException\n"
-        + "  {\n"
-        + "    Solver solver = new Solver();");
-  }
+  private final StringBuilder stringBuilder;
 
   protected Map<String, Sort> sortSymbols = new HashMap<>();
   // here we are using a list instead of a map to handle scopes for declared terms.
@@ -53,12 +39,18 @@ public class Cvc5ApiVisitor extends AbstractSmtAstVisitor
   {
     this.smtSettings = smtSettings;
     this.solver = solver;
-  }
-
-  public Cvc5ApiVisitor(Solver solver)
-  {
-    this.smtSettings = SmtSettings.Default;
-    this.solver = solver;
+    stringBuilder = new StringBuilder();
+    stringBuilder.append("import static io.github.cvc5.Kind.*;\n"
+        + "\n"
+        + "import io.github.cvc5.*;\n"
+        + "import java.util.HashSet;\n"
+        + "import java.util.Set;\n"
+        + "\n"
+        + "public class Main\n"
+        + "{\n"
+        + "  public static void main(String[] args) throws CVC5ApiException\n"
+        + "  {\n"
+        + "    Solver solver = new Solver();");
   }
 
   protected void initializeProgram()
