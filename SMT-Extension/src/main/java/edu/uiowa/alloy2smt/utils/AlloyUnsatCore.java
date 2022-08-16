@@ -4,8 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import edu.mit.csail.sdg.alloy4.Pos;
 import edu.uiowa.smt.smtAst.SmtUnsatCore;
 
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlAttribute;
+import jakarta.xml.bind.annotation.XmlRootElement;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;

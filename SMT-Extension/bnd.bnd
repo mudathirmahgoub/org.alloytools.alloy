@@ -1,10 +1,10 @@
 -buildpath: \
     lib/cvc5-1.0.2-dev.jar;version=file,\
+    lib/jakarta.xml.bind-api-4.0.0.jar;version=file,\
 	org.apache.commons.cli,\
 	org.alloytools.alloy.core,\
 	com.fasterxml.jackson.core.jackson-annotations,\
 	com.fasterxml.jackson.core.jackson-databind,\
-	jaxb-api,\
 	com.fasterxml.jackson.core.jackson-core,\
 	org.antlr.antlr4-runtime;version='4.7.2'\
 

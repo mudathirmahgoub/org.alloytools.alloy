@@ -16,8 +16,7 @@ JPM-Command: alloy
     org.antlr.antlr4-runtime;version='4.7.2',\
     com.fasterxml.jackson.core.jackson-annotations,\
     com.fasterxml.jackson.core.jackson-databind,\
-    com.fasterxml.jackson.core.jackson-core,\
-    jaxb-api
+    com.fasterxml.jackson.core.jackson-core
 
 -sources: false
 -conditionalpackage: aQute.*, org.apache.commmons.cli, slf4j*
@@ -45,7 +44,12 @@ JPM-Command: alloy
     @${repo;com.fasterxml.jackson.core.jackson-databind},\
     @${repo;com.fasterxml.jackson.core.jackson-core},\
     @${repo;SMT-Extension},\
+    @../SMT-Extension/lib/angus-activation-1.0.0.jar,\
     @../SMT-Extension/lib/cvc5-1.0.2-dev.jar,\
+    @../SMT-Extension/lib/jakarta.activation-api-2.1.0.jar,\
+    @../SMT-Extension/lib/jakarta.xml.bind-api-4.0.0.jar,\
+    @../SMT-Extension/lib/jaxb-core-4.0.0.jar,\
+    @../SMT-Extension/lib/jaxb-impl-4.0.0.jar,\
     @../SMT-Extension/binaries,\
 	LICENSES
 -dependson: *
