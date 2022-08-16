@@ -517,7 +517,10 @@ public final class SimpleGUI implements ComponentListener, Listener {
             arch + "/libcvc5jni.so",
             arch + "/libcvc5jni.dylib",
             arch + "/libcvc5jni.jnilib",
-            arch + "/cvc5_linux");
+            arch + "/cvc5_linux",
+            arch + "/cvc5_win64.exe",
+            arch + "/cvc5_mac"
+            );
         Util.copy(frame,
             false,
             false,
