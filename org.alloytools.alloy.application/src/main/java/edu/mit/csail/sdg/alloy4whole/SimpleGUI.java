@@ -514,6 +514,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
             arch + "/spear",
             arch + "/cryptominisat",
             arch + "/electrod",
+            arch + "/libcvc5.so",
             arch + "/libcvc5jni.so",
             arch + "/libcvc5jni.dylib",
             arch + "/libcvc5jni.jnilib",
