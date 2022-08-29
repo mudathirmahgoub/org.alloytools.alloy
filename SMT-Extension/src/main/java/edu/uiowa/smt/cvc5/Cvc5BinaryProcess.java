@@ -9,7 +9,7 @@ public class Cvc5BinaryProcess
 
   public static final String OS = System.getProperty("os.name");
   public static final String SEP = File.separator;
-  public static final String BIN_PATH = ".." + SEP + "org.alloytools.alloy.dist" + SEP + "/binaries" + SEP;
+  public static final String BIN_PATH = ".." + SEP + "SMT-Extension" + SEP + "binaries" + SEP;
 
   private Process process;
   private Scanner scanner;
@@ -63,15 +63,15 @@ public class Cvc5BinaryProcess
 
     if (onWindows())
     {
-      cvc5 = BIN_PATH + "cvc5_win64.exe";
+      cvc5 = BIN_PATH + "amd64-windows" + SEP + "cvc5_win64.exe";
     }
     else if (onMac())
     {
-      cvc5 = BIN_PATH + "cvc5_mac";
+      cvc5 = BIN_PATH + "x86-mac" + SEP + "cvc5_mac";
     }
     else if (OS.startsWith("Linux"))
     {
-      cvc5 = BIN_PATH + "cvc5_linux";
+      cvc5 = BIN_PATH + "amd64-linux" + SEP + "cvc5_linux";
     }
     else
     {
