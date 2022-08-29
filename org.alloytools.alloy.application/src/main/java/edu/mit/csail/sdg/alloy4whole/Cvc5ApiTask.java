@@ -45,12 +45,12 @@ public class Cvc5ApiTask implements WorkerEngine.WorkerTask
   public static AlloySettings alloySettings = AlloySettings.getInstance();
   public static String lastXmlFile;
 
-  static Cvc5ApiVisitor cvc5ApiVisitor;
+  volatile static Cvc5ApiVisitor cvc5ApiVisitor;
 
   Cvc5ApiTask(Map<String, String> alloyFiles,
-              String originalFileName,
-              int resolutionMode,
-              int targetCommandIndex)
+      String originalFileName,
+      int resolutionMode,
+      int targetCommandIndex)
   {
     this.alloyFiles = alloyFiles;
     this.originalFileName = originalFileName;
@@ -66,8 +66,10 @@ public class Cvc5ApiTask implements WorkerEngine.WorkerTask
       this.workerCallback = workerCallback;
       translation = translateToSMT();
       SmtScript optimizedScript = translation.getOptimizedSmtScript();
-      cvc5ApiVisitor = optimizedScript.toCvc5Api(translation.getAlloySettings(), new Solver());
-
+      synchronized (this)
+      {
+        cvc5ApiVisitor = optimizedScript.toCvc5Api(translation.getAlloySettings(), new Solver());
+      }
 
       CommandResult commandResult;
 
@@ -144,8 +146,7 @@ public class Cvc5ApiTask implements WorkerEngine.WorkerTask
     }
   }
 
-  private CommandResult solveCommand(int index, Cvc5ApiVisitor cvc5ApiVisitor)
-      throws Exception
+  private CommandResult solveCommand(int index, Cvc5ApiVisitor cvc5ApiVisitor) throws Exception
   {
     cvc5ApiVisitor.visit(translation.getOptimizedSmtScript(index));
     Command command = translation.getCommands().get(index);
@@ -160,7 +161,8 @@ public class Cvc5ApiTask implements WorkerEngine.WorkerTask
 
     final long startSolve = System.currentTimeMillis();
 
-    Object[] javaCodeMessage = new Object[] {"link", "java code", "MSG: " + cvc5ApiVisitor.getJavaCode()};
+    Object[] javaCodeMessage =
+        new Object[] {"link", "java code", "MSG: " + cvc5ApiVisitor.getJavaCode()};
     workerCallback.callback(javaCodeMessage);
     callbackPlain("\n");
 
@@ -188,8 +190,8 @@ public class Cvc5ApiTask implements WorkerEngine.WorkerTask
     return commandResult;
   }
 
-  private Set<Pos> prepareUnsatCore(
-      int commandIndex, long duration, Cvc5ApiVisitor cvc5ApiVisitor) throws Exception
+  private Set<Pos> prepareUnsatCore(int commandIndex, long duration, Cvc5ApiVisitor cvc5ApiVisitor)
+      throws Exception
   {
     Term[] coreTerms = cvc5ApiVisitor.getUnsatCore();
     String corString =
@@ -201,14 +203,16 @@ public class Cvc5ApiTask implements WorkerEngine.WorkerTask
     callbackPlain("\n");
 
     List<String> coreAssertions = cvc5ApiVisitor.getCoreAssertions(coreTerms);
-    String alloyCore = coreAssertions.stream().map(s -> "|" + s + "|").collect(Collectors.joining("\n"));
+    String alloyCore =
+        coreAssertions.stream().map(s -> "|" + s + "|").collect(Collectors.joining("\n"));
     alloyCore = "(" + alloyCore + ")";
     callbackPlain("cvc5 Api found an ");
     Object[] anotherCore = new Object[] {"link", "Alloy unsat core", "MSG: " + alloyCore};
     workerCallback.callback(anotherCore);
     callbackPlain("\n");
 
-    Object[] javaCodeMessage = new Object[] {"link", "java code", "MSG: " + cvc5ApiVisitor.getJavaCode()};
+    Object[] javaCodeMessage =
+        new Object[] {"link", "java code", "MSG: " + cvc5ApiVisitor.getJavaCode()};
     workerCallback.callback(javaCodeMessage);
     callbackPlain("\n");
 
@@ -296,8 +300,8 @@ public class Cvc5ApiTask implements WorkerEngine.WorkerTask
    * @return a path to the xml file where the model is saved
    * @throws Exception
    */
-  private String prepareInstance(
-      int commandIndex, long duration, Cvc5ApiVisitor cvc5ApiVisitor) throws Exception
+  private String prepareInstance(int commandIndex, long duration, Cvc5ApiVisitor cvc5ApiVisitor)
+      throws Exception
   {
     List<Triplet<String, Declaration, Term>> termSymbols = cvc5ApiVisitor.getTermSymbols();
     Term[] terms = new Term[termSymbols.size()];
@@ -321,7 +325,8 @@ public class Cvc5ApiTask implements WorkerEngine.WorkerTask
     workerCallback.callback(modelMessage);
     callbackPlain("\n");
 
-    Object[] javaCodeMessage = new Object[] {"link", "java code", "MSG: " + cvc5ApiVisitor.getJavaCode()};
+    Object[] javaCodeMessage =
+        new Object[] {"link", "java code", "MSG: " + cvc5ApiVisitor.getJavaCode()};
     workerCallback.callback(javaCodeMessage);
     callbackPlain("\n");
 
