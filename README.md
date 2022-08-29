@@ -27,14 +27,16 @@ JVM to run Alloy on macOS. A `.pkg` file is provided for that purpose.
 
 Checkout the project and type `./gradlew build`. You find the executable JAR in org.alloytools.alloy.dist/target/org.alloytools.alloy.dist.jar after the build has finished.
 
-     $ java -version           # requires 1.8 (and NOT 1.9, gradle does not run on 1.9)
-     java version "1.8.0_144"
-     Java(TM) SE Runtime Environment (build 1.8.0_144-b01)
-     Java HotSpot(TM) 64-Bit Server VM (build 25.144-b01, mixed model
+     $ java -version           # requires 1.9+
+     openjdk version "11.0.16" 2022-07-19
+     OpenJDK Runtime Environment (build 11.0.16+8-post-Ubuntu-0ubuntu122.04)
+     OpenJDK 64-Bit Server VM (build 11.0.16+8-post-Ubuntu-0ubuntu122.04, mixed mode, sharing)
      $ git clone --recursive https://github.com/AlloyTools/org.alloytools.alloy.git
      $ cd org.alloytools.alloy
-     $ ./gradlew build
-     $ java -jar org.alloytools.alloy.dist/target/org.alloytools.alloy.dist.jar
+     $ ./gradlew assemble
+     # add libcvc5.so to library path
+     $ export LD_LIBRARY_PATH=SMT-Extension/binaries/amd64-linux
+     $ java -cp org.alloytools.alloy.dist/target/org.alloytools.alloy.dist.jar edu.mit.csail.sdg.alloy4whole.SimpleGUI
      # opens GUI
      
 Note: if you are behind a proxy, the call to `gradlew` is likely to fail, unless you pass it further options about the http and https proxies (and possibly your login and password on this proxy). There are several ways to pass these options, a simple one is to type (replace the `XXXXX`'s by the adequate settings):
