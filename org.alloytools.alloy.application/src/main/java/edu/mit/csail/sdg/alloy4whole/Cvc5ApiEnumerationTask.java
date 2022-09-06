@@ -39,57 +39,58 @@ public class Cvc5ApiEnumerationTask implements WorkerEngine.WorkerTask
   @Override
   public void run(WorkerEngine.WorkerCallback workerCallback) throws Exception
   {
-    try
-    {
-      if (!xmlFileName.equals(Cvc5ApiTask.lastXmlFile))
-      {
-        workerCallback.callback(new Object[] {
-            "pop", "You can only enumerate the solutions of the last executed command."});
-        return;
-      }
-
-      Object[] javaCodeMessage = new Object[] {"link", "java code", "MSG: " + Cvc5ApiTask.cvc5ApiVisitor.getJavaCode()};
-      workerCallback.callback(javaCodeMessage);
-
-      // (block-model)
-      if (A4Preferences.CvcBlockModel.get().equals(A4Preferences.CvcLiterals))
-      {
-        Cvc5ApiTask.cvc5ApiVisitor.blockModel(BlockModelsMode.LITERALS);
-      }
-      else
-      {
-        Cvc5ApiTask.cvc5ApiVisitor.blockModel(BlockModelsMode.VALUES);
-      }
-
-      // (check-sat)
-      Result result = Cvc5ApiTask.cvc5ApiVisitor.checkSat();
-
-      if (result.isSat())
-      {
-        // get a new model and save it
-        prepareInstance(commandIndex);
-        // tell alloySolution user interface that the last instance has changed
-        workerCallback.callback(new Object[] {"declare", xmlFileName});
-      }
-      else if (result.isUnsat())
-      {
-        workerCallback.callback(new Object[] {"pop",
-            "There are no more satisfying instances.\n\n"
-                + "Note: due to symmetry breaking and other optimizations,\n"
-                + "some equivalent solutions may have been omitted."});
-      }
-      else
-      {
-        workerCallback.callback(new Object[] {"pop", "cvc5 Api solver returned unknown."});
-      }
-    }
-    catch (Exception exception)
-    {
-      JOptionPane.showMessageDialog(null, exception);
-      StringWriter stringWriter = new StringWriter();
-      exception.printStackTrace(new PrintWriter(stringWriter));
-      throw new Exception(stringWriter.toString());
-    }
+    throw new UnsupportedOperationException("New instance is not currently implemented for cvc5 api");
+//    try
+//    {
+//      if (!xmlFileName.equals(Cvc5ApiTask.lastXmlFile))
+//      {
+//        workerCallback.callback(new Object[] {
+//            "pop", "You can only enumerate the solutions of the last executed command."});
+//        return;
+//      }
+//
+//      Object[] javaCodeMessage = new Object[] {"link", "java code", "MSG: " + Cvc5ApiTask.cvc5ApiVisitor.getJavaCode()};
+//      workerCallback.callback(javaCodeMessage);
+//
+//      // (block-model)
+//      if (A4Preferences.CvcBlockModel.get().equals(A4Preferences.CvcLiterals))
+//      {
+//        Cvc5ApiTask.cvc5ApiVisitor.blockModel(BlockModelsMode.LITERALS);
+//      }
+//      else
+//      {
+//        Cvc5ApiTask.cvc5ApiVisitor.blockModel(BlockModelsMode.VALUES);
+//      }
+//
+//      // (check-sat)
+//      Result result = Cvc5ApiTask.cvc5ApiVisitor.checkSat();
+//
+//      if (result.isSat())
+//      {
+//        // get a new model and save it
+//        prepareInstance(commandIndex);
+//        // tell alloySolution user interface that the last instance has changed
+//        workerCallback.callback(new Object[] {"declare", xmlFileName});
+//      }
+//      else if (result.isUnsat())
+//      {
+//        workerCallback.callback(new Object[] {"pop",
+//            "There are no more satisfying instances.\n\n"
+//                + "Note: due to symmetry breaking and other optimizations,\n"
+//                + "some equivalent solutions may have been omitted."});
+//      }
+//      else
+//      {
+//        workerCallback.callback(new Object[] {"pop", "cvc5 Api solver returned unknown."});
+//      }
+//    }
+//    catch (Exception exception)
+//    {
+//      JOptionPane.showMessageDialog(null, exception);
+//      StringWriter stringWriter = new StringWriter();
+//      exception.printStackTrace(new PrintWriter(stringWriter));
+//      throw new Exception(stringWriter.toString());
+//    }
   }
 
   private Translation translateToSMT() throws IOException
