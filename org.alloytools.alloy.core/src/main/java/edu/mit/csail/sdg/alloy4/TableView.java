@@ -161,6 +161,8 @@ public class TableView {
 
         });
 
+        Map<String, String> atomToName = solution.getAtomToName();
+
         for (Sig s : sigs) {
 
             if (s.builtin)

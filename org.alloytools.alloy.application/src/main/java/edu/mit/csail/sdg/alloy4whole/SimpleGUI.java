@@ -1119,7 +1119,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
         if (i >= commands.size())
             i = commands.size() - 1;
         SimpleCallback1 cb = new SimpleCallback1(this, null, log, VerbosityPref.get().ordinal(), latestAlloyVersionName, latestAlloyVersion);
-        SimpleTask1 task = new SimpleTask1();
+
         A4Options opt = new A4Options();
         opt.tempDirectory = alloyHome(frame) + fs + "tmp";
         opt.solverDirectory = alloyHome(frame) + fs + "binary";
@@ -1133,12 +1133,23 @@ public final class SimpleGUI implements ComponentListener, Listener {
         opt.decompose_mode = DecomposePref.get().ordinal();
         opt.originalFilename = Util.canon(text.get().getFilename());
         opt.solver = Solver.get();
-        task.bundleIndex = i;
-        task.bundleWarningNonFatal = WarningNonfatal.get();
-        task.map = text.takeSnapshot();
-        task.options = opt.dup();
-        task.resolutionMode = (Version.experimental && ImplicitThis.get()) ? 2 : 1;
-        task.tempdir = maketemp(frame);
+
+        WorkerEngine.WorkerTask task;
+
+        Map<String, String > alloyFiles = text.takeSnapshot();
+        int resolutionMode              = (Version.experimental && ImplicitThis.get()) ? 2 : 1;
+        if(RelationalSolver.get().equals(KODKOD)) {
+            SimpleTask1 task = new SimpleTask1();
+            task.bundleIndex = i;
+            task.bundleWarningNonFatal = WarningNonfatal.get();
+            task.map = alloyFiles;
+            task.options = opt.dup();
+            task.resolutionMode = resolutionMode;
+            task.tempdir = maketemp(frame);
+        }
+        else{
+            task = new Cvc4Task(alloyFiles, opt.originalFilename, resolutionMode, i);
+        }
         try {
             runmenu.setEnabled(false);
             runbutton.setVisible(false);
@@ -1372,6 +1383,9 @@ public final class SimpleGUI implements ComponentListener, Listener {
 
             optmenu.addSeparator();
 
+            addToMenu(optmenu, RelationalSolver);
+            addToMenu(optmenu, Cvc4Timeout);
+            addToMenu(optmenu, Cvc4IncludeCommandScope);
             addToMenu(optmenu, Solver);
             addToMenu(optmenu, SkolemDepth);
             JMenu cmMenu = addToMenu(optmenu, CoreMinimization);
@@ -1737,9 +1751,26 @@ public final class SimpleGUI implements ComponentListener, Listener {
             if (WorkerEngine.isBusy())
                 throw new RuntimeException("Alloy4 is currently executing a SAT solver command. Please wait until that command has finished.");
             SimpleCallback1 cb = new SimpleCallback1(SimpleGUI.this, viz, log, VerbosityPref.get().ordinal(), latestAlloyVersionName, latestAlloyVersion);
-            SimpleTask2 task = new SimpleTask2();
-            task.filename = arg[0];
-            task.index = Integer.valueOf(arg[1]);
+
+            WorkerEngine.WorkerTask task;
+            if(RelationalSolver.get().equals(KODKOD)) {
+                SimpleTask2 task = new SimpleTask2();
+                task.filename = arg[0];
+                task.index = Integer.valueOf(arg[1]);
+            }
+            else{
+                try {
+                    task = new Cvc4EnumerationTask(arg);
+                } catch (Exception exception) {
+                    StringWriter stringWriter = new StringWriter();
+                    exception.printStackTrace(new PrintWriter(stringWriter));
+                    log.logBold(stringWriter.toString());
+                    log.logDivider();
+                    log.flush();
+                    return arg;
+                }
+            }
+
             try {
                 if (AlloyCore.isDebug())
                     WorkerEngine.runLocally(task, cb);

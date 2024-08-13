@@ -2204,4 +2204,15 @@ public final class A4Solution {
         extensions.add(new CNFTransformer());
     }
 
+    public Map<String, String> getAtomToName()
+    {
+        Map<String, String> atomToName = new HashMap<>();
+
+        for (Map.Entry<Object, String> entry: atom2name.entrySet())
+        {
+            atomToName.put(entry.getKey().toString(), entry.getValue());
+        }
+
+        return atomToName;
+    }
 }

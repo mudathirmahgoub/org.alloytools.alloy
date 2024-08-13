@@ -723,6 +723,23 @@ public class A4Preferences {
     /** Automatically infer partial instance from model */
     public static final BooleanPref                   InferPartialInstance = new BooleanPref("InferPartialInstance", "Infer partial instance");
 
+    public static final String KODKOD = "Kodkod";
+
+    public static final String CVC4 = "CVC4";
+
+    public static final StringChoicePref RelationalSolver                   = new StringChoicePref("Relational Solver", Arrays.asList(KODKOD, CVC4), KODKOD);
+
+    public static final IntChoicePref                Cvc4Timeout            = new IntChoicePref("Cvc4Timeout", "CVC4 timeout", Arrays.asList(30000, 60000, 120000, 300000, 600000), 30000){
+        @Override
+        public Object renderValueShort(Integer value)
+        {
+            double valueInMinutes = value / 60000.0;
+            return valueInMinutes + " minutes";
+        }
+    };
+
+    public static final BooleanPref Cvc4IncludeCommandScope = new BooleanPref("Cvc4IncludeCommandScope", "CVC4 include scope", false);
+
     public static final DelayedChoicePref<SATFactory> Solver               = new DelayedChoicePref<SATFactory>("SatSolver2", "Solver", SATFactory.getAllSolvers(), SATFactory.DEFAULT) {
 
                                                                                @Override
