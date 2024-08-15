@@ -134,6 +134,24 @@ public class Cvc5ApiVisitor extends AbstractSmtAstVisitor
   }
 
   @Override
+  public Term visit(LambdaExpr lambdaExpr)
+  {
+    return null;
+  }
+
+  @Override
+  public Term visit(SmtFilter filter)
+  {
+    return null;
+  }
+
+  @Override
+  public Term visit(SmtAll all)
+  {
+    return null;
+  }
+
+  @Override
   public Term visit(SmtQtExpr smtQtExpr)
   {
     int size = termSymbols.size();

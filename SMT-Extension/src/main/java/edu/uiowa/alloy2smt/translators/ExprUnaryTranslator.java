@@ -208,6 +208,7 @@ public class ExprUnaryTranslator
 
     SmtExpr member = SmtBinaryExpr.Op.SET_MEMBER.make(variable.getVariable(), A);
     variable.setConstraint(member);
+    variable.setSet(A);
 
     SmtExpr singleton = SmtUnaryExpr.Op.SET_SINGLETON.make(variable.getVariable());
 

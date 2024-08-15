@@ -79,6 +79,7 @@ public class DeclTranslator
         Variable variable = (Variable) ((SmtUnaryExpr) set).getExpr();
         SmtExpr constraint = ((SmtVariable) variable.getDeclaration()).getConstraint();
         smtVariable.setConstraint(constraint.replace(variable, smtVariable.getVariable()));
+        smtVariable.setSet(((SmtVariable) variable.getDeclaration()).getSet());
         return smtVariable;
       }
     }

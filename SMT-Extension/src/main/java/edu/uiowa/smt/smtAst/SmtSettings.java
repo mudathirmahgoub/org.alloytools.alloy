@@ -21,7 +21,7 @@ public class SmtSettings extends SmtAst
 
   protected SmtSettings()
   {
-    addLogic("ALL");
+    addLogic("HO_ALL");
     putSolverOption("produce-models", "true");
     putSolverOption("incremental", "true");
     putSolverOption("sets-ext", "true");

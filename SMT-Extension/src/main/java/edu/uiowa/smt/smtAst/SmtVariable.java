@@ -11,6 +11,7 @@ package edu.uiowa.smt.smtAst;
 public class SmtVariable extends Declaration
 {
   private SmtExpr constraint;
+  private SmtExpr set;
 
   public SmtVariable(String name, SmtSort sort, boolean isOriginal)
   {
@@ -27,9 +28,19 @@ public class SmtVariable extends Declaration
     return constraint;
   }
 
+  public SmtExpr getSet()
+  {
+    return set;
+  }
+
   @Override
   public void accept(SmtAstVisitor visitor)
   {
     visitor.visit(this);
+  }
+
+  public void setSet(SmtExpr set)
+  {
+    this.set = set;
   }
 }

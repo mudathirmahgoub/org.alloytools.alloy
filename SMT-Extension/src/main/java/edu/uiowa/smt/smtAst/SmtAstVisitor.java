@@ -23,6 +23,12 @@ public interface SmtAstVisitor {
 
   Sort visit(IntSort intSort);
 
+  Term visit(LambdaExpr lambdaExpr);
+
+  Term visit(SmtFilter filter);
+
+  Term visit(SmtAll all);
+
   Term visit(SmtQtExpr quantifiedExpression);
 
   Sort visit(RealSort realSort);

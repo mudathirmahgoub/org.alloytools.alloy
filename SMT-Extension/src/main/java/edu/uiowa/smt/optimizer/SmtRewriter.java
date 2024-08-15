@@ -449,6 +449,10 @@ public class SmtRewriter implements ISmtRewriter
     {
       rewriteResult = visit((UninterpretedConstant) smtExpr);
     }
+    else if (smtExpr instanceof SmtAll)
+    {
+      rewriteResult = SmtRewriteResult.Status.Done.make(smtExpr);
+    }
     else
     {
       throw new UnsupportedOperationException();

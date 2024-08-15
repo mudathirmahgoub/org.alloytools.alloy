@@ -99,6 +99,41 @@ public class SmtLibPrettyPrinter extends SmtLibPrinter
   }
 
   @Override
+  public Term visit(LambdaExpr expr)
+  {
+    stringBuilder.append("(lambda (");
+    for (SmtVariable boundVariable : expr.getInputVariables())
+    {
+      this.visit(boundVariable);
+    }
+    stringBuilder.append(") ");
+    tabsCount++;
+    this.visit(expr.getBody());
+    stringBuilder.append(")");
+    tabsCount -= 1;
+    return null;
+  }
+
+  @Override
+  public Term visit(SmtAll all)
+  {
+    tabsCount++;
+    stringBuilder.append("\n");
+    printTabs();
+    stringBuilder.append("(set.all\n");
+    tabsCount++;
+    printTabs();
+    this.visit(all.lambda);
+    stringBuilder.append("\n");
+    printTabs();
+    this.visit(all.set);
+    stringBuilder.append(")");
+    tabsCount -= 2;
+    return null;
+  }
+
+
+  @Override
   public Term visit(SmtQtExpr expr)
   {
     tabsCount++;

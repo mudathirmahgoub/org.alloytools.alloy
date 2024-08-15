@@ -109,6 +109,40 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
   }
 
   @Override
+  public Term visit(LambdaExpr lambdaExpr)
+  {
+    stringBuilder.append("(lambda (");
+    for (SmtVariable boundVariable : lambdaExpr.getInputVariables())
+    {
+      this.visit(boundVariable);
+    }
+    stringBuilder.append(") ");
+    this.visit(lambdaExpr.getBody());
+    stringBuilder.append(")");
+    return null;
+  }
+
+  @Override
+  public Term visit(SmtAll all)
+  {
+    stringBuilder.append("(set.all " + all.lambda);
+    stringBuilder.append(" ");
+    stringBuilder.append(all.set);
+    stringBuilder.append(")");
+    return null;
+  }
+
+  @Override
+  public Term visit(SmtFilter filter)
+  {
+    stringBuilder.append("(set.filter " + filter.lambda);
+    stringBuilder.append(" ");
+    stringBuilder.append(filter.set);
+    stringBuilder.append(")");
+    return null;
+  }
+
+  @Override
   public Term visit(SmtQtExpr smtQtExpr)
   {
     stringBuilder.append("(" + smtQtExpr.getOp() + " (");
@@ -441,6 +475,18 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
     else if (smtExpr instanceof SmtMultiArityExpr)
     {
       this.visit((SmtMultiArityExpr) smtExpr);
+    }
+    else if (smtExpr instanceof LambdaExpr)
+    {
+      this.visit((LambdaExpr) smtExpr);
+    }
+    else if (smtExpr instanceof SmtAll)
+    {
+      this.visit((SmtAll) smtExpr);
+    }
+    else if (smtExpr instanceof SmtFilter)
+    {
+      this.visit((SmtFilter) smtExpr);
     }
     else if (smtExpr instanceof SmtQtExpr)
     {

@@ -261,14 +261,18 @@ public class ExprQtTranslator
   {
     // all x: e1, y: e2, ... | f is translated into
     // forall x, y,... (x in e1 and y in e2 and ... and constraints implies f)
+    int index = smtVariables.size() - 1;
+    LambdaExpr lambda = new LambdaExpr(Arrays.asList(smtVariables.get(index)), body);
+    SmtExpr all = new SmtAll(lambda, smtVariables.get(index).getSet());
 
+    while(index > 0)
+    {
+      index--;
+      lambda = new LambdaExpr(Arrays.asList(smtVariables.get(index)), all);
+      all = new SmtAll(lambda, smtVariables.get(index).getSet());
+    }
 
-    SmtExpr multiplicity = TranslatorUtils.getVariablesConstraints(smtVariables);
-    SmtExpr and = SmtMultiArityExpr.Op.AND.make(multiplicity, constraints);
-    body = SmtBinaryExpr.Op.IMPLIES.make(and, body);
-
-    SmtExpr forAll = SmtQtExpr.Op.FORALL.make(body, smtVariables);
-    return forAll;
+    return all;
   }
 
   private SmtExpr translateNoQuantifier(SmtExpr body, List<SmtVariable> smtVariables,
