@@ -27,7 +27,7 @@ public interface SmtAstVisitor {
 
   Term visit(SmtFilter filter);
 
-  Term visit(SmtAll all);
+  Term visit(SmtSetQtExpr setQtExpr);
 
   Term visit(SmtQtExpr quantifiedExpression);
 

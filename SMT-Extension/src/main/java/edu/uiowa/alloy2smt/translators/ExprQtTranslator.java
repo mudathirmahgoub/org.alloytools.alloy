@@ -260,16 +260,21 @@ public class ExprQtTranslator
                                          SmtEnv smtEnv, SmtExpr constraints)
   {
     // all x: e1, y: e2, ... | f is translated into
-    // forall x, y,... (x in e1 and y in e2 and ... and constraints implies f)
+    // (set.all
+    //   (lambda ((x T1)
+    //     (set.all
+    //       (lambda ((y T2)) ... f)
+    //       e2))
+    //   e1)
     int index = smtVariables.size() - 1;
     LambdaExpr lambda = new LambdaExpr(Arrays.asList(smtVariables.get(index)), body);
-    SmtExpr all = new SmtAll(lambda, smtVariables.get(index).getSet());
+    SmtExpr all = new SmtSetQtExpr(SmtSetQtExpr.Op.ALL, lambda, smtVariables.get(index).getSet());
 
     while(index > 0)
     {
       index--;
       lambda = new LambdaExpr(Arrays.asList(smtVariables.get(index)), all);
-      all = new SmtAll(lambda, smtVariables.get(index).getSet());
+      all = new SmtSetQtExpr(SmtSetQtExpr.Op.ALL, lambda, smtVariables.get(index).getSet());
     }
 
     return all;
@@ -285,15 +290,24 @@ public class ExprQtTranslator
   private SmtExpr translateSomeQuantifier(SmtExpr body, List<SmtVariable> smtVariables,
                                           SmtEnv smtEnv, SmtExpr constraints)
   {
-
     // some x: e1, y: e2, ... | f is translated into
-    // exists x, y,... (x in e1 and y in e2 and ... and constraints and f)
+    // (set.some
+    //   (lambda ((x T1)
+    //     (set.some
+    //       (lambda ((y T2)) ... f)
+    //       e2))
+    //   e1)
+    int index = smtVariables.size() - 1;
+    LambdaExpr lambda = new LambdaExpr(Arrays.asList(smtVariables.get(index)), body);
+    SmtExpr some = new SmtSetQtExpr(SmtSetQtExpr.Op.SOME, lambda, smtVariables.get(index).getSet());
 
-    SmtExpr multiplicity = TranslatorUtils.getVariablesConstraints(smtVariables);
-    SmtMultiArityExpr and = SmtMultiArityExpr.Op.AND.make(multiplicity, constraints, body);
-
-    SmtExpr exists = SmtQtExpr.Op.EXISTS.make(and, smtVariables);
-    return exists;
+    while(index > 0)
+    {
+      index--;
+      lambda = new LambdaExpr(Arrays.asList(smtVariables.get(index)), some);
+      some = new SmtSetQtExpr(SmtSetQtExpr.Op.SOME, lambda, smtVariables.get(index).getSet());
+    }
+    return some;
   }
 
   private SmtExpr translateOneQuantifier(SmtExpr body, List<SmtVariable> smtVariables,

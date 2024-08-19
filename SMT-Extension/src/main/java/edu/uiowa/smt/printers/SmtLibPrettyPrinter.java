@@ -115,18 +115,18 @@ public class SmtLibPrettyPrinter extends SmtLibPrinter
   }
 
   @Override
-  public Term visit(SmtAll all)
+  public Term visit(SmtSetQtExpr setQtExpr)
   {
     tabsCount++;
     stringBuilder.append("\n");
     printTabs();
-    stringBuilder.append("(set.all\n");
+    stringBuilder.append("(" + setQtExpr.op + "\n");
     tabsCount++;
     printTabs();
-    this.visit(all.lambda);
+    this.visit(setQtExpr.lambda);
     stringBuilder.append("\n");
     printTabs();
-    this.visit(all.set);
+    this.visit(setQtExpr.set);
     stringBuilder.append(")");
     tabsCount -= 2;
     return null;

@@ -123,11 +123,11 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
   }
 
   @Override
-  public Term visit(SmtAll all)
+  public Term visit(SmtSetQtExpr setQtExpr)
   {
-    stringBuilder.append("(set.all " + all.lambda);
+    stringBuilder.append("(" + setQtExpr.op + " " + setQtExpr.lambda);
     stringBuilder.append(" ");
-    stringBuilder.append(all.set);
+    stringBuilder.append(setQtExpr.set);
     stringBuilder.append(")");
     return null;
   }
@@ -480,9 +480,9 @@ public class SmtLibPrinter extends AbstractSmtAstVisitor
     {
       this.visit((LambdaExpr) smtExpr);
     }
-    else if (smtExpr instanceof SmtAll)
+    else if (smtExpr instanceof SmtSetQtExpr)
     {
-      this.visit((SmtAll) smtExpr);
+      this.visit((SmtSetQtExpr) smtExpr);
     }
     else if (smtExpr instanceof SmtFilter)
     {

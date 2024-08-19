@@ -15,7 +15,6 @@ import edu.uiowa.smt.smtAst.*;
 import io.github.cvc5.*;
 import io.github.cvc5.modes.*;
 
-import javax.swing.*;
 import java.util.*;
 
 public class Cvc5ApiVisitor extends AbstractSmtAstVisitor
@@ -146,7 +145,7 @@ public class Cvc5ApiVisitor extends AbstractSmtAstVisitor
   }
 
   @Override
-  public Term visit(SmtAll all)
+  public Term visit(SmtSetQtExpr all)
   {
     return null;
   }

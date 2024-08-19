@@ -449,7 +449,7 @@ public class SmtRewriter implements ISmtRewriter
     {
       rewriteResult = visit((UninterpretedConstant) smtExpr);
     }
-    else if (smtExpr instanceof SmtAll)
+    else if (smtExpr instanceof SmtSetQtExpr)
     {
       rewriteResult = SmtRewriteResult.Status.Done.make(smtExpr);
     }

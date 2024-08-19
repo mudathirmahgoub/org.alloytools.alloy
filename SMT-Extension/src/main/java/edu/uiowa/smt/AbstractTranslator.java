@@ -161,19 +161,14 @@ public abstract class AbstractTranslator
   private static Assertion getIdentityRelation(SmtSort sort, FunctionDeclaration identity)
   {
     // Axiom for identity relation
-    SmtVariable a = new SmtVariable(TranslatorUtils.getFreshName(sort), sort, false);
+    SmtSort tupleSort = ((SetSort)identity.getSort()).elementSort;
+    SmtVariable x = new SmtVariable(TranslatorUtils.getFreshName(tupleSort), tupleSort, false);
 
-    SmtVariable b = new SmtVariable(TranslatorUtils.getFreshName(sort), sort, false);
 
-    SmtMultiArityExpr tupleAB = new SmtMultiArityExpr(SmtMultiArityExpr.Op.TUPLE, a.getVariable(), b.getVariable());
-
-    SmtBinaryExpr member = SmtBinaryExpr.Op.SET_MEMBER.make(tupleAB, identity.getVariable());
-
-    SmtBinaryExpr equals = SmtBinaryExpr.Op.EQ.make(a.getVariable(), b.getVariable());
-
-    SmtBinaryExpr equiv = SmtBinaryExpr.Op.EQ.make(member, equals);
-
-    SmtQtExpr forAll = SmtQtExpr.Op.FORALL.make(equiv, a, b);
+    SmtExpr a= SmtBinaryExpr.Op.TUPLE_SELECT.make(new IntConstant("0"), x.getVariable());
+    SmtExpr b= SmtBinaryExpr.Op.TUPLE_SELECT.make(new IntConstant("1"), x.getVariable());
+    SmtBinaryExpr equals = SmtBinaryExpr.Op.EQ.make(a, b);
+    SmtSetQtExpr forAll = SmtSetQtExpr.Op.ALL.make(equals, x, identity.getVariable());
 
     Assertion assertion = new Assertion("", "Identity relation definition for " + identity.getName(), forAll);
 

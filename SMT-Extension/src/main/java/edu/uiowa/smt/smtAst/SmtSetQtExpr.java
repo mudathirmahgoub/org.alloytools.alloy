@@ -9,19 +9,69 @@
 package edu.uiowa.smt.smtAst;
 
 import edu.uiowa.smt.AbstractTranslator;
-import edu.uiowa.smt.printers.SmtLibPrettyPrinter;
 import edu.uiowa.smt.printers.SmtLibPrinter;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-public class SmtAll extends SmtFilter
+public class SmtSetQtExpr extends SmtFilter
 {
 
-  public SmtAll(LambdaExpr lambda, SmtExpr set)
+  public final SmtSetQtExpr.Op op;
+
+  public SmtSetQtExpr(SmtSetQtExpr.Op op, LambdaExpr lambda, SmtExpr set)
   {
     super(lambda, set);
+    this.op = op;
   }
+
+
+  public enum Op
+  {
+    ALL("set.all"),
+    SOME("set.some");
+
+    private final String opStr;
+
+    Op(String op)
+    {
+      this.opStr = op;
+    }
+
+    public static SmtSetQtExpr.Op getOp(String operator)
+    {
+      switch (operator)
+      {
+        case "set.all":
+          return ALL;
+        case "set.some":
+          return SOME;
+        default:
+          throw new UnsupportedOperationException("Operator " + operator + " is not defined");
+      }
+    }
+
+    public SmtSetQtExpr make(LambdaExpr lambda, SmtExpr set)
+    {
+      return new SmtSetQtExpr(this, lambda, set);
+    }
+
+    public SmtSetQtExpr make(SmtExpr body, SmtVariable x, SmtExpr set)
+    {
+      LambdaExpr lambda = new LambdaExpr(Collections.singletonList(x), body);
+      return new SmtSetQtExpr(this, lambda, set);
+    }
+
+
+    @Override
+    public String toString()
+    {
+      return this.opStr;
+    }
+  }
+
 
   @Override
   public void accept(SmtAstVisitor visitor)
