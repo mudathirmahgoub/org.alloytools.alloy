@@ -226,11 +226,8 @@ public class ExprBinaryTranslator
 
     SmtVariable x = new SmtVariable("x", ASort.elementSort, false);
     SmtVariable y = new SmtVariable("y", BSort.elementSort, false);
-    SmtExpr xMemberA = SmtBinaryExpr.Op.SET_MEMBER.make(x.getVariable(), A);
-    SmtExpr yMemberB = SmtBinaryExpr.Op.SET_MEMBER.make(y.getVariable(), B);
 
     SmtVariable u = new SmtVariable("u", ASort.elementSort, false);
-    SmtExpr uMemberA = SmtBinaryExpr.Op.SET_MEMBER.make(u.getVariable(), A);
 
     // multiplicitySet subset of A one -> some B
     // and
@@ -251,20 +248,16 @@ public class ExprBinaryTranslator
     SmtExpr uEqualX = SmtBinaryExpr.Op.EQ.make(u.getVariable(), x.getVariable());
     SmtExpr notUEqualX = SmtUnaryExpr.Op.NOT.make(uEqualX);
 
-    SmtExpr uImplies = SmtBinaryExpr.Op.IMPLIES.make(SmtMultiArityExpr.Op.AND.make(uMemberA, notUEqualX), notUY);
-    SmtExpr forAllU = SmtQtExpr.Op.FORALL.make(uImplies, u);
+    SmtExpr uImplies = SmtBinaryExpr.Op.IMPLIES.make(notUEqualX, notUY);
+    SmtExpr forAllU = SmtSetQtExpr.Op.ALL.make(uImplies, u, A);
 
-    SmtExpr existsYBody = SmtMultiArityExpr.Op.AND.make(yMemberB, xyMember);
+    SmtExpr existsY = SmtSetQtExpr.Op.SOME.make(xyMember, y, B);
+    SmtExpr forAllX = SmtSetQtExpr.Op.ALL.make(existsY, x, A);
 
-    SmtExpr existsY = SmtQtExpr.Op.EXISTS.make(existsYBody, y);
-    SmtExpr xImplies = SmtBinaryExpr.Op.IMPLIES.make(xMemberA, existsY);
-    SmtExpr forAllX = SmtQtExpr.Op.FORALL.make(xImplies, x);
+    SmtExpr existsXBody = SmtMultiArityExpr.Op.AND.make(xyMember, forAllU);
 
-    SmtExpr existsXBody = SmtMultiArityExpr.Op.AND.make(SmtMultiArityExpr.Op.AND.make(xMemberA, xyMember), forAllU);
-
-    SmtExpr existsX = SmtQtExpr.Op.EXISTS.make(existsXBody, x);
-    SmtExpr yImplies = SmtBinaryExpr.Op.IMPLIES.make(yMemberB, existsX);
-    SmtExpr forAllY = SmtQtExpr.Op.FORALL.make(yImplies, y);
+    SmtExpr existsX = SmtSetQtExpr.Op.SOME.make(existsXBody, x, A);
+    SmtExpr forAllY = SmtSetQtExpr.Op.ALL.make(existsX, y, B);
 
     SmtExpr and = SmtMultiArityExpr.Op.AND.make(subset, forAllX, forAllY);
 
@@ -290,11 +283,8 @@ public class ExprBinaryTranslator
 
     SmtVariable x = new SmtVariable("x", ASort.elementSort, false);
     SmtVariable y = new SmtVariable("y", BSort.elementSort, false);
-    SmtExpr xMemberA = SmtBinaryExpr.Op.SET_MEMBER.make(x.getVariable(), A);
-    SmtExpr yMemberB = SmtBinaryExpr.Op.SET_MEMBER.make(y.getVariable(), B);
 
     SmtVariable u = new SmtVariable("u", ASort.elementSort, false);
-    SmtExpr uMemberA = SmtBinaryExpr.Op.SET_MEMBER.make(u.getVariable(), A);
 
     // multiplicitySet subset of A one -> set B
     // and
@@ -313,14 +303,13 @@ public class ExprBinaryTranslator
     SmtExpr uEqualX = SmtBinaryExpr.Op.EQ.make(u.getVariable(), x.getVariable());
     SmtExpr notUEqualX = SmtUnaryExpr.Op.NOT.make(uEqualX);
 
-    SmtExpr uImplies = SmtBinaryExpr.Op.IMPLIES.make(SmtMultiArityExpr.Op.AND.make(uMemberA, notUEqualX), notUY);
-    SmtExpr forAllU = SmtQtExpr.Op.FORALL.make(uImplies, u);
+    SmtExpr uImplies = SmtBinaryExpr.Op.IMPLIES.make(notUEqualX, notUY);
+    SmtExpr forAllU = SmtSetQtExpr.Op.ALL.make(uImplies, u, A);
 
-    SmtExpr existsXBody = SmtMultiArityExpr.Op.AND.make(SmtMultiArityExpr.Op.AND.make(xMemberA, xyMember), forAllU);
+    SmtExpr existsXBody = SmtMultiArityExpr.Op.AND.make(xyMember, forAllU);
 
-    SmtExpr existsX = SmtQtExpr.Op.EXISTS.make(existsXBody, x);
-    SmtExpr yImplies = SmtBinaryExpr.Op.IMPLIES.make(yMemberB, existsX);
-    SmtExpr forAllY = SmtQtExpr.Op.FORALL.make(yImplies, y);
+    SmtExpr existsX = SmtSetQtExpr.Op.SOME.make(existsXBody, x, A);
+    SmtExpr forAllY = SmtSetQtExpr.Op.ALL.make(existsX, y, B);
 
     SmtExpr and = SmtMultiArityExpr.Op.AND.make(subset, forAllY);
 
@@ -346,11 +335,8 @@ public class ExprBinaryTranslator
 
     SmtVariable x = new SmtVariable("x", ASort.elementSort, false);
     SmtVariable y = new SmtVariable("y", BSort.elementSort, false);
-    SmtExpr xMemberA = SmtBinaryExpr.Op.SET_MEMBER.make(x.getVariable(), A);
-    SmtExpr yMemberB = SmtBinaryExpr.Op.SET_MEMBER.make(y.getVariable(), B);
 
     SmtVariable v = new SmtVariable("v", BSort.elementSort, false);
-    SmtExpr vMemberB = SmtBinaryExpr.Op.SET_MEMBER.make(v.getVariable(), B);
 
     // multiplicitySet subset of A some -> one B
     // and
@@ -370,21 +356,16 @@ public class ExprBinaryTranslator
     SmtExpr vEqualY = SmtBinaryExpr.Op.EQ.make(v.getVariable(), y.getVariable());
     SmtExpr notVEqualY = SmtUnaryExpr.Op.NOT.make(vEqualY);
 
-    SmtExpr vImplies = SmtBinaryExpr.Op.IMPLIES.make(SmtMultiArityExpr.Op.AND.make(vMemberB, notVEqualY), notXV);
-    SmtExpr forAllV = SmtQtExpr.Op.FORALL.make(vImplies, v);
+    SmtExpr vImplies = SmtBinaryExpr.Op.IMPLIES.make(notVEqualY, notXV);
+    SmtExpr forAllV = SmtSetQtExpr.Op.ALL.make(vImplies, v, B);
 
-    SmtExpr existsYBody = SmtMultiArityExpr.Op.AND.make(SmtMultiArityExpr.Op.AND.make(yMemberB, xyMember), forAllV);
+    SmtExpr existsYBody = SmtMultiArityExpr.Op.AND.make(xyMember, forAllV);
 
-    SmtExpr existsY = SmtQtExpr.Op.EXISTS.make(existsYBody, y);
-    SmtExpr xImplies = SmtBinaryExpr.Op.IMPLIES.make(xMemberA, existsY);
-    SmtExpr forAllX = SmtQtExpr.Op.FORALL.make(xImplies, x);
+    SmtExpr existsY = SmtSetQtExpr.Op.SOME.make(existsYBody, y, B);
+    SmtExpr forAllX = SmtSetQtExpr.Op.ALL.make(existsY, x, A);
 
-
-    SmtExpr existsXBody = SmtMultiArityExpr.Op.AND.make(xMemberA, xyMember);
-
-    SmtExpr existsX = SmtQtExpr.Op.EXISTS.make(existsXBody, x);
-    SmtExpr yImplies = SmtBinaryExpr.Op.IMPLIES.make(yMemberB, existsX);
-    SmtExpr forAllY = SmtQtExpr.Op.FORALL.make(yImplies, y);
+    SmtExpr existsX = SmtSetQtExpr.Op.SOME.make(xyMember, x, A);
+    SmtExpr forAllY = SmtSetQtExpr.Op.ALL.make(existsX, y, B);
 
     SmtExpr and = SmtMultiArityExpr.Op.AND.make(subset, forAllX, forAllY);
 
@@ -410,11 +391,8 @@ public class ExprBinaryTranslator
 
     SmtVariable x = new SmtVariable("x", ASort.elementSort, false);
     SmtVariable y = new SmtVariable("y", BSort.elementSort, false);
-    SmtExpr xMemberA = SmtBinaryExpr.Op.SET_MEMBER.make(x.getVariable(), A);
-    SmtExpr yMemberB = SmtBinaryExpr.Op.SET_MEMBER.make(y.getVariable(), B);
 
     SmtVariable v = new SmtVariable("v", BSort.elementSort, false);
-    SmtExpr vMemberB = SmtBinaryExpr.Op.SET_MEMBER.make(v.getVariable(), B);
 
     // multiplicitySet subset of A set -> one B
     // and
@@ -432,14 +410,13 @@ public class ExprBinaryTranslator
     SmtExpr vEqualY = SmtBinaryExpr.Op.EQ.make(v.getVariable(), y.getVariable());
     SmtExpr notVEqualY = SmtUnaryExpr.Op.NOT.make(vEqualY);
 
-    SmtExpr vImplies = SmtBinaryExpr.Op.IMPLIES.make(SmtMultiArityExpr.Op.AND.make(vMemberB, notVEqualY), notXV);
-    SmtExpr forAllV = SmtQtExpr.Op.FORALL.make(vImplies, v);
+    SmtExpr vImplies = SmtBinaryExpr.Op.IMPLIES.make(notVEqualY, notXV);
+    SmtExpr forAllV = SmtSetQtExpr.Op.ALL.make(vImplies, v, B);
 
-    SmtExpr existsYBody = SmtMultiArityExpr.Op.AND.make(SmtMultiArityExpr.Op.AND.make(yMemberB, xyMember), forAllV);
+    SmtExpr existsYBody = SmtMultiArityExpr.Op.AND.make(xyMember, forAllV);
 
-    SmtExpr existsY = SmtQtExpr.Op.EXISTS.make(existsYBody, y);
-    SmtExpr xImplies = SmtBinaryExpr.Op.IMPLIES.make(xMemberA, existsY);
-    SmtExpr forAllX = SmtQtExpr.Op.FORALL.make(xImplies, x);
+    SmtExpr existsY = SmtSetQtExpr.Op.SOME.make(existsYBody, y, B);
+    SmtExpr forAllX = SmtSetQtExpr.Op.ALL.make(existsY, x, A);
 
     SmtExpr and = SmtMultiArityExpr.Op.AND.make(subset, forAllX);
 
@@ -465,8 +442,6 @@ public class ExprBinaryTranslator
 
     SmtVariable x = new SmtVariable("x", ASort.elementSort, false);
     SmtVariable y = new SmtVariable("y", BSort.elementSort, false);
-    SmtExpr xMemberA = SmtBinaryExpr.Op.SET_MEMBER.make(x.getVariable(), A);
-    SmtExpr yMemberB = SmtBinaryExpr.Op.SET_MEMBER.make(y.getVariable(), B);
 
     // multiplicitySet subset of A some -> some B
     // and
@@ -478,16 +453,11 @@ public class ExprBinaryTranslator
 
     SmtExpr xyMember = SmtBinaryExpr.Op.SET_MEMBER.make(xyTuple, multiplicitySet.getVariable());
 
-    SmtExpr existsYBody = SmtMultiArityExpr.Op.AND.make(yMemberB, xyMember);
-    SmtExpr existsY = SmtQtExpr.Op.EXISTS.make(existsYBody, y);
-    SmtExpr xImplies = SmtBinaryExpr.Op.IMPLIES.make(xMemberA, existsY);
-    SmtExpr forAllX = SmtQtExpr.Op.FORALL.make(xImplies, x);
+    SmtExpr existsY = SmtSetQtExpr.Op.SOME.make(xyMember, y, B);
+    SmtExpr forAllX = SmtSetQtExpr.Op.ALL.make(existsY, x, A);
 
-    SmtExpr existsXBody = SmtMultiArityExpr.Op.AND.make(xMemberA, xyMember);
-
-    SmtExpr existsX = SmtQtExpr.Op.EXISTS.make(existsXBody, x);
-    SmtExpr yImplies = SmtBinaryExpr.Op.IMPLIES.make(yMemberB, existsX);
-    SmtExpr forAllY = SmtQtExpr.Op.FORALL.make(yImplies, y);
+    SmtExpr existsX = SmtSetQtExpr.Op.SOME.make(xyMember, x, A);
+    SmtExpr forAllY = SmtSetQtExpr.Op.ALL.make(existsX, y, B);
 
     SmtExpr and = SmtMultiArityExpr.Op.AND.make(Arrays.asList(forAllX, forAllY, subset));
 
@@ -512,8 +482,6 @@ public class ExprBinaryTranslator
 
     SmtVariable x = new SmtVariable("x", ASort.elementSort, false);
     SmtVariable y = new SmtVariable("y", BSort.elementSort, false);
-    SmtExpr xMemberA = SmtBinaryExpr.Op.SET_MEMBER.make(x.getVariable(), A);
-    SmtExpr yMemberB = SmtBinaryExpr.Op.SET_MEMBER.make(y.getVariable(), B);
 
     // multiplicitySet subset of A some -> set B
     // and
@@ -523,10 +491,8 @@ public class ExprBinaryTranslator
 
     SmtExpr xyMember = SmtBinaryExpr.Op.SET_MEMBER.make(xyTuple, multiplicitySet.getVariable());
 
-    SmtExpr existsXBody = SmtMultiArityExpr.Op.AND.make(xMemberA, xyMember);
-    SmtExpr existsX = SmtQtExpr.Op.EXISTS.make(existsXBody, x);
-    SmtExpr yImplies = SmtBinaryExpr.Op.IMPLIES.make(yMemberB, existsX);
-    SmtExpr forAllY = SmtQtExpr.Op.FORALL.make(yImplies, y);
+    SmtExpr existsX = SmtSetQtExpr.Op.SOME.make(xyMember, x, A);
+    SmtExpr forAllY = SmtSetQtExpr.Op.ALL.make(existsX, y, B);
 
     SmtExpr and = SmtMultiArityExpr.Op.AND.make(subset, forAllY);
 
@@ -552,8 +518,6 @@ public class ExprBinaryTranslator
 
     SmtVariable x = new SmtVariable("x", ASort.elementSort, false);
     SmtVariable y = new SmtVariable("y", BSort.elementSort, false);
-    SmtExpr xMemberA = SmtBinaryExpr.Op.SET_MEMBER.make(x.getVariable(), A);
-    SmtExpr yMemberB = SmtBinaryExpr.Op.SET_MEMBER.make(y.getVariable(), B);
 
     // multiplicitySet subset of A set -> some B
     // and
@@ -563,10 +527,8 @@ public class ExprBinaryTranslator
 
     SmtExpr xyMember = SmtBinaryExpr.Op.SET_MEMBER.make(xyTuple, multiplicitySet.getVariable());
 
-    SmtExpr existsYBody = SmtMultiArityExpr.Op.AND.make(yMemberB, xyMember);
-    SmtExpr existsY = SmtQtExpr.Op.EXISTS.make(existsYBody, y);
-    SmtExpr xImplies = SmtBinaryExpr.Op.IMPLIES.make(xMemberA, existsY);
-    SmtExpr forAllX = SmtQtExpr.Op.FORALL.make(xImplies, x);
+    SmtExpr existsY = SmtSetQtExpr.Op.SOME.make(xyMember, y, B);
+    SmtExpr forAllX = SmtSetQtExpr.Op.ALL.make(existsY, x, A);
     SmtExpr and = SmtMultiArityExpr.Op.AND.make(subset, forAllX);
 
     multiplicitySet.setConstraint(and);
@@ -592,13 +554,9 @@ public class ExprBinaryTranslator
 
     SmtVariable x = new SmtVariable("x", ASort.elementSort, false);
     SmtVariable y = new SmtVariable("y", BSort.elementSort, false);
-    SmtExpr xMemberA = SmtBinaryExpr.Op.SET_MEMBER.make(x.getVariable(), A);
-    SmtExpr yMemberB = SmtBinaryExpr.Op.SET_MEMBER.make(y.getVariable(), B);
 
     SmtVariable u = new SmtVariable("u", ASort.elementSort, false);
     SmtVariable v = new SmtVariable("v", BSort.elementSort, false);
-    SmtExpr uMemberA = SmtBinaryExpr.Op.SET_MEMBER.make(u.getVariable(), A);
-    SmtExpr vMemberB = SmtBinaryExpr.Op.SET_MEMBER.make(v.getVariable(), B);
 
     // multiplicitySet subset of A one -> lone B
     // and
@@ -627,27 +585,26 @@ public class ExprBinaryTranslator
     SmtExpr vEqualY = SmtBinaryExpr.Op.EQ.make(v.getVariable(), y.getVariable());
     SmtExpr notVEqualY = SmtUnaryExpr.Op.NOT.make(vEqualY);
 
-    SmtExpr vImplies = SmtBinaryExpr.Op.IMPLIES.make(SmtMultiArityExpr.Op.AND.make(vMemberB, notVEqualY), notXV);
-    SmtExpr forAllV = SmtQtExpr.Op.FORALL.make(vImplies, v);
+    SmtExpr vImplies = SmtBinaryExpr.Op.IMPLIES.make(notVEqualY, notXV);
+    SmtExpr forAllV = SmtSetQtExpr.Op.ALL.make(vImplies, v, B);
 
     SmtExpr uEqualX = SmtBinaryExpr.Op.EQ.make(u.getVariable(), x.getVariable());
     SmtExpr notUEqualX = SmtUnaryExpr.Op.NOT.make(uEqualX);
 
-    SmtExpr uImplies = SmtBinaryExpr.Op.IMPLIES.make(SmtMultiArityExpr.Op.AND.make(uMemberA, notUEqualX), notUY);
-    SmtExpr forAllU = SmtQtExpr.Op.FORALL.make(uImplies, u);
+    SmtExpr uImplies = SmtBinaryExpr.Op.IMPLIES.make(notUEqualX, notUY);
+    SmtExpr forAllU = SmtSetQtExpr.Op.ALL.make(uImplies, u, A);
 
-    SmtExpr existsYBody = SmtMultiArityExpr.Op.AND.make(SmtMultiArityExpr.Op.AND.make(yMemberB, xyMember), forAllV);
+    SmtExpr existsYBody = SmtMultiArityExpr.Op.AND.make(xyMember, forAllV);
 
-    SmtExpr existsY = SmtQtExpr.Op.EXISTS.make(existsYBody, y);
-    SmtExpr lone = SmtMultiArityExpr.Op.OR.make(SmtQtExpr.Op.FORALL.make(notXY, y), existsY);
-    SmtExpr xImplies = SmtBinaryExpr.Op.IMPLIES.make(xMemberA, lone);
-    SmtExpr forAllX = SmtQtExpr.Op.FORALL.make(xImplies, x);
+    SmtExpr existsY = SmtSetQtExpr.Op.SOME.make(existsYBody, y, B);
+    SmtExpr lone = SmtMultiArityExpr.Op.OR.make(SmtSetQtExpr.Op.ALL.make(notXY, y, B), existsY);
 
-    SmtExpr existsXBody = SmtMultiArityExpr.Op.AND.make(SmtMultiArityExpr.Op.AND.make(xMemberA, xyMember), forAllU);
+    SmtExpr forAllX = SmtSetQtExpr.Op.ALL.make(lone, x, A);
 
-    SmtExpr existsX = SmtQtExpr.Op.EXISTS.make(existsXBody, x);
-    SmtExpr yImplies = SmtBinaryExpr.Op.IMPLIES.make(yMemberB, existsX);
-    SmtExpr forAllY = SmtQtExpr.Op.FORALL.make(yImplies, y);
+    SmtExpr existsXBody = SmtMultiArityExpr.Op.AND.make(xyMember, forAllU);
+
+    SmtExpr existsX = SmtSetQtExpr.Op.SOME.make(existsXBody, x, A);
+    SmtExpr forAllY = SmtSetQtExpr.Op.ALL.make(existsX, y, B);
 
     SmtExpr and = SmtMultiArityExpr.Op.AND.make(subset, forAllX, forAllY);
 
@@ -675,11 +632,8 @@ public class ExprBinaryTranslator
 
     SmtVariable x = new SmtVariable("x", ASort.elementSort, false);
     SmtVariable y = new SmtVariable("y", BSort.elementSort, false);
-    SmtExpr xMemberA = SmtBinaryExpr.Op.SET_MEMBER.make(x.getVariable(), A);
-    SmtExpr yMemberB = SmtBinaryExpr.Op.SET_MEMBER.make(y.getVariable(), B);
 
     SmtVariable v = new SmtVariable("v", BSort.elementSort, false);
-    SmtExpr vMemberB = SmtBinaryExpr.Op.SET_MEMBER.make(v.getVariable(), B);
 
     // multiplicitySet subset of A some -> lone B
     // and
@@ -703,21 +657,17 @@ public class ExprBinaryTranslator
     SmtExpr vEqualY = SmtBinaryExpr.Op.EQ.make(v.getVariable(), y.getVariable());
     SmtExpr notVEqualY = SmtUnaryExpr.Op.NOT.make(vEqualY);
 
-    SmtExpr vImplies = SmtBinaryExpr.Op.IMPLIES.make(SmtMultiArityExpr.Op.AND.make(vMemberB, notVEqualY), notXV);
-    SmtExpr forAllV = SmtQtExpr.Op.FORALL.make(vImplies, v);
+    SmtExpr vImplies = SmtBinaryExpr.Op.IMPLIES.make(notVEqualY, notXV);
+    SmtExpr forAllV = SmtSetQtExpr.Op.ALL.make(vImplies, v, B);
 
-    SmtExpr existsYBody = SmtMultiArityExpr.Op.AND.make(SmtMultiArityExpr.Op.AND.make(yMemberB, xyMember), forAllV);
+    SmtExpr existsYBody = SmtMultiArityExpr.Op.AND.make(xyMember, forAllV);
 
-    SmtExpr existsY = SmtQtExpr.Op.EXISTS.make(existsYBody, y);
-    SmtExpr lone = SmtMultiArityExpr.Op.OR.make(SmtQtExpr.Op.FORALL.make(notXY, y), existsY);
-    SmtExpr xImplies = SmtBinaryExpr.Op.IMPLIES.make(xMemberA, lone);
-    SmtExpr forAllX = SmtQtExpr.Op.FORALL.make(xImplies, x);
+    SmtExpr existsY = SmtSetQtExpr.Op.SOME.make(existsYBody, y, B);
+    SmtExpr lone = SmtMultiArityExpr.Op.OR.make(SmtSetQtExpr.Op.ALL.make(notXY, y, B), existsY);
+    SmtExpr forAllX = SmtSetQtExpr.Op.ALL.make(lone, x, A);
 
-    SmtExpr existsXBody = SmtMultiArityExpr.Op.AND.make(xMemberA, xyMember);
-
-    SmtExpr existsX = SmtQtExpr.Op.EXISTS.make(existsXBody, x);
-    SmtExpr yImplies = SmtBinaryExpr.Op.IMPLIES.make(yMemberB, existsX);
-    SmtExpr forAllY = SmtQtExpr.Op.FORALL.make(yImplies, y);
+    SmtExpr existsX = SmtSetQtExpr.Op.SOME.make(xyMember, x, A);
+    SmtExpr forAllY = SmtSetQtExpr.Op.ALL.make(existsX, y, B);
 
     SmtExpr and = SmtMultiArityExpr.Op.AND.make(subset, forAllX, forAllY);
 
@@ -744,11 +694,8 @@ public class ExprBinaryTranslator
 
     SmtVariable x = new SmtVariable("x", ASort.elementSort, false);
     SmtVariable y = new SmtVariable("y", BSort.elementSort, false);
-    SmtExpr xMemberA = SmtBinaryExpr.Op.SET_MEMBER.make(x.getVariable(), A);
-    SmtExpr yMemberB = SmtBinaryExpr.Op.SET_MEMBER.make(y.getVariable(), B);
 
     SmtVariable v = new SmtVariable("v", BSort.elementSort, false);
-    SmtExpr vMemberB = SmtBinaryExpr.Op.SET_MEMBER.make(v.getVariable(), B);
 
     // multiplicitySet subset of A set -> lone B
     // and
@@ -770,15 +717,14 @@ public class ExprBinaryTranslator
     SmtExpr vEqualY = SmtBinaryExpr.Op.EQ.make(v.getVariable(), y.getVariable());
     SmtExpr notVEqualY = SmtUnaryExpr.Op.NOT.make(vEqualY);
 
-    SmtExpr vImplies = SmtBinaryExpr.Op.IMPLIES.make(SmtMultiArityExpr.Op.AND.make(vMemberB, notVEqualY), notXV);
-    SmtExpr forAllV = SmtQtExpr.Op.FORALL.make(vImplies, v);
+    SmtExpr vImplies = SmtBinaryExpr.Op.IMPLIES.make(notVEqualY, notXV);
+    SmtExpr forAllV = SmtSetQtExpr.Op.ALL.make(vImplies, v, B);
 
-    SmtExpr existsYBody = SmtMultiArityExpr.Op.AND.make(SmtMultiArityExpr.Op.AND.make(yMemberB, xyMember), forAllV);
+    SmtExpr existsYBody = SmtMultiArityExpr.Op.AND.make(xyMember, forAllV);
 
-    SmtExpr existsY = SmtQtExpr.Op.EXISTS.make(existsYBody, y);
-    SmtExpr lone = SmtMultiArityExpr.Op.OR.make(SmtQtExpr.Op.FORALL.make(notXY, y), existsY);
-    SmtExpr xImplies = SmtBinaryExpr.Op.IMPLIES.make(xMemberA, lone);
-    SmtExpr forAllX = SmtQtExpr.Op.FORALL.make(xImplies, x);
+    SmtExpr existsY = SmtSetQtExpr.Op.SOME.make(existsYBody, y, B);
+    SmtExpr lone = SmtMultiArityExpr.Op.OR.make(SmtSetQtExpr.Op.ALL.make(notXY, y, B), existsY);
+    SmtExpr forAllX = SmtSetQtExpr.Op.ALL.make(lone, x, A);
 
     SmtExpr and = SmtMultiArityExpr.Op.AND.make(subset, forAllX);
     multiplicitySet.setConstraint(and);
@@ -802,13 +748,9 @@ public class ExprBinaryTranslator
 
     SmtVariable x = new SmtVariable("x", ASort.elementSort, false);
     SmtVariable y = new SmtVariable("y", BSort.elementSort, false);
-    SmtExpr xMemberA = SmtBinaryExpr.Op.SET_MEMBER.make(x.getVariable(), A);
-    SmtExpr yMemberB = SmtBinaryExpr.Op.SET_MEMBER.make(y.getVariable(), B);
 
     SmtVariable u = new SmtVariable("u", ASort.elementSort, false);
     SmtVariable v = new SmtVariable("v", BSort.elementSort, false);
-    SmtExpr uMemberA = SmtBinaryExpr.Op.SET_MEMBER.make(u.getVariable(), A);
-    SmtExpr vMemberB = SmtBinaryExpr.Op.SET_MEMBER.make(v.getVariable(), B);
 
     // multiplicitySet subset of A lone -> lone B
     // and
@@ -840,28 +782,26 @@ public class ExprBinaryTranslator
     SmtExpr vEqualY = SmtBinaryExpr.Op.EQ.make(v.getVariable(), y.getVariable());
     SmtExpr notVEqualY = SmtUnaryExpr.Op.NOT.make(vEqualY);
 
-    SmtExpr vImplies = SmtBinaryExpr.Op.IMPLIES.make(SmtMultiArityExpr.Op.AND.make(vMemberB, notVEqualY), notXV);
-    SmtExpr forAllV = SmtQtExpr.Op.FORALL.make(vImplies, v);
+    SmtExpr vImplies = SmtBinaryExpr.Op.IMPLIES.make(notVEqualY, notXV);
+    SmtExpr forAllV = SmtSetQtExpr.Op.ALL.make(vImplies, v, B);
 
     SmtExpr uEqualX = SmtBinaryExpr.Op.EQ.make(u.getVariable(), x.getVariable());
     SmtExpr notUEqualX = SmtUnaryExpr.Op.NOT.make(uEqualX);
 
-    SmtExpr uImplies = SmtBinaryExpr.Op.IMPLIES.make(SmtMultiArityExpr.Op.AND.make(uMemberA, notUEqualX), notUY);
-    SmtExpr forAllU = SmtQtExpr.Op.FORALL.make(uImplies, u);
+    SmtExpr uImplies = SmtBinaryExpr.Op.IMPLIES.make(notUEqualX, notUY);
+    SmtExpr forAllU = SmtSetQtExpr.Op.ALL.make(uImplies, u, A);
 
-    SmtExpr existsYBody = SmtMultiArityExpr.Op.AND.make(SmtMultiArityExpr.Op.AND.make(yMemberB, xyMember), forAllV);
+    SmtExpr existsYBody = SmtMultiArityExpr.Op.AND.make(xyMember, forAllV);
 
-    SmtExpr existsY = SmtQtExpr.Op.EXISTS.make(existsYBody, y);
-    SmtExpr loneWest = SmtMultiArityExpr.Op.OR.make(SmtQtExpr.Op.FORALL.make(notXY, y), existsY);
-    SmtExpr xImplies = SmtBinaryExpr.Op.IMPLIES.make(xMemberA, loneWest);
-    SmtExpr forAllX = SmtQtExpr.Op.FORALL.make(xImplies, x);
+    SmtExpr existsY = SmtSetQtExpr.Op.SOME.make(existsYBody, y, B);
+    SmtExpr loneWest = SmtMultiArityExpr.Op.OR.make(SmtSetQtExpr.Op.ALL.make(notXY, y, B), existsY);
+    SmtExpr forAllX = SmtSetQtExpr.Op.ALL.make(loneWest, x, A);
 
-    SmtExpr existsXBody = SmtMultiArityExpr.Op.AND.make(SmtMultiArityExpr.Op.AND.make(xMemberA, xyMember), forAllU);
+    SmtExpr existsXBody = SmtMultiArityExpr.Op.AND.make(xyMember, forAllU);
 
-    SmtExpr existsX = SmtQtExpr.Op.EXISTS.make(existsXBody, x);
-    SmtExpr loneEast = SmtMultiArityExpr.Op.OR.make(SmtQtExpr.Op.FORALL.make(notXY, x), existsX);
-    SmtExpr yImplies = SmtBinaryExpr.Op.IMPLIES.make(yMemberB, loneEast);
-    SmtExpr forAllY = SmtQtExpr.Op.FORALL.make(yImplies, y);
+    SmtExpr existsX = SmtSetQtExpr.Op.SOME.make(existsXBody, x, A);
+    SmtExpr loneEast = SmtMultiArityExpr.Op.OR.make(SmtSetQtExpr.Op.ALL.make(notXY, x, A), existsX);
+    SmtExpr forAllY = SmtSetQtExpr.Op.ALL.make(loneEast, y, B);
 
     SmtExpr and = SmtMultiArityExpr.Op.AND.make(subset, forAllX, forAllY);
 
@@ -888,13 +828,9 @@ public class ExprBinaryTranslator
 
     SmtVariable x = new SmtVariable("x", ASort.elementSort, false);
     SmtVariable y = new SmtVariable("y", BSort.elementSort, false);
-    SmtExpr xMemberA = SmtBinaryExpr.Op.SET_MEMBER.make(x.getVariable(), A);
-    SmtExpr yMemberB = SmtBinaryExpr.Op.SET_MEMBER.make(y.getVariable(), B);
 
     SmtVariable u = new SmtVariable("u", ASort.elementSort, false);
     SmtVariable v = new SmtVariable("v", BSort.elementSort, false);
-    SmtExpr uMemberA = SmtBinaryExpr.Op.SET_MEMBER.make(u.getVariable(), A);
-    SmtExpr vMemberB = SmtBinaryExpr.Op.SET_MEMBER.make(v.getVariable(), B);
 
     // multiplicitySet subset of A lone -> one B
     // and
@@ -924,27 +860,25 @@ public class ExprBinaryTranslator
     SmtExpr vEqualY = SmtBinaryExpr.Op.EQ.make(v.getVariable(), y.getVariable());
     SmtExpr notVEqualY = SmtUnaryExpr.Op.NOT.make(vEqualY);
 
-    SmtExpr vImplies = SmtBinaryExpr.Op.IMPLIES.make(SmtMultiArityExpr.Op.AND.make(vMemberB, notVEqualY), notXV);
-    SmtExpr forAllV = SmtQtExpr.Op.FORALL.make(vImplies, v);
+    SmtExpr vImplies = SmtBinaryExpr.Op.IMPLIES.make(notVEqualY, notXV);
+    SmtExpr forAllV = SmtSetQtExpr.Op.ALL.make(vImplies, v, B);
 
     SmtExpr uEqualX = SmtBinaryExpr.Op.EQ.make(u.getVariable(), x.getVariable());
     SmtExpr notUEqualX = SmtUnaryExpr.Op.NOT.make(uEqualX);
 
-    SmtExpr uImplies = SmtBinaryExpr.Op.IMPLIES.make(SmtMultiArityExpr.Op.AND.make(uMemberA, notUEqualX), notUY);
-    SmtExpr forAllU = SmtQtExpr.Op.FORALL.make(uImplies, u);
+    SmtExpr uImplies = SmtBinaryExpr.Op.IMPLIES.make(notUEqualX, notUY);
+    SmtExpr forAllU = SmtSetQtExpr.Op.ALL.make(uImplies, u, A);
 
-    SmtExpr existsYBody = SmtMultiArityExpr.Op.AND.make(SmtMultiArityExpr.Op.AND.make(yMemberB, xyMember), forAllV);
+    SmtExpr existsYBody = SmtMultiArityExpr.Op.AND.make(xyMember, forAllV);
 
-    SmtExpr existsY = SmtQtExpr.Op.EXISTS.make(existsYBody, y);
-    SmtExpr xImplies = SmtBinaryExpr.Op.IMPLIES.make(xMemberA, existsY);
-    SmtExpr forAllX = SmtQtExpr.Op.FORALL.make(xImplies, x);
+    SmtExpr existsY = SmtSetQtExpr.Op.SOME.make(existsYBody, y, B);
+    SmtExpr forAllX = SmtSetQtExpr.Op.ALL.make(existsY, x, A);
 
-    SmtExpr existsXBody = SmtMultiArityExpr.Op.AND.make(SmtMultiArityExpr.Op.AND.make(xMemberA, xyMember), forAllU);
+    SmtExpr existsXBody = SmtMultiArityExpr.Op.AND.make(xyMember, forAllU);
 
-    SmtExpr existsX = SmtQtExpr.Op.EXISTS.make(existsXBody, x);
-    SmtExpr loneEast = SmtMultiArityExpr.Op.OR.make(SmtQtExpr.Op.FORALL.make(notXY, x), existsX);
-    SmtExpr yImplies = SmtBinaryExpr.Op.IMPLIES.make(yMemberB, loneEast);
-    SmtExpr forAllY = SmtQtExpr.Op.FORALL.make(yImplies, y);
+    SmtExpr existsX = SmtSetQtExpr.Op.SOME.make(existsXBody, x, A);
+    SmtExpr loneEast = SmtMultiArityExpr.Op.OR.make(SmtSetQtExpr.Op.ALL.make(notXY, x, A), existsX);
+    SmtExpr forAllY = SmtSetQtExpr.Op.ALL.make(loneEast, y, B);
 
     SmtExpr and = SmtMultiArityExpr.Op.AND.make(subset, forAllX, forAllY);
 
@@ -972,11 +906,9 @@ public class ExprBinaryTranslator
 
     SmtVariable x = new SmtVariable("x", ASort.elementSort, false);
     SmtVariable y = new SmtVariable("y", BSort.elementSort, false);
-    SmtExpr xMemberA = SmtBinaryExpr.Op.SET_MEMBER.make(x.getVariable(), A);
-    SmtExpr yMemberB = SmtBinaryExpr.Op.SET_MEMBER.make(y.getVariable(), B);
+
 
     SmtVariable u = new SmtVariable("u", ASort.elementSort, false);
-    SmtExpr uMemberA = SmtBinaryExpr.Op.SET_MEMBER.make(u.getVariable(), A);
 
     // multiplicitySet subset of A lone -> some B
     // and
@@ -1003,22 +935,18 @@ public class ExprBinaryTranslator
     SmtExpr uEqualX = SmtBinaryExpr.Op.EQ.make(u.getVariable(), x.getVariable());
     SmtExpr notUEqualX = SmtUnaryExpr.Op.NOT.make(uEqualX);
 
-    SmtExpr uImplies = SmtBinaryExpr.Op.IMPLIES.make(SmtMultiArityExpr.Op.AND.make(uMemberA, notUEqualX), notUY);
-    SmtExpr forAllU = SmtQtExpr.Op.FORALL.make(uImplies, u);
+    SmtExpr uImplies = SmtBinaryExpr.Op.IMPLIES.make(notUEqualX, notUY);
+    SmtExpr forAllU = SmtSetQtExpr.Op.ALL.make(uImplies, u, A);
 
-    SmtExpr existsYBody = SmtMultiArityExpr.Op.AND.make(yMemberB, xyMember);
-
-    SmtExpr existsY = SmtQtExpr.Op.EXISTS.make(existsYBody, y);
-    SmtExpr xImplies = SmtBinaryExpr.Op.IMPLIES.make(xMemberA, existsY);
-    SmtExpr forAllX = SmtQtExpr.Op.FORALL.make(xImplies, x);
+    SmtExpr existsY = SmtSetQtExpr.Op.SOME.make(xyMember, y, B);
+    SmtExpr forAllX = SmtSetQtExpr.Op.ALL.make(existsY, x, A);
 
 
-    SmtExpr existsXBody = SmtMultiArityExpr.Op.AND.make(SmtMultiArityExpr.Op.AND.make(xMemberA, xyMember), forAllU);
+    SmtExpr existsXBody = SmtMultiArityExpr.Op.AND.make(xyMember, forAllU);
 
-    SmtExpr existsX = SmtQtExpr.Op.EXISTS.make(existsXBody, x);
-    SmtExpr loneEast = SmtMultiArityExpr.Op.OR.make(SmtQtExpr.Op.FORALL.make(notXY, x), existsX);
-    SmtExpr yImplies = SmtBinaryExpr.Op.IMPLIES.make(yMemberB, loneEast);
-    SmtExpr forAllY = SmtQtExpr.Op.FORALL.make(yImplies, y);
+    SmtExpr existsX = SmtSetQtExpr.Op.SOME.make(existsXBody, x, A);
+    SmtExpr loneEast = SmtMultiArityExpr.Op.OR.make(SmtSetQtExpr.Op.ALL.make(notXY, x, A), existsX);
+    SmtExpr forAllY = SmtSetQtExpr.Op.ALL.make(loneEast, y, B);
 
     SmtExpr and = SmtMultiArityExpr.Op.AND.make(subset, forAllX, forAllY);
 
@@ -1044,11 +972,8 @@ public class ExprBinaryTranslator
 
     SmtVariable x = new SmtVariable("x", ASort.elementSort, false);
     SmtVariable y = new SmtVariable("y", BSort.elementSort, false);
-    SmtExpr xMemberA = SmtBinaryExpr.Op.SET_MEMBER.make(x.getVariable(), A);
-    SmtExpr yMemberB = SmtBinaryExpr.Op.SET_MEMBER.make(y.getVariable(), B);
 
     SmtVariable u = new SmtVariable("u", ASort.elementSort, false);
-    SmtExpr uMemberA = SmtBinaryExpr.Op.SET_MEMBER.make(u.getVariable(), A);
 
     // multiplicitySet subset of A lone -> set B
     // and
@@ -1072,14 +997,13 @@ public class ExprBinaryTranslator
     SmtExpr uEqualX = SmtBinaryExpr.Op.EQ.make(u.getVariable(), x.getVariable());
     SmtExpr notUEqualX = SmtUnaryExpr.Op.NOT.make(uEqualX);
 
-    SmtExpr uImplies = SmtBinaryExpr.Op.IMPLIES.make(SmtMultiArityExpr.Op.AND.make(uMemberA, notUEqualX), notUY);
-    SmtExpr forAllU = SmtQtExpr.Op.FORALL.make(uImplies, u);
-    SmtExpr existsXBody = SmtMultiArityExpr.Op.AND.make(SmtMultiArityExpr.Op.AND.make(xMemberA, xyMember), forAllU);
+    SmtExpr uImplies = SmtBinaryExpr.Op.IMPLIES.make(notUEqualX, notUY);
+    SmtExpr forAllU = SmtSetQtExpr.Op.ALL.make(uImplies, u, A);
+    SmtExpr existsXBody = SmtMultiArityExpr.Op.AND.make(xyMember, forAllU);
 
-    SmtExpr existsX = SmtQtExpr.Op.EXISTS.make(existsXBody, x);
-    SmtExpr loneEast = SmtMultiArityExpr.Op.OR.make(SmtQtExpr.Op.FORALL.make(notXY, x), existsX);
-    SmtExpr yImplies = SmtBinaryExpr.Op.IMPLIES.make(yMemberB, loneEast);
-    SmtExpr forAllY = SmtQtExpr.Op.FORALL.make(yImplies, y);
+    SmtExpr existsX = SmtSetQtExpr.Op.SOME.make(existsXBody, x, A);
+    SmtExpr loneEast = SmtMultiArityExpr.Op.OR.make(SmtSetQtExpr.Op.ALL.make(notXY, x, A), existsX);
+    SmtExpr forAllY = SmtSetQtExpr.Op.ALL.make(loneEast, y, B);
 
     SmtExpr and = SmtMultiArityExpr.Op.AND.make(subset, forAllY);
     multiplicitySet.setConstraint(and);
@@ -1738,7 +1662,7 @@ public class ExprBinaryTranslator
 //
 //      SmtExpr and = SmtMultiArityExpr.Op.AND.make(equal, singletonA, singletonB);
 //
-//      SmtQtExpr exists = SmtQtExpr.Op.EXISTS.make(and, x, y, z);
+//      SmtQtExpr exists = SmtSetQtExpr.Op.SOME.make(and, x, y, z);
 //      smtEnv.addAuxiliaryFormula(exists);
 //      return z.getVariable();
 //    }
