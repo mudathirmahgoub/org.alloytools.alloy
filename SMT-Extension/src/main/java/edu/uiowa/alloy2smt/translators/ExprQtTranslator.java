@@ -318,6 +318,23 @@ public class ExprQtTranslator
     //    for all x', y', ... (x in e1 and y in e2 ... and constraints(x', y', ...)
     //      and not (x' = x and y' = y ...) implies not f(x', y', ...)))
 
+    // one x: e1, y: e2, ... | f(x, y, ...) is translated into
+    // (set.some
+    //   (lambda ((x T1)
+    //     (set.some
+    //       (lambda ((y T2)) ...
+    //       (and
+    //         f(x, y, ...)
+    //         (set.all
+    //           (lambda ((x' T1)
+    //             (set.all
+    //               (lambda ((y' T2)) ...
+    //                 (not (x' = x and y' = y ...) implies not f(x', y', ...)))
+    //              e2))
+    //           e1)
+    //       e2))
+    //   e1)
+
     SmtExpr multiplicity = TranslatorUtils.getVariablesConstraints(smtVariables);
     SmtExpr existsAnd = SmtMultiArityExpr.Op.AND.make(multiplicity, constraints, body);
 

@@ -37,3 +37,8 @@ enroute.zip
 
 .idea
 *.iml
+cnf/.settings/org.eclipse.buildship.core.prefs
+org.alloytools.alloy.application/.settings/org.eclipse.buildship.core.prefs
+org.alloytools.alloy.core/.settings/org.eclipse.buildship.core.prefs
+org.alloytools.alloy.dist/.settings/org.eclipse.buildship.core.prefs
+org.alloytools.alloy.extra/.settings/org.eclipse.buildship.core.prefs
