@@ -83,7 +83,12 @@ public class LambdaExpr extends SmtExpr
 
   @Override
   public SmtExpr replace(SmtExpr oldSmtExpr, SmtExpr newSmtExpr) {
-    return null;
+    if (oldSmtExpr.equals(this))
+    {
+      return newSmtExpr;
+    }
+    SmtExpr smtExpr = body.replace(oldSmtExpr, newSmtExpr);
+    return new LambdaExpr(inputVariables, smtExpr);
   }
 
   @Override

@@ -114,7 +114,13 @@ public class SmtSetQtExpr extends SmtFilter
 
   @Override
   public SmtExpr replace(SmtExpr oldSmtExpr, SmtExpr newSmtExpr) {
-    return null;
+    if (oldSmtExpr.equals(this))
+    {
+      return newSmtExpr;
+    }
+    SmtExpr newSet = set.replace(oldSmtExpr, newSmtExpr);
+    LambdaExpr newLambda = (LambdaExpr) lambda.replace(oldSmtExpr, newSmtExpr);
+    return new SmtSetQtExpr(op, newLambda, newSet);
   }
 
   @Override
