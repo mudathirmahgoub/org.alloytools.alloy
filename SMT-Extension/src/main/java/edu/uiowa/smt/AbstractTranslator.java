@@ -142,20 +142,20 @@ public abstract class AbstractTranslator
   private static Assertion getUninterpretedIntValueAssertion()
   {
     // uninterpretedIntValue is injective function
-    SmtVariable X = new SmtVariable("x", uninterpretedInt, false);
-    SmtVariable Y = new SmtVariable("y", uninterpretedInt, false);
+    SmtVariable X = new SmtVariable("x", uninterpretedIntTuple, false);
+    SmtVariable Y = new SmtVariable("y", uninterpretedIntTuple, false);
     SmtExpr XEqualsY = SmtBinaryExpr.Op.EQ.make(X.getVariable(), Y.getVariable());
     SmtExpr notXEqualsY = SmtUnaryExpr.Op.NOT.make(XEqualsY);
 
-    SmtExpr XValue = new SmtCallExpr(uninterpretedIntValue, X.getVariable());
-    SmtExpr YValue = new SmtCallExpr(uninterpretedIntValue, Y.getVariable());
+    SmtExpr XValue = new SmtCallExpr(uninterpretedIntValue, SmtBinaryExpr.Op.TUPLE_SELECT.make(new IntConstant("0"), X.getVariable()));
+    SmtExpr YValue = new SmtCallExpr(uninterpretedIntValue, SmtBinaryExpr.Op.TUPLE_SELECT.make(new IntConstant("0"), Y.getVariable()));
 
     SmtExpr XValueEqualsYValue = SmtBinaryExpr.Op.EQ.make(XValue, YValue);
     SmtExpr notXValueEqualsYValue = SmtUnaryExpr.Op.NOT.make(XValueEqualsYValue);
     SmtExpr implication = SmtBinaryExpr.Op.IMPLIES.make(notXEqualsY, notXValueEqualsYValue);
-    SmtExpr forAll = SmtQtExpr.Op.FORALL.make(implication, X, Y);
-
-    return new Assertion("", uninterpretedIntValueName + " is injective", forAll);
+    SmtExpr allY = SmtSetQtExpr.Op.ALL.make(implication, Y, univInt.getVariable());
+    SmtExpr allX = SmtSetQtExpr.Op.ALL.make(allY, X, univInt.getVariable());
+    return new Assertion("", uninterpretedIntValueName + " is injective", allX);
   }
 
   private static Assertion getIdentityRelation(SmtSort sort, FunctionDeclaration identity)
