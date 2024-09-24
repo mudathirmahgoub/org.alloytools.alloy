@@ -32,6 +32,10 @@ public class SmtFilter extends SmtExpr
   public SmtFilter(LambdaExpr lambda, SmtExpr set)
   {
     this.lambda = lambda;
+    if(set == null)
+    {
+      throw new UnsupportedOperationException("null set");
+    }
     this.set = set;
   }
 

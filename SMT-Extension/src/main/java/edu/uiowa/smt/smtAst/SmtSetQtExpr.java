@@ -64,6 +64,24 @@ public class SmtSetQtExpr extends SmtFilter
       return new SmtSetQtExpr(this, lambda, set);
     }
 
+    public SmtSetQtExpr make(SmtExpr body, SmtVariable [] variables, SmtExpr [] sets)
+    {
+      return this.make(body, Arrays.asList(variables), Arrays.asList(sets));
+    }
+
+    public SmtSetQtExpr make(SmtExpr body, List<SmtVariable> variables, List<SmtExpr> sets)
+    {
+      if(variables.size() != sets.size() || variables.isEmpty())
+      {
+        throw new RuntimeException("Incorrect sizes for operator " + this);
+      }
+      SmtSetQtExpr nested = this.make(body, variables.get(variables.size() - 1),sets.get(sets.size() - 1));
+      for(int i = sets.size() - 2; i >= 0; i--)
+      {
+        nested = this.make(nested, variables.get(i),sets.get(i));
+      }
+      return nested;
+    }
 
     @Override
     public String toString()
