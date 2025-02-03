@@ -24,7 +24,7 @@ public class SmtSettings extends SmtAst
     addLogic("HO_ALL");
     putSolverOption("produce-models", "true");
     putSolverOption("incremental", "true");
-    putSolverOption("sets-ext", "true");
+    putSolverOption("sets-exp", "true");
     putSolverOption(FINITE_MODEL_FIND, Boolean.toString(false));
     putSolverOption("cegqi-all", "false");
     finiteModelFinding = true;
