@@ -14,6 +14,37 @@ features.
 
 Alloy 6 is a [major new release](http://alloytools.org/alloy6.html) More documentation can be found at: http://alloytools.org/documentation.html.
 
+# cvc5 relational solver
+
+This branch (`cvc5`) adds a second solver for commands: the SMT solver
+[cvc5](https://cvc5.github.io) with its theory of finite sets and relations.
+The translator from Alloy to SMT-LIB is in [alloy2smt](alloy2smt).
+
+* **Choosing it**: in the Options menu, set *Relational solver* to `cvc5`.
+* **No installation needed**: the executable jar bundles the cvc5 1.4.2
+  binaries for Linux, macOS and Windows on x86_64 and arm64. To use another
+  cvc5, set the system property `cvc5.path` or the environment variable `CVC5`.
+  To build a jar with the binaries, run `./gradlew :alloy2smt:fetchCvc5` before
+  `./gradlew build`; without them, Alloy looks for `cvc5` on the `PATH`.
+* **Unbounded by default**: without the scope of the command, `unsat` means
+  that there is no instance of any size, so a `check` is proved for every
+  scope. The option *cvc5 include scope* bounds the signatures by the scope, as
+  Kodkod does.
+* **Options and defaults**: *cvc5 timeout* (1 minute), *cvc5 include scope*
+  (no), *cvc5 quantifiers* (`set.all/set.some`), *cvc5 finite model finding*
+  (no).
+* **Integers** are mathematical integers, and arithmetic on sets of integers is
+  lifted to their elements, unlike Alloy's bounded integers and sums.
+* **Generated files**: the SMT-LIB script, the mapping of signatures and fields
+  to SMT symbols, and the instance are links in the message panel.
+* **Command line**: `java -cp org.alloytools.alloy.dist.jar edu.uiowa.alloy2smt.Main -i model.als -d out -s`
+  writes a standalone SMT-LIB script for each command.
+
+The semantics, the options and the unsupported features are described in
+[bin/guidelines.md](bin/guidelines.md). [CVC5_RESULTS.md](CVC5_RESULTS.md)
+compares cvc5 with Kodkod on the example models, bounded and unbounded.
+Building and running this branch requires Java 17 or later.
+
 # Requirements
 
 Alloy runs on all operating systems with a recent JVM (Java 6 or later). 
@@ -58,6 +89,7 @@ The workspace is divided into a number of projects:
 * [org.alloytools.alloy.extra](org.alloytools.alloy.extra) – Models and examples
 * [org.alloytools.pardinus](org.alloytools.pardinus) – A Kodkod extension without native code
 * [org.alloytools.kodkod.nativesat](org.alloytools.kodkod.nativesat) – The native code libraries for Kodkod
+* [alloy2smt](alloy2smt) – Translation of Alloy commands into SMT-LIB for the cvc5 relational solver
 
 ### Relevant Project files
 
