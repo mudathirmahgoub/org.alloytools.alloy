@@ -6,22 +6,32 @@ Without the scope of commands, it can prove that a model is unsatisfiable for ev
 
 ## Installing cvc5
 
-Download cvc5 (version 1.2 or later) from [here](https://cvc5.github.io/downloads.html).
-Alloy looks for the binary in this order: the Java system property `cvc5.path`, the environment
-variable `CVC5`, the `PATH`, and `bin/cvc5` in the working directory.
+The Alloy jar of the cvc5 branch bundles the cvc5 1.4.2 binaries for Linux, macOS and
+Windows on x86_64 and arm64, from the [cvc5 releases](https://github.com/cvc5/cvc5/releases)
+(the static builds without GPL code). The binary for the current platform is extracted into
+the temporary directory the first time cvc5 runs. To build such a jar, run
+`./gradlew :alloy2smt:fetchCvc5` before building.
+
+Alloy looks for the binary in this order: the Java system property `cvc5.path`, the
+environment variable `CVC5`, the bundled binary, the `PATH`, and `bin/cvc5` in the working
+directory. Another cvc5 (version 1.2 or later) can be downloaded from
+[here](https://cvc5.github.io/downloads.html).
 
 ## Options
 
 The solver is chosen in the Options menu with **Relational solver** (Kodkod or cvc5).
 
-- **cvc5 timeout**: the time limit of each command (default 0.5 minutes).
+- **cvc5 timeout**: the time limit of each command (default 1 minute).
 - **cvc5 include scope**: whether signatures are bounded by the scope of commands, as with
-  Kodkod (default yes). Without the scope, cvc5 may find instances larger than the scope, and
-  `unsat` means that there is no instance of any size.
+  Kodkod (default no). Without the scope (unbounded), cvc5 may find instances larger than the
+  scope, and `unsat` means that there is no instance of any size.
   The scope can also be written as cardinality constraints: `run {#A = 3}`.
-- **cvc5 quantifiers**: the translation of Alloy quantifiers: `hybrid` (default: first-order
-  `forall`/`exists`, and `set.filter` for comprehensions and the quantifiers `one` and `lone`),
-  `forall/exists`, or the bounded set quantifiers `set.all`/`set.some` of cvc5.
+- **cvc5 quantifiers**: the translation of Alloy quantifiers: the bounded set quantifiers
+  `set.all`/`set.some` of cvc5 (default, the best without finite model finding), `hybrid`
+  (first-order `forall`/`exists`, and `set.filter` for comprehensions and the quantifiers `one`
+  and `lone`; the best with finite model finding), or `forall/exists`.
+- **cvc5 finite model finding**: whether cvc5 searches models of increasing size for the
+  atoms (`--finite-model-find`, default no). See `CVC5_RESULTS.md` for its effect.
 
 ## Generated files
 
@@ -33,10 +43,11 @@ the visualizer.
 ## Translation from the command line
 
 ```
-java -cp <alloy.jar> edu.uiowa.alloy2smt.Main -i model.als -d out -s -q hybrid
+java -cp <alloy.jar> edu.uiowa.alloy2smt.Main -i model.als -d out -s -q set
 ```
-writes `out/model_<i>.smt2` for each command: `-s` includes the scope, `-q` chooses the
-translation of quantifiers: `hybrid` (default), `fo` or `set`.
+writes `out/model_<i>.smt2` for each command: `-s` includes the scope (default unbounded),
+`-f` enables finite model finding (default disabled), and `-q` chooses the translation of
+quantifiers: `set` (default), `hybrid` or `fo`.
 
 # Integer signatures
 ## Semantics of functions plus, minus, mul, div, rem

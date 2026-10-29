@@ -90,8 +90,9 @@ public class Main
         options.addOption(Option.builder("i").longOpt("input").desc("Input Alloy model").hasArg().build());
         options.addOption(Option.builder("o").longOpt("output").desc("SMT-LIB model output").hasArg().build());
         options.addOption(Option.builder("d").longOpt("directory").desc("Write one standalone SMT-LIB script per command in this directory").hasArg().build());
-        options.addOption(Option.builder("q").longOpt("quantifiers").desc("Translation of quantifiers: 'hybrid' (forall, exists, set.filter; default), 'fo' (forall, exists) or 'set' (set.all, set.some, set.filter)").hasArg().build());
-        options.addOption(Option.builder("s").longOpt("scope").desc("Bound the signatures by the scope of each command").build());
+        options.addOption(Option.builder("q").longOpt("quantifiers").desc("Translation of quantifiers: 'set' (set.all, set.some, set.filter; default), 'hybrid' (forall, exists, set.filter; best with -f) or 'fo' (forall, exists)").hasArg().build());
+        options.addOption(Option.builder("s").longOpt("scope").desc("Bound the signatures by the scope of each command (default: unbounded)").build());
+        options.addOption(Option.builder("f").longOpt("finite-model-find").desc("Enable the finite model finding of cvc5 (default: disabled)").build());
 
         try
         {
@@ -104,11 +105,12 @@ public class Main
                 switch (quantifiers)
                 {
                     case "fo": translatorOptions.quantifiers = TranslatorOptions.Quantifiers.FIRST_ORDER; break;
-                    case "set": translatorOptions.quantifiers = TranslatorOptions.Quantifiers.SET; break;
-                    default: translatorOptions.quantifiers = TranslatorOptions.Quantifiers.HYBRID; break;
+                    case "hybrid": translatorOptions.quantifiers = TranslatorOptions.Quantifiers.HYBRID; break;
+                    default: translatorOptions.quantifiers = TranslatorOptions.Quantifiers.SET; break;
                 }
             }
             boolean includeScope = command.hasOption("s");
+            translatorOptions.finiteModelFinding = command.hasOption("f");
 
             if (command.hasOption("d"))
             {

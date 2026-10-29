@@ -730,7 +730,7 @@ public class A4Preferences {
     /** The solver of commands: Kodkod (SAT based) or cvc5 (SMT based, using its theory of finite relations). */
     public static final StringChoicePref RelationalSolver = new StringChoicePref("RelationalSolver", "Relational solver", Arrays.asList(KODKOD, CVC5), KODKOD);
 
-    public static final IntChoicePref Cvc5Timeout = new IntChoicePref("Cvc5Timeout", "cvc5 timeout", Arrays.asList(30000, 60000, 120000, 300000, 600000), 30000) {
+    public static final IntChoicePref Cvc5Timeout = new IntChoicePref("Cvc5Timeout", "cvc5 timeout", Arrays.asList(30000, 60000, 120000, 300000, 600000), 60000) {
 
         @Override
         public Object renderValueShort(Integer value) {
@@ -739,8 +739,14 @@ public class A4Preferences {
         }
     };
 
-    /** Whether cvc5 bounds the signatures by the scope of the command, as Kodkod does. */
-    public static final BooleanPref Cvc5IncludeCommandScope = new BooleanPref("Cvc5IncludeCommandScope", "cvc5 include scope", true);
+    /**
+     * Whether cvc5 bounds the signatures by the scope of the command, as Kodkod does.
+     * By default the analysis is unbounded: unsat means there is no instance of any size.
+     */
+    public static final BooleanPref Cvc5IncludeCommandScope = new BooleanPref("Cvc5IncludeCommandScope", "cvc5 include scope", false);
+
+    /** Whether cvc5 uses finite model finding (--finite-model-find). */
+    public static final BooleanPref Cvc5FiniteModelFinding = new BooleanPref("Cvc5FiniteModelFinding", "cvc5 finite model finding", false);
 
     public static final String CVC5_HYBRID = "hybrid";
 
@@ -749,11 +755,12 @@ public class A4Preferences {
     public static final String CVC5_SET = "set.all/set.some";
 
     /**
-     * The translation of quantifiers for cvc5: hybrid (forall/exists, and set.filter for
-     * comprehensions, one and lone), first-order forall/exists, or the bounded set
-     * quantifiers set.all/set.some.
+     * The translation of quantifiers for cvc5: the bounded set quantifiers set.all/set.some
+     * (the best without finite model finding), hybrid (forall/exists, and set.filter for
+     * comprehensions, one and lone; the best with finite model finding), or first-order
+     * forall/exists.
      */
-    public static final StringChoicePref Cvc5Quantifiers = new StringChoicePref("Cvc5Quantifiers", "cvc5 quantifiers", Arrays.asList(CVC5_HYBRID, CVC5_FIRST_ORDER, CVC5_SET), CVC5_HYBRID);
+    public static final StringChoicePref Cvc5Quantifiers = new StringChoicePref("Cvc5Quantifiers", "cvc5 quantifiers", Arrays.asList(CVC5_SET, CVC5_HYBRID, CVC5_FIRST_ORDER), CVC5_SET);
 
     public static final DelayedChoicePref<SATFactory> Solver               = new DelayedChoicePref<SATFactory>("SatSolver2", "Solver", SATFactory.getAllSolvers(), SATFactory.DEFAULT) {
 

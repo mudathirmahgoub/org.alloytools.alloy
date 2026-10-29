@@ -1,0 +1,58 @@
+// Downloads the cvc5 binaries that are bundled in the jar (see Cvc5Process.findBinary):
+//   ./gradlew :alloy2smt:fetchCvc5
+// The binaries are stored in cvc5/<platform>/ (not under version control) and are
+// included in the jar by -includeresource in bnd.bnd. Without them, Alloy looks for
+// cvc5 on the PATH.
+
+def cvc5Version = '1.4.2'
+
+// platform directory -> name of the release asset (the static builds without GPL code)
+def cvc5Platforms = [
+    'linux-x86_64'  : 'Linux-x86_64',
+    'linux-arm64'   : 'Linux-arm64',
+    'macos-x86_64'  : 'macOS-x86_64',
+    'macos-arm64'   : 'macOS-arm64',
+    'windows-x86_64': 'Win64-x86_64',
+    'windows-arm64' : 'Win64-arm64'
+]
+
+tasks.register('fetchCvc5') {
+    description = "Downloads the cvc5 ${cvc5Version} binaries bundled in the jar"
+    doLast {
+        def target = file('cvc5')
+        def versionFile = new File(target, 'VERSION')
+        if (versionFile.exists() && versionFile.text.trim() != cvc5Version) {
+            project.delete(target)
+        }
+        cvc5Platforms.each { platform, asset ->
+            def name = "cvc5-${asset}-static"
+            def executable = platform.startsWith('windows') ? 'cvc5.exe' : 'cvc5'
+            def directory = new File(target, platform)
+            if (new File(directory, executable).exists()) {
+                return
+            }
+            def zip = new File(temporaryDir, "${name}.zip")
+            logger.lifecycle("Downloading ${name}.zip")
+            ant.get(src: "https://github.com/cvc5/cvc5/releases/download/cvc5-${cvc5Version}/${name}.zip", dest: zip)
+            project.copy {
+                from(zipTree(zip)) {
+                    include "${name}/bin/${executable}"
+                    eachFile { it.path = it.name }
+                }
+                includeEmptyDirs = false
+                into directory
+            }
+            // the license of cvc5 and of the libraries in its static build
+            project.copy {
+                from(zipTree(zip)) {
+                    include "${name}/COPYING", "${name}/AUTHORS", "${name}/licenses/**"
+                    eachFile { it.path = it.path.substring(name.length() + 1) }
+                }
+                includeEmptyDirs = false
+                into new File(target, 'licenses')
+            }
+            zip.delete()
+        }
+        versionFile.text = cvc5Version
+    }
+}

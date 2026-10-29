@@ -31,8 +31,16 @@ public class TranslatorOptions
         HYBRID
     }
 
-    // the best translation on the Alloy example models
-    public Quantifiers quantifiers = Quantifiers.HYBRID;
+    // the best translation on the Alloy example models without finite model finding (the default);
+    // with finite model finding, HYBRID is the best
+    public Quantifiers quantifiers = Quantifiers.SET;
+
+    /**
+     * Whether cvc5 uses finite model finding (--finite-model-find). It searches models of
+     * increasing size for the uninterpreted sorts, which most satisfiable relational
+     * problems need to terminate.
+     */
+    public boolean finiteModelFinding = false;
 
     public TranslatorOptions()
     {

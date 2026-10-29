@@ -50,6 +50,7 @@ import static edu.mit.csail.sdg.alloy4.A4Preferences.KODKOD;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.Cvc5Timeout;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.Cvc5IncludeCommandScope;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.Cvc5Quantifiers;
+import static edu.mit.csail.sdg.alloy4.A4Preferences.Cvc5FiniteModelFinding;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.Welcome;
 import static edu.mit.csail.sdg.alloy4.OurUtil.menu;
 import static edu.mit.csail.sdg.alloy4.OurUtil.menuItem;
@@ -1394,6 +1395,7 @@ public final class SimpleGUI implements ComponentListener, Listener {
             addToMenu(optmenu, Cvc5Timeout);
             addToMenu(optmenu, Cvc5IncludeCommandScope);
             addToMenu(optmenu, Cvc5Quantifiers);
+            addToMenu(optmenu, Cvc5FiniteModelFinding);
             addToMenu(optmenu, Solver);
             addToMenu(optmenu, SkolemDepth);
             JMenu cmMenu = addToMenu(optmenu, CoreMinimization);

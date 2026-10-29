@@ -27,3 +27,5 @@ nbactions.xml
 .gradle/
 build/
 out/
+# cvc5 binaries downloaded by the Gradle task fetchCvc5
+cvc5/

@@ -33,7 +33,9 @@ import static edu.mit.csail.sdg.alloy4.A4Preferences.Cvc5Timeout;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.Cvc5IncludeCommandScope;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.CVC5_FIRST_ORDER;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.CVC5_SET;
+import static edu.mit.csail.sdg.alloy4.A4Preferences.CVC5_HYBRID;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.Cvc5Quantifiers;
+import static edu.mit.csail.sdg.alloy4.A4Preferences.Cvc5FiniteModelFinding;
 
 public class Cvc5Task implements WorkerEngine.WorkerTask
 {
@@ -719,12 +721,15 @@ public class Cvc5Task implements WorkerEngine.WorkerTask
 
     static TranslatorOptions getTranslatorOptions()
     {
+        TranslatorOptions options;
         switch (Cvc5Quantifiers.get())
         {
-            case CVC5_FIRST_ORDER: return new TranslatorOptions(TranslatorOptions.Quantifiers.FIRST_ORDER);
-            case CVC5_SET: return new TranslatorOptions(TranslatorOptions.Quantifiers.SET);
-            default: return new TranslatorOptions(TranslatorOptions.Quantifiers.HYBRID);
+            case CVC5_FIRST_ORDER: options = new TranslatorOptions(TranslatorOptions.Quantifiers.FIRST_ORDER); break;
+            case CVC5_HYBRID: options = new TranslatorOptions(TranslatorOptions.Quantifiers.HYBRID); break;
+            default: options = new TranslatorOptions(TranslatorOptions.Quantifiers.SET); break;
         }
+        options.finiteModelFinding = Cvc5FiniteModelFinding.get();
+        return options;
     }
 
     public static SmtModel parseModel(String model)

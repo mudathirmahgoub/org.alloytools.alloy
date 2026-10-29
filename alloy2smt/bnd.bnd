@@ -22,6 +22,9 @@
 -nojunit: true
 -nojunitosgi: true
 
+# the cvc5 binaries downloaded by the Gradle task fetchCvc5, if present
+-includeresource: cvc5=-cvc5
+
 Export-Package: \
 	edu.uiowa.alloy2smt.*,\
 	edu.uiowa.smt.*

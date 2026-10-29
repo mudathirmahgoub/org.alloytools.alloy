@@ -1,12 +1,19 @@
 package edu.uiowa.smt.cvc5;
 
 import java.io.*;
+import java.net.URL;
+import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 /**
  * An interactive cvc5 process that receives SMT-LIB commands and returns their output.
  * The binary is found in this order: the system property cvc5.path, the environment
- * variable CVC5, the PATH, and the bin directory of the working directory.
+ * variable CVC5, the binary bundled in the jar for this platform, the PATH, and the bin
+ * directory of the working directory.
  */
 public class Cvc5Process
 {
@@ -53,6 +60,11 @@ public class Cvc5Process
         {
             candidates.add(System.getenv("CVC5"));
         }
+        File bundled = extractBundledBinary();
+        if (bundled != null)
+        {
+            candidates.add(bundled.getPath());
+        }
         String path = System.getenv("PATH");
         if (path != null)
         {
@@ -70,8 +82,77 @@ public class Cvc5Process
                 return file;
             }
         }
-        throw new Exception("The cvc5 binary was not found. Set the system property cvc5.path or the environment variable CVC5 to its path, " +
+        throw new Exception("The cvc5 binary was not found: this Alloy jar has no cvc5 binary for the platform " + getPlatform() +
+                ". Set the system property cvc5.path or the environment variable CVC5 to its path, " +
                 "or add it to the PATH. cvc5 can be downloaded from https://cvc5.github.io/downloads.html");
+    }
+
+    /**
+     * @return the platform directory of the bundled binaries: os-arch, e.g. macos-arm64,
+     * or null if no binary is bundled for this platform
+     */
+    static String getPlatform()
+    {
+        String os = OS.toLowerCase(Locale.US);
+        String arch = System.getProperty("os.arch").toLowerCase(Locale.US);
+        String osName = os.startsWith("windows") ? "windows" : os.startsWith("mac") ? "macos" : os.startsWith("linux") ? "linux" : null;
+        String archName = arch.equals("amd64") || arch.equals("x86_64") ? "x86_64" :
+                          arch.equals("aarch64") || arch.equals("arm64") ? "arm64" : null;
+        return osName == null || archName == null ? null : osName + "-" + archName;
+    }
+
+    /**
+     * Extracts the cvc5 binary bundled in the jar (cvc5/platform/cvc5) into a cache directory
+     * in the temporary directory, unless it is already there.
+     * @return the extracted binary, or null if there is no binary for this platform
+     */
+    private static File extractBundledBinary()
+    {
+        String platform = getPlatform();
+        if (platform == null)
+        {
+            return null;
+        }
+        String executable = onWindows() ? "cvc5.exe" : "cvc5";
+        ClassLoader loader = Cvc5Process.class.getClassLoader();
+        URL url = loader.getResource("cvc5/" + platform + "/" + executable);
+        if (url == null)
+        {
+            return null;
+        }
+        try
+        {
+            String version = "unknown";
+            try (InputStream input = loader.getResourceAsStream("cvc5/VERSION"))
+            {
+                if (input != null)
+                {
+                    version = new String(input.readAllBytes(), StandardCharsets.UTF_8).trim();
+                }
+            }
+            URLConnection connection = url.openConnection();
+            long size = connection.getContentLengthLong();
+            File directory = new File(System.getProperty("java.io.tmpdir"), "alloy-cvc5-" + version + "-" + platform);
+            File binary = new File(directory, executable);
+            if (binary.isFile() && binary.canExecute() && binary.length() == size)
+            {
+                return binary;
+            }
+            Files.createDirectories(directory.toPath());
+            // another Alloy process may extract the binary at the same time
+            Path temporary = Files.createTempFile(directory.toPath(), executable, ".tmp");
+            try (InputStream input = connection.getInputStream())
+            {
+                Files.copy(input, temporary, StandardCopyOption.REPLACE_EXISTING);
+            }
+            temporary.toFile().setExecutable(true);
+            Files.move(temporary, binary.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+            return binary;
+        }
+        catch (IOException exception)
+        {
+            return null;
+        }
     }
 
     private static ProcessBuilder getProcessBuilder() throws Exception

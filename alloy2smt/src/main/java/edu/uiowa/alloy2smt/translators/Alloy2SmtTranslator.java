@@ -154,8 +154,10 @@ public class Alloy2SmtTranslator extends AbstractTranslator
     private void setSolverOptions()
     {
         smtProgram.addOption("produce-models", "true");
-        // finite model finding is needed for satisfiable relational constraints
-        smtProgram.addOption("finite-model-find", "true");
+        if (options.finiteModelFinding)
+        {
+            smtProgram.addOption("finite-model-find", "true");
+        }
         // set.universe and set.complement
         smtProgram.addOption("sets-exp", "true");
         if (options.useFilter())
