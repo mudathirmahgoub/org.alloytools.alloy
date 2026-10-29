@@ -1,17 +1,17 @@
 # Alloy2smt
 
-Alloy2smt is a translator that translates models written in alloy language into cvc4 smt-lib language. 
+Alloy2smt translates Alloy models into SMT-LIB for the theory of finite sets and relations of
+[cvc5](https://cvc5.github.io). It is a project of the Alloy bnd workspace and is built with the
+other projects (`./gradlew build`).
 
-### Requirements
-
-Java Platform (JDK) 8
-
-### Building alloy2smt
-
-1. Clone the project `git clone https://github.com/mudathirmahgoub/alloy2smt`
-2. Run gradle wrapper command with build. For Linux run the command `./gradlew build`.  For Windows run the command `gradlew.bat build`. To build without running the tests, use the task `alloy2smtWithDependencies` instead of `build`
-3. Run the translator using the command
-```jshelllanguage
-java -jar build/libs/alloy2smt_with_dependencies.jar -i examples/test.als -o examples/test.smt2
+Each command is translated into a standalone script:
 ```
-The generated smt files can be checked using the SMT solver [CVC4](http://cvc4.cs.stanford.edu/downloads/). 
+java -cp <alloy.jar> edu.uiowa.alloy2smt.Main -i examples/test.als -d out -s
+```
+- `-s`: bound the signatures by the scope of the command, as Kodkod does
+- `-q hybrid|fo|set`: translate Alloy quantifiers with `forall`/`exists` and `set.filter`
+  for comprehensions and `one`/`lone` quantifiers (default), with first-order
+  `forall`/`exists` only, or with the bounded set quantifiers `set.all`/`set.some`.
+
+The tests (`src/test/java`) run the cvc5 binary (see `bin/guidelines.md`) on the example
+models; they are not run by the build.

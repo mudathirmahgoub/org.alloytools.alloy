@@ -28,21 +28,18 @@ public class SmtLibPrettyPrinter implements SmtAstVisitor
     }
 
 
-    private void initializeProgram()
+    private void initializeProgram(SmtProgram program)
     {
-        stringBuilder.append(
-                "(set-logic ALL)\n" +
-                "(set-option :produce-models true)\n" +
-                "(set-option :incremental true)\n" +
-                "(set-option :block-models true)\n" +
-//                "(set-option :fmf-bound true)\n" +
-                "(set-option :finite-model-find true)\n" +
-                "(set-option :sets-ext true)\n");
+        for (SolverOption option : program.getOptions())
+        {
+            visit(option);
+        }
+        stringBuilder.append("(set-logic ").append(program.getLogic()).append(")\n");
     }
 
     public void visit(SmtProgram program)
     {
-        initializeProgram();
+        initializeProgram(program);
 
         for(Sort sort : program.getSorts())
         {
@@ -89,6 +86,7 @@ public class SmtLibPrettyPrinter implements SmtAstVisitor
         }
         else
         {
+            // ((_ tuple.select i) t)
             stringBuilder.append("((_ " + binaryExpression.getOp() + " ");
             stringBuilder.append(((IntConstant)binaryExpression.getLhsExpr()).getValue());
             stringBuilder.append(") ");
@@ -321,8 +319,8 @@ public class SmtLibPrettyPrinter implements SmtAstVisitor
         }
         else
         {
-            stringBuilder.append(functionCallExpression.getFunctionName());
-        }     
+            stringBuilder.append(TranslatorUtils.sanitizeWithBars(functionCallExpression.getFunctionName()));
+        }
     }
 
     @Override
@@ -375,7 +373,11 @@ public class SmtLibPrettyPrinter implements SmtAstVisitor
         else if (expression instanceof  LetExpression)
         {
             this.visit((LetExpression) expression);
-        }  
+        }
+        else if (expression instanceof  LambdaExpression)
+        {
+            this.visit((LambdaExpression) expression);
+        }
         else if (expression instanceof  ITEExpression)
         {
             this.visit((ITEExpression) expression);
@@ -437,7 +439,7 @@ public class SmtLibPrettyPrinter implements SmtAstVisitor
 
     @Override
     public void visit(LetExpression let) {
-        stringBuilder.append("( let (");
+        stringBuilder.append("(let (");
         for(Map.Entry<String, Expression> letVar : let.getLetVariables().entrySet())
         {
             stringBuilder.append("(");
@@ -448,6 +450,16 @@ public class SmtLibPrettyPrinter implements SmtAstVisitor
         stringBuilder.append(") ");
         this.visit(let.getExpression());
         stringBuilder.append(")");        
+    }
+
+    @Override
+    public void visit(LambdaExpression lambda)
+    {
+        stringBuilder.append("(lambda (");
+        this.visit(lambda.getParameter());
+        stringBuilder.append(") ");
+        this.visit(lambda.getBody());
+        stringBuilder.append(")");
     }
 
     @Override

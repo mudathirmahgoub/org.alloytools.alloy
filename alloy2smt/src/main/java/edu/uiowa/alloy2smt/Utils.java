@@ -16,6 +16,7 @@ import edu.uiowa.smt.printers.SmtLibPrettyPrinter;
 import edu.uiowa.smt.smtAst.*;
 import edu.uiowa.alloy2smt.translators.Alloy2SmtTranslator;
 import edu.uiowa.alloy2smt.translators.Translation;
+import edu.uiowa.alloy2smt.translators.TranslatorOptions;
 
 import java.util.Map;
 
@@ -23,27 +24,19 @@ public class Utils
 {
     public static Translation translateFromFile(String filePath)
     {
+        return translateFromFile(filePath, new TranslatorOptions());
+    }
+
+    public static Translation translateFromFile(String filePath, TranslatorOptions options)
+    {
         CompModule alloyModel = CompUtil.parseEverything_fromFile(null, null, filePath);
-        return getTranslation(alloyModel);
+        return getTranslation(alloyModel, options);
     }
 
     private static String translateFromModel(CompModule alloyModel, int commandIndex, boolean includeScope)
     {
-        Alloy2SmtTranslator translator      = new Alloy2SmtTranslator(alloyModel);
-        SmtProgram          smtProgram      = translator.translate();
-        SmtLibPrettyPrinter programPrinter  = new SmtLibPrettyPrinter();
-
-        programPrinter.visit(smtProgram);
-
-        String              program         = programPrinter.getSmtLib();
-        Assertion           assertion       = translator.translateCommand(commandIndex, includeScope);
-        SmtLibPrettyPrinter commandPrinter  = new SmtLibPrettyPrinter();
-
-        commandPrinter.visit(assertion);
-
-        String              command         = commandPrinter.getSmtLib();
-
-        return program + command + SmtLibPrettyPrinter.CHECK_SAT + "\n" + SmtLibPrettyPrinter.GET_MODEL + "\n";
+        Translation translation = getTranslation(alloyModel, new TranslatorOptions());
+        return translation.translateCommandScript(commandIndex, includeScope) + SmtLibPrettyPrinter.GET_MODEL + "\n";
     }
 
     public static String translateFromString(String alloyProgram, int commandIndex, boolean includeScope)
@@ -55,18 +48,23 @@ public class Utils
     public static Translation translate(String alloyProgram)
     {
         CompModule alloyModel = CompUtil.parseEverything_fromString(null, alloyProgram);
-        return getTranslation(alloyModel);
+        return getTranslation(alloyModel, new TranslatorOptions());
     }
 
     public static Translation translate(Map<String, String> alloyFiles, String originalFileName, int resolutionMode)
     {
-        CompModule alloyModel = CompUtil.parseEverything_fromFile(null, alloyFiles, originalFileName, resolutionMode);
-        return getTranslation(alloyModel);
+        return translate(alloyFiles, originalFileName, resolutionMode, new TranslatorOptions());
     }
 
-    private static Translation getTranslation(CompModule alloyModel)
+    public static Translation translate(Map<String, String> alloyFiles, String originalFileName, int resolutionMode, TranslatorOptions options)
     {
-        Alloy2SmtTranslator translator  = new Alloy2SmtTranslator(alloyModel);
+        CompModule alloyModel = CompUtil.parseEverything_fromFile(null, alloyFiles, originalFileName, resolutionMode);
+        return getTranslation(alloyModel, options);
+    }
+
+    public static Translation getTranslation(CompModule alloyModel, TranslatorOptions options)
+    {
+        Alloy2SmtTranslator translator  = new Alloy2SmtTranslator(alloyModel, options);
         SmtProgram program              = translator.translate();
         Mapper mapper                   = translator.generateMapper();
         SmtLibPrettyPrinter printer     = new SmtLibPrettyPrinter();

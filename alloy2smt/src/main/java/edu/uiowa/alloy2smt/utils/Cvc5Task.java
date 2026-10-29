@@ -2,28 +2,24 @@ package edu.uiowa.alloy2smt.utils;
 
 import edu.mit.csail.sdg.ast.Command;
 import edu.uiowa.alloy2smt.translators.Translation;
-import edu.uiowa.smt.TranslatorUtils;
-import edu.uiowa.smt.cvc4.Cvc4Process;
+import edu.uiowa.smt.cvc5.Cvc5Process;
 import edu.uiowa.smt.printers.SmtLibPrettyPrinter;
 
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-public class Cvc4Task
+public class Cvc5Task
 {
-    public Cvc4Process cvc4Process;
+    public Cvc5Process cvc5Process;
 
     private int timeout;
 
-    public Cvc4Task(int timeout)
+    public Cvc5Task(int timeout)
     {
         this.timeout = timeout;
     }
 
-    public Cvc4Task()
+    public Cvc5Task()
     {
         this.timeout = 25000;
     }
@@ -34,21 +30,22 @@ public class Cvc4Task
         String smtScript = translation.getSmtScript();
         if (smtScript != null)
         {
-            cvc4Process = Cvc4Process.start();
-
-            cvc4Process.sendCommand(smtScript);
-
-            setSolverOptions(cvc4Process);
-
-            // surround each command except the last one with (push) and (pop)
-            for (int index = 0; index < translation.getCommands().size(); index++)
+            startProcess(smtScript);
+            try
             {
-                // (push)
-                cvc4Process.sendCommand(SmtLibPrettyPrinter.PUSH);
-                CommandResult commandResult = solveCommand(index, includeScope, translation);
-                // (pop)
-                cvc4Process.sendCommand(SmtLibPrettyPrinter.POP);
-                commandResults.add(commandResult);
+                for (int index = 0; index < translation.getCommands().size(); index++)
+                {
+                    // (push)
+                    cvc5Process.sendCommand(SmtLibPrettyPrinter.PUSH);
+                    CommandResult commandResult = solveCommand(index, includeScope, translation);
+                    // (pop)
+                    cvc5Process.sendCommand(SmtLibPrettyPrinter.POP);
+                    commandResults.add(commandResult);
+                }
+            }
+            finally
+            {
+                cvc5Process.destroy();
             }
             return commandResults;
         }
@@ -57,39 +54,37 @@ public class Cvc4Task
 
     public CommandResult run(Translation translation, boolean includeScope, int commandIndex ) throws Exception
     {
-        String smtScript = translation.getSmtScript();
-        cvc4Process = Cvc4Process.start();
-
-        cvc4Process.sendCommand(smtScript);
-
-        setSolverOptions(cvc4Process);
-
-        CommandResult commandResult = solveCommand(commandIndex, includeScope, translation);
-
-        return commandResult;
+        startProcess(translation.getSmtScript());
+        try
+        {
+            return solveCommand(commandIndex, includeScope, translation);
+        }
+        finally
+        {
+            cvc5Process.destroy();
+        }
     }
 
-    public String setSolverOptions(Cvc4Process cvc4Process) throws IOException
+    // options that are set before the script, they can not be changed after the logic is set
+    private void startProcess(String smtScript) throws Exception
     {
-        Map<String, String> options = new HashMap<>();
-        options.put("tlimit", Integer.toString(timeout));
-        String script = TranslatorUtils.translateOptions(options);
-        cvc4Process.sendCommand(script);
-        return script;
+        cvc5Process = Cvc5Process.start();
+        cvc5Process.sendCommand("(set-option :incremental true)\n(set-option :tlimit-per " + timeout + ")");
+        cvc5Process.sendCommand(smtScript);
     }
 
     private CommandResult solveCommand(int index, boolean includeScope, Translation translation) throws Exception
     {
         String commandTranslation = translation.translateCommand(index, includeScope);
         Command command = translation.getCommands().get(index);
-        String result = cvc4Process.sendCommand(commandTranslation + SmtLibPrettyPrinter.CHECK_SAT);
+        String result = cvc5Process.sendCommand(commandTranslation + SmtLibPrettyPrinter.CHECK_SAT);
 
         String smt = translation.getSmtScript() + commandTranslation + SmtLibPrettyPrinter.CHECK_SAT;
         CommandResult commandResult = new CommandResult(index, command, smt, result);
 
         if (result.equals("sat"))
         {
-            commandResult.model = cvc4Process.sendCommand(SmtLibPrettyPrinter.GET_MODEL);
+            commandResult.model = cvc5Process.sendCommand(SmtLibPrettyPrinter.GET_MODEL);
             commandResult.smtModel = commandResult.parseModel(commandResult.model);
         }
         return commandResult;

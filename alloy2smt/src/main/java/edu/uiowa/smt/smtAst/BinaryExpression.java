@@ -160,6 +160,24 @@ public class BinaryExpression extends Expression
                     throw new RuntimeException(String.format("The index '%1$d' out of range", index));
                 }
             } break;
+            case SET_ALL:
+            case SET_SOME:
+            case SET_FILTER:
+            {
+                if(!(lhsExpr instanceof LambdaExpression))
+                {
+                    throw new RuntimeException(String.format("The left expression '%1$s' is not a lambda expression", lhsExpr));
+                }
+                if(!(rhsExpr.getSort() instanceof SetSort))
+                {
+                    throw new RuntimeException(String.format("The sort of right expression '%1$s' is not a set", rhsExpr.getSort()));
+                }
+                Sort elementSort = ((SetSort) rhsExpr.getSort()).elementSort;
+                if(!lhsExpr.getSort().equals(elementSort))
+                {
+                    throw new RuntimeException(String.format("The lambda parameter sort '%1$s' doesn't match the element sort '%2$s'", lhsExpr.getSort(), elementSort));
+                }
+            } break;
             default:
                 throw new UnsupportedOperationException();
         }
@@ -200,14 +218,18 @@ public class BinaryExpression extends Expression
         LTE ("<="),
         GT (">"),
         LT ("<"),
-        UNION ("union"),
-        INTERSECTION ("intersection"),
-        SETMINUS ("setminus"),
-        MEMBER ("member"),
-        SUBSET ("subset"),
-        JOIN ("join"),
-        PRODUCT ("product"),
-        TUPSEL ("tupSel");
+        UNION ("set.union"),
+        INTERSECTION ("set.inter"),
+        SETMINUS ("set.minus"),
+        MEMBER ("set.member"),
+        SUBSET ("set.subset"),
+        JOIN ("rel.join"),
+        PRODUCT ("rel.product"),
+        TUPSEL ("tuple.select"),
+        // higher-order set operators: the left operand is a LambdaExpression
+        SET_ALL ("set.all"),
+        SET_SOME ("set.some"),
+        SET_FILTER ("set.filter");
 
         private final String opStr;
 
@@ -238,14 +260,17 @@ public class BinaryExpression extends Expression
                 case "<="           : return LTE;
                 case ">"            : return GT;
                 case "<"            : return LT;
-                case "union"        : return UNION;
-                case "intersection" : return INTERSECTION;
-                case "setminus"     : return SETMINUS;
-                case "member"       : return MEMBER;
-                case "subset"       : return SUBSET;
-                case "join"         : return JOIN;
-                case "product"      : return PRODUCT;
-                case "tupSel"       : return TUPSEL;
+                case "set.union"    : return UNION;
+                case "set.inter"    : return INTERSECTION;
+                case "set.minus"    : return SETMINUS;
+                case "set.member"   : return MEMBER;
+                case "set.subset"   : return SUBSET;
+                case "rel.join"     : return JOIN;
+                case "rel.product"  : return PRODUCT;
+                case "tuple.select" : return TUPSEL;
+                case "set.all"      : return SET_ALL;
+                case "set.some"     : return SET_SOME;
+                case "set.filter"   : return SET_FILTER;
                 default:
                     throw new UnsupportedOperationException("Operator " + operator + " is not defined");
             }
@@ -327,6 +352,9 @@ public class BinaryExpression extends Expression
                 TupleSort sort = (TupleSort)rhsExpr.getSort();
                 return sort.elementSorts.get(index);
             }
+            case SET_ALL: return AbstractTranslator.boolSort;
+            case SET_SOME: return AbstractTranslator.boolSort;
+            case SET_FILTER: return rhsExpr.getSort();
             default:
                 throw new UnsupportedOperationException();
         }

@@ -2,7 +2,8 @@ grammar Smt;
 
 // parser rules
 
-model : '(' 'model' sortDeclaration* functionDefinition* ')' ;
+// cvc5 prints a model as a list of definitions, CVC4 prefixed it with 'model'
+model : '(' 'model'? sortDeclaration* functionDefinition* ')' ;
 
 sortDeclaration :  '(' 'declare-sort' sortName arity ')' ;
 
@@ -53,9 +54,11 @@ boolConstant : True | False;
 
 integerConstant : '-' Integer | Integer ;
 
-uninterpretedConstant : (AtomPrefix | UninterpretedIntPrefix) Integer;
+// cvc5 prints uninterpreted values as (as @Atom_0 Atom)
+uninterpretedConstant : (AtomPrefix | UninterpretedIntPrefix) Integer
+                        | 'as' (AtomPrefix | UninterpretedIntPrefix) Integer sortName ;
 
-emptySet : 'as' 'emptyset' '(' 'Set' sort ')' ;
+emptySet : 'as' 'set.empty' '(' 'Set' sort ')' ;
 
 getValue : '(' ('(' expression expression ')' )+ ')';
 
@@ -65,25 +68,25 @@ True: 'true' ;
 
 False: 'false' ;
 
-UnaryOperator : 'not' | 'singleton' | 'complement' | 'transpose' | 'tclosure' ;
+UnaryOperator : 'not' | 'set.singleton' | 'set.complement' | 'rel.transpose' | 'rel.tclosure' ;
 
 BinaryOperator : '=' | '>' | '>=' | '<' | '<='
                 | '+' | '-' | '*' | '/' | 'mod'
                 | 'or' | 'and' | '=>'
-                | 'union' | 'intersection' | 'setminus' | 'member' | 'subset'
-                | 'join' | 'product' ;
+                | 'set.union' | 'set.inter' | 'set.minus' | 'set.member' | 'set.subset'
+                | 'rel.join' | 'rel.product' ;
 
 TernaryOperator : 'ite' ;
 
-MultiArityOperator : 'mkTuple' | 'insert' | 'distinct' ;
+MultiArityOperator : 'tuple' | 'set.insert' | 'distinct' ;
 
-AtomPrefix : '@uc_Atom_';
+AtomPrefix : '@Atom_';
 
-UninterpretedIntPrefix : '@uc_UninterpretedInt_' ;
+UninterpretedIntPrefix : '@UninterpretedInt_' ;
 
 Identifier : IdentifierLetter (IdentifierLetter | Digit)* | ('|' .*? '|');
 
-IdentifierLetter : 'a'..'z'|'A'..'Z'|'_'|'/' | '\'' | '"';
+IdentifierLetter : 'a'..'z'|'A'..'Z'|'_'|'/' | '\'' | '"' | '$';
 
 Integer : Digit+ ;
 

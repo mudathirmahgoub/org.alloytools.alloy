@@ -15,6 +15,8 @@ public class SmtProgram extends SmtModel
 {
     private final List<ConstantDeclaration>    constantDeclarations = new ArrayList<>();
     private final List<Assertion>              assertions           = new ArrayList<>();
+    private final List<SolverOption>           options              = new ArrayList<>();
+    private String                             logic                = "ALL";
 
     public SmtProgram()
     {
@@ -25,6 +27,29 @@ public class SmtProgram extends SmtModel
         super(program);
         this.constantDeclarations.addAll(program.constantDeclarations);
         this.assertions.addAll(program.assertions);
+        this.options.addAll(program.options);
+        this.logic = program.logic;
+    }
+
+    public String getLogic()
+    {
+        return logic;
+    }
+
+    public void setLogic(String logic)
+    {
+        this.logic = logic;
+    }
+
+    public List<SolverOption> getOptions()
+    {
+        return options;
+    }
+
+    public void addOption(String name, String value)
+    {
+        options.removeIf(option -> option.name.equals(name));
+        options.add(new SolverOption(name, value));
     }
 
     public void addConstantDeclaration(ConstantDeclaration constantDeclaration)

@@ -19,7 +19,7 @@ import java.util.Map;
 
 import static edu.mit.csail.sdg.alloy4.A4Preferences.ImplicitThis;
 
-public class Cvc4EnumerationTask implements WorkerEngine.WorkerTask
+public class Cvc5EnumerationTask implements WorkerEngine.WorkerTask
 {
     private final String xmlFileName;
     private Translation translation;
@@ -28,7 +28,7 @@ public class Cvc4EnumerationTask implements WorkerEngine.WorkerTask
     private int commandIndex;
     private String originalFileName;
 
-    Cvc4EnumerationTask(String xmlFileName) throws Exception
+    Cvc5EnumerationTask(String xmlFileName) throws Exception
     {
         this.xmlFileName = xmlFileName;
     }
@@ -38,7 +38,7 @@ public class Cvc4EnumerationTask implements WorkerEngine.WorkerTask
     {
         try
         {
-            if(! xmlFileName.equals(Cvc4Task.lastXmlFile))
+            if(! xmlFileName.equals(Cvc5Task.lastXmlFile))
             {
                 workerCallback.callback(new Object[]{"pop", "You can only enumerate the solutions of the last executed command."});
                 return;
@@ -67,8 +67,9 @@ public class Cvc4EnumerationTask implements WorkerEngine.WorkerTask
                 }
             }
 
-            // (check-sat)
-            String result = Cvc4Task.cvc4Process.sendCommand(SmtLibPrettyPrinter.CHECK_SAT);
+            // exclude the values of the last model, then (check-sat)
+            Cvc5Task.cvc5Process.sendCommand("(block-model :values)");
+            String result = Cvc5Task.cvc5Process.sendCommand(SmtLibPrettyPrinter.CHECK_SAT);
             if(result != null)
             {
                 switch (result)
@@ -83,7 +84,7 @@ public class Cvc4EnumerationTask implements WorkerEngine.WorkerTask
                         workerCallback.callback(new Object[]{"pop", "There are no more satisfying instances.\n\n" + "Note: due to symmetry breaking and other optimizations,\n" + "some equivalent solutions may have been omitted."});
                         break;
                     default:
-                        workerCallback.callback(new Object[]{"pop", "CVC4 solver returned unknown."});
+                        workerCallback.callback(new Object[]{"pop", "cvc5 returned unknown."});
                 }
             }
         }
@@ -98,22 +99,22 @@ public class Cvc4EnumerationTask implements WorkerEngine.WorkerTask
     private Translation translateToSMT() throws IOException
     {
         int resolutionMode      = (Version.experimental && ImplicitThis.get()) ? 2 : 1;
-        Translation translation = Utils.translate(alloyFiles, originalFileName, resolutionMode);
+        Translation translation = Utils.translate(alloyFiles, originalFileName, resolutionMode, Cvc5Task.getTranslatorOptions());
         return translation;
     }
 
     private void prepareInstance(int commandIndex) throws Exception
     {
-        String smtModel     = Cvc4Task.cvc4Process.sendCommand(SmtLibPrettyPrinter.GET_MODEL);
+        String smtModel     = Cvc5Task.cvc5Process.sendCommand(SmtLibPrettyPrinter.GET_MODEL);
         Command command     = translation.getCommands().get(commandIndex);
 
-        SmtModel model      = Cvc4Task.parseModel(smtModel);
+        SmtModel model      = Cvc5Task.parseModel(smtModel);
 
         File xmlFile        = new File(xmlFileName);
 
         String xmlFilePath  = xmlFile.getAbsolutePath();
 
-        Cvc4Task.writeModelToAlloyXmlFile(translation, model, xmlFilePath,
+        Cvc5Task.writeModelToAlloyXmlFile(translation, model, xmlFilePath,
                 originalFileName, command, alloy.getAlloyFiles());
     }
 }

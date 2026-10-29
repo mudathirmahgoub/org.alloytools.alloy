@@ -60,6 +60,8 @@ public interface SmtAstVisitor
 
     void visit(LetExpression letExpression);
 
+    void visit(LambdaExpression lambdaExpression);
+
     void visit(ITEExpression iteExpression);
 
     void visit(UninterpretedConstant uninterpretedConstant);

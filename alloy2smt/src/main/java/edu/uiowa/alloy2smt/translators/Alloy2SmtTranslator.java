@@ -8,16 +8,16 @@
 
 package edu.uiowa.alloy2smt.translators;
 
+import edu.mit.csail.sdg.alloy4.A4Reporter;
 import edu.mit.csail.sdg.alloy4.Pair;
 import edu.mit.csail.sdg.ast.*;
 import edu.mit.csail.sdg.parser.CompModule;
+import edu.mit.csail.sdg.translator.SigScopes;
 import edu.uiowa.alloy2smt.mapping.Mapper;
 import edu.uiowa.alloy2smt.mapping.MappingField;
 import edu.uiowa.alloy2smt.mapping.MappingSignature;
 import edu.uiowa.alloy2smt.mapping.MappingType;
-import edu.uiowa.alloy2smt.utils.AlloyUtils;
 import edu.uiowa.smt.AbstractTranslator;
-import edu.uiowa.smt.Environment;
 import edu.uiowa.smt.TranslatorUtils;
 import edu.uiowa.smt.smtAst.*;
 
@@ -26,38 +26,58 @@ import java.util.stream.Collectors;
 
 public class Alloy2SmtTranslator extends AbstractTranslator
 {
-    private final static int        DefaultScope = 3;
     final CompModule                alloyModel;
     final List<Sig>                 reachableSigs;
     final List<Sig>                 topLevelSigs;
     final List<Command>             commands;
+    final TranslatorOptions         options;
 
     final SignatureTranslator       signatureTranslator;
     final ExprTranslator            exprTranslator;
 
     Set<String> funcNames;
-    //ToDo: it is really important to remove this variable. It is the source of many bugs
-    Expression                                      auxExpr;
-    Map<Sig, Expr>                                  sigFacts;
-    
-    Map<String, String>                             funcNamesMap;
-    Map<String, List<String>> setComprehensionFuncNameToInputsMap;
-    Map<String, Expression>                         setCompFuncNameToDefMap;
-    Map<String, VariableDeclaration>                setCompFuncNameToBdVarExprMap;
-    Map<Sig, FunctionDeclaration>                   signaturesMap;   
-    List<VariableDeclaration>                       existentialBdVars;
+    List<Map.Entry<Sig, Expr>>                      sigFacts;
+
+    Map<Sig, FunctionDeclaration>                   signaturesMap;
     Map<Sig.Field, FunctionDeclaration>             fieldsMap;
     Map<String, Func> nameToFuncMap;
     Map<Expr, Integer>  sigToIdMap;
-    Map<Expr, FunctionDeclaration> multiplicityVariableMap;
+    // whether the translation contains lambda expressions (set.all, set.some, set.filter)
+    boolean usesLambdas;
 
+    // the translation of an instance of util/ordering
+    static class Ordering
+    {
+        final Sig sig;
+        final FunctionDeclaration mapping;
+        final FunctionDeclaration next;
+        final ConstantDeclaration first;
+        final ConstantDeclaration last;
+
+        Ordering(Sig sig, FunctionDeclaration mapping, FunctionDeclaration next, ConstantDeclaration first, ConstantDeclaration last)
+        {
+            this.sig = sig;
+            this.mapping = mapping;
+            this.next = next;
+            this.first = first;
+            this.last = last;
+        }
+    }
+
+    List<Ordering> orderings = new ArrayList<>();
 
     public Alloy2SmtTranslator(CompModule alloyModel)
+    {
+        this(alloyModel, new TranslatorOptions());
+    }
+
+    public Alloy2SmtTranslator(CompModule alloyModel, TranslatorOptions options)
     {
         TranslatorUtils.reset();
 
         this.smtProgram             = new SmtProgram();
         this.alloyModel             = alloyModel;
+        this.options                = options;
         this.reachableSigs          = new ArrayList<>();
         this.topLevelSigs           = new ArrayList<>();
         this.commands               = alloyModel.getAllCommands();
@@ -66,16 +86,13 @@ public class Alloy2SmtTranslator extends AbstractTranslator
         this.comparisonOperations = new HashMap<>();
         this.arithmeticOperations = new HashMap<>();
         this.signaturesMap          = new HashMap<>();
-        this.funcNamesMap           = new HashMap<>();
         this.functionsMap           = new HashMap<>();
         this.nameToFuncMap          = new HashMap<>();
         this.fieldsMap              = new HashMap<>();
-        this.sigFacts               = new HashMap<>();
-        this.existentialBdVars      = new ArrayList<>();
+        this.sigFacts               = new ArrayList<>();
         this.funcNames              = new HashSet<>();
         this.integerConstants       = new HashMap<>();
         this.sigToIdMap             = new HashMap<>();
-        this.multiplicityVariableMap = new HashMap<>();
 
         this.signaturesMap.put(Sig.UNIV, atomUniverse);
         this.signaturesMap.put(Sig.SIGINT, intUniv);
@@ -85,16 +102,14 @@ public class Alloy2SmtTranslator extends AbstractTranslator
 
         this.functionsMap.put(uninterpretedIntValue.getName(), uninterpretedIntValue);
 
-        this.setComprehensionFuncNameToInputsMap = new HashMap<>();
-        this.setCompFuncNameToDefMap        = new HashMap<>(); 
-        this.setCompFuncNameToBdVarExprMap  = new HashMap<>();
-        this.exprTranslator                 = new ExprTranslator(this);        
+        this.exprTranslator                 = new ExprTranslator(this);
     }
 
     public Alloy2SmtTranslator(Alloy2SmtTranslator translator)
     {
         this.smtProgram             = new SmtProgram(translator.smtProgram);
         this.alloyModel             = translator.alloyModel;
+        this.options                = translator.options;
         this.reachableSigs          = new ArrayList<>(translator.reachableSigs);
         this.topLevelSigs           = new ArrayList<>(translator.topLevelSigs);
         this.sigToIdMap             = new HashMap<>(translator.sigToIdMap);
@@ -107,42 +122,52 @@ public class Alloy2SmtTranslator extends AbstractTranslator
         this.integerConstants       = new HashMap<>(translator.integerConstants);
         this.arithmeticOperations = new HashMap<>(translator.arithmeticOperations);
         this.signaturesMap          = new HashMap<>(translator.signaturesMap);
-        this.funcNamesMap           = new HashMap<>(translator.funcNamesMap);
         this.functionsMap           = new HashMap<>(translator.functionsMap);
+        this.nameToFuncMap          = new HashMap<>(translator.nameToFuncMap);
         this.fieldsMap              = new HashMap<>(translator.fieldsMap);
-        this.sigFacts               = new HashMap<>(translator.sigFacts);
-        this.existentialBdVars      = new ArrayList<>(translator.existentialBdVars);
+        this.sigFacts               = new ArrayList<>(translator.sigFacts);
         this.funcNames              = new HashSet<>(translator.funcNames);
-        this.multiplicityVariableMap = new HashMap<>(translator.multiplicityVariableMap);
+        this.usesLambdas            = translator.usesLambdas;
+        this.orderings              = new ArrayList<>(translator.orderings);
 
-        this.setComprehensionFuncNameToInputsMap = new HashMap<>(translator.setComprehensionFuncNameToInputsMap);
-        this.setCompFuncNameToDefMap        = new HashMap<>(translator.setCompFuncNameToDefMap);
-        this.setCompFuncNameToBdVarExprMap  = new HashMap<>(translator.setCompFuncNameToBdVarExprMap);
         this.exprTranslator                 = new ExprTranslator(this);
     }
 
 
-    FunctionDeclaration getFunctionFromAlloyName(String name)
-    {
-        FunctionDeclaration function = functionsMap.get(funcNamesMap.get(name));
-        if(function == null)
-        {
-            throw new RuntimeException("Function " + name + " is not found.");
-        }
-        return function;
-    }
-
+    /**
+     * Translates signatures, fields, their facts and the functions and predicates of the model.
+     * The facts of the model are part of the formula of each command.
+     */
     @Override
     public SmtProgram translate()
     {
+        setSolverOptions();
         translateSpecialFunctions();
         this.signatureTranslator.translateSigs();
         this.signatureTranslator.translateSpecialSigFacts();
         translateFunctionsAndPredicates();
         this.signatureTranslator.translateSigFacts();
-        translateFacts();
         translateSpecialAssertions();
         return this.smtProgram;
+    }
+
+    private void setSolverOptions()
+    {
+        smtProgram.addOption("produce-models", "true");
+        // finite model finding is needed for satisfiable relational constraints
+        smtProgram.addOption("finite-model-find", "true");
+        // set.universe and set.complement
+        smtProgram.addOption("sets-exp", "true");
+        if (options.useFilter())
+        {
+            // lambda expressions of set.all, set.some and set.filter
+            smtProgram.setLogic("HO_ALL");
+            smtProgram.addOption("uf-lazy-ll", "true");
+        }
+        else
+        {
+            smtProgram.setLogic("ALL");
+        }
     }
 
     private void translateSpecialFunctions()
@@ -155,428 +180,54 @@ public class Alloy2SmtTranslator extends AbstractTranslator
 
     private void translateSpecialAssertions()
     {
-        // Axiom for identity relation
-        VariableDeclaration a       = new VariableDeclaration(TranslatorUtils.getNewAtomName(), atomSort, null);
-        MultiArityExpression        tupleA  = new MultiArityExpression(MultiArityExpression.Op.MKTUPLE,a.getVariable());
-        BinaryExpression            memberA = BinaryExpression.Op.MEMBER.make(tupleA, this.atomUniverse.getVariable());
-
-        VariableDeclaration b       = new VariableDeclaration(TranslatorUtils.getNewAtomName(), atomSort, null);
-        MultiArityExpression        tupleB  = new MultiArityExpression(MultiArityExpression.Op.MKTUPLE,b.getVariable());
-        BinaryExpression            memberB = BinaryExpression.Op.MEMBER.make(tupleB, this.atomUniverse.getVariable());
-
-        BinaryExpression            and     = BinaryExpression.Op.AND.make(memberA, memberB);
-
-        MultiArityExpression        tupleAB = new MultiArityExpression(MultiArityExpression.Op.MKTUPLE,a.getVariable(), b.getVariable());
-
-        BinaryExpression            member  = BinaryExpression.Op.MEMBER.make(tupleAB, this.atomIdentity.getVariable());
-
-        BinaryExpression            equals  = BinaryExpression.Op.EQ.make(a.getVariable(), b.getVariable());
-
-        BinaryExpression            equiv   = BinaryExpression.Op.EQ.make(member, equals);
-
-        BinaryExpression            implies = BinaryExpression.Op.IMPLIES.make(and, equiv);
-        
-        QuantifiedExpression        idenSemantics  = QuantifiedExpression.Op.FORALL.make(implies, a, b);
-
         this.smtProgram.addAssertion(new Assertion("Empty unary relation definition for Atom", BinaryExpression.Op.EQ.make(this.atomNone.getVariable(), UnaryExpression.Op.EMPTYSET.make(setOfUnaryAtomSort))));
         this.smtProgram.addAssertion(new Assertion("Universe definition for Atom", BinaryExpression.Op.EQ.make(this.atomUniverse.getVariable(), UnaryExpression.Op.UNIVSET.make(setOfUnaryAtomSort))));
         this.smtProgram.addAssertion(new Assertion("Universe definition for UninterpretedInt", BinaryExpression.Op.EQ.make(intUniv.getVariable(), UnaryExpression.Op.UNIVSET.make(setOfUninterpretedIntTuple))));
-        this.smtProgram.addAssertion(new Assertion("Identity relation definition for Atom", idenSemantics));
-
-        // uninterpretedIntValue is injective function
-        VariableDeclaration X = new VariableDeclaration("x", uninterpretedInt, null);
-        VariableDeclaration Y = new VariableDeclaration("y", uninterpretedInt, null);
-        Expression XEqualsY = BinaryExpression.Op.EQ.make(X.getVariable(), Y.getVariable());
-        Expression notXEqualsY = UnaryExpression.Op.NOT.make(XEqualsY);
-
-        Expression XValue = new FunctionCallExpression(uninterpretedIntValue, X.getVariable());
-        Expression YValue = new FunctionCallExpression(uninterpretedIntValue, Y.getVariable());
-
-        Expression XValueEqualsYValue = BinaryExpression.Op.EQ.make(XValue, YValue);
-        Expression notXValueEqualsYValue = UnaryExpression.Op.NOT.make(XValueEqualsYValue);
-        Expression implication = BinaryExpression.Op.IMPLIES.make(notXEqualsY, notXValueEqualsYValue);
-        Expression forAll = QuantifiedExpression.Op.FORALL.make(implication, X, Y);
-
-        smtProgram.addAssertion(new Assertion(uninterpretedIntValueName + " is injective", forAll));
-
+        // iden = {(a, a) | a in univ}
+        Expression identity = UnaryExpression.Op.IDEN.make(this.atomUniverse.getVariable());
+        this.smtProgram.addAssertion(new Assertion("Identity relation definition for Atom", BinaryExpression.Op.EQ.make(this.atomIdentity.getVariable(), identity)));
     }
-
-    private void translateFacts()
-    {
-        for (Pair<String, Expr> pair :this.alloyModel.getAllFacts() )
-        {
-            translateFact(pair.a, pair.b);
-        }
-    }
-
-    private void translateFunctionsAndPredicates()
-    {        
-        List<String> funcOrder = new ArrayList<>();
-        Map<String, List<String>> dependency = new HashMap<>();
-
-        for (CompModule module: this.alloyModel.getAllReachableModules())
-        {
-            //ToDo: review the case of integer and % (mod) operator
-            if (module.getModelName().equals("util/integer"))
-            {
-                continue;
-            }
-            for (Func func : module.getAllFunc())
-            {
-                funcNames.add(func.label);
-                this.nameToFuncMap.put(func.label, func);
-                sortFunctionDependency(func.label, func.getBody(), dependency);
-            }
-        }
-
-        for (CompModule module: this.alloyModel.getAllReachableModules())
-        {
-            //ToDo: review the case of integer and % (mod) operator
-            if(module.getModelName().equals("util/integer"))
-            {
-                continue;
-            }
-            for (Func func : module.getAllFunc())
-            {
-                funcNames.add(func.label);
-                this.nameToFuncMap.put(func.label, func);
-            }
-
-            // translate functions in ordering module differently
-            // these functions are defined in SignatureTranslator.java
-            if(module.getModelName().equals("util/ordering"))
-            {
-                continue;
-            }
-
-            for (Func f : module.getAllFunc())
-            {
-                //ignore  private functions like $$Default and run$1 etc
-                // run functions are handled in commands translation
-                if (f.isPrivate != null)
-                {
-                    continue;
-                }
-
-                if(isSetComprehension(f.getBody()))
-                {
-                    translateSetComprehensionFunction(f);
-                }
-                else
-                {
-                    translateFunction(f);
-                }
-                sortFunctionDependency(f.label, f.getBody(), dependency);
-            }
-        }
-                
-        // Organize the order of dependency
-        organizeDependency(dependency, funcOrder);
-        
-        for(int i = 0; i < funcOrder.size(); ++i)
-        {
-            if(!this.setCompFuncNameToDefMap.containsKey(funcOrder.get(i)))
-            {
-                this.smtProgram.addFunction(this.functionsMap.get(this.funcNamesMap.get(funcOrder.get(i))));
-            }            
-        }
-    }
-
-    private void translateSetComprehensionFunction(Func f)
-    {
-        //ToDo: refactor this function to use ExprQtTranslator
-        String funcName = f.label;
-        Environment environment = new Environment();
-
-        ExprQt exprQtBody = (ExprQt)(((ExprUnary)f.getBody()).sub);
-
-        List<Sort> elementSorts = new ArrayList<>();
-
-        for(int i = 0; i < exprQtBody.decls.size(); ++i)
-        {                    
-            for(int j = 0; j < exprQtBody.decls.get(i).names.size(); ++j)
-            {
-                elementSorts.addAll(AlloyUtils.getExprSorts(exprQtBody.decls.get(i).expr));
-            }                    
-        }
-
-        String              setBdVarName    = TranslatorUtils.getNewSetName();
-        SetSort             setSort         = new SetSort(new TupleSort(elementSorts));
-        VariableDeclaration setBdVar   = new VariableDeclaration(setBdVarName, setSort, null);
-        LinkedHashMap<VariableDeclaration, Expression> inputBdVars = new LinkedHashMap<>();
-        List<String> inputVarNames = new ArrayList<>();
-        
-        // Declare input variables
-        for(int i = 0; i < f.decls.size(); ++i)
-        {
-            for(ExprHasName n : f.decls.get(i).names)
-            {
-                String  variableName       = n.label;
-                Sort    bdVarSort       = TranslatorUtils.getSetSortOfAtomWithArity(getArityofExpr(f.decls.get(i).expr));
-                VariableDeclaration bdVarDecl = new VariableDeclaration(variableName, bdVarSort, null);
-                
-                inputVarNames.add(variableName);
-                environment.put(variableName, bdVarDecl.getVariable());
-            }
-        }        
-
-        for(Decl decl : exprQtBody.decls)
-        {                    
-            Expression declExpr         = exprTranslator.translateExpr(decl.expr, environment);
-            List<Sort> declExprSorts    = AlloyUtils.getExprSorts(decl.expr);
-
-            for (ExprHasName name: decl.names)
-            {
-                String label = name.label;
-                VariableDeclaration bdVar = new VariableDeclaration(label, declExprSorts.get(0), null);
-                environment.put(name.label, bdVar.getVariable());
-                inputBdVars.put(bdVar, declExpr);                
-            }                    
-        }
-        
-        Expression setCompBodyExpr  = exprTranslator.translateExpr(exprQtBody.sub, environment);
-        Expression membership       = AlloyUtils.getMemberExpression(inputBdVars, 0);
-
-        for(int i = 1; i < inputBdVars.size(); ++i)
-        {
-            membership = BinaryExpression.Op.AND.make(membership, AlloyUtils.getMemberExpression(inputBdVars, i));
-        }
-        membership = BinaryExpression.Op.AND.make(membership, setCompBodyExpr);
-        Expression setMembership = BinaryExpression.Op.MEMBER.make(exprTranslator.exprUnaryTranslator.mkTupleExpr(new ArrayList<>(inputBdVars.keySet())), setBdVar.getVariable());
-        membership = BinaryExpression.Op.EQ.make(membership, setMembership);
-        Expression forallExpr = QuantifiedExpression.Op.FORALL.make(membership, new ArrayList<>(inputBdVars.keySet()));
-
-        this.setCompFuncNameToBdVarExprMap.put(funcName, setBdVar);
-        this.setCompFuncNameToDefMap.put(funcName, forallExpr); 
-        this.setComprehensionFuncNameToInputsMap.put(funcName, inputVarNames);
-    }    
-         
-    
-    public FunctionDefinition translateFunction(Func f)
-    {
-        if(f == null)
-        {
-            //ToDo: fix the null issue with  examples/case_studies/firewire.als
-            throw new RuntimeException("Null argument");
-        }
-        if(isSetComprehension(f.getBody()))
-        {
-           throw new RuntimeException("The body of function " + f.label + " is a set comprehension. It should be translated using method Alloy2SmtTranslator.translateSetComprehensionFunction");
-        }
-
-        Sort returnSort = BoolSort.getInstance();
-        String functionName = f.label;
-        List<VariableDeclaration> arguments = new ArrayList<>();
-        Environment environment = new Environment();
-                
-        // Save function name
-        this.funcNamesMap.put(f.label, functionName);
-        // Declare argument variables
-        for(int i = 0; i < f.decls.size(); ++i)
-        {
-            for(ExprHasName n : f.decls.get(i).names)
-            {
-                String  label = n.label;
-                Expression range = this.exprTranslator.translateExpr(f.decls.get(i).expr);
-                VariableDeclaration argument = new VariableDeclaration(label, range.getSort(), null);
-                Expression subset = BinaryExpression.Op.SUBSET.make(argument.getVariable(), range);
-                argument.setConstraint(subset);
-                arguments.add(argument);
-                environment.put(label, argument.getVariable());
-            }
-        }
-        // If the function is not predicate, we change its returned type.
-        if(!f.isPred)
-        {
-            returnSort = TranslatorUtils.getSetSortOfAtomWithArity(getArityofExpr(f.returnDecl));
-        }
-        
-        FunctionDefinition funcDef = new FunctionDefinition(functionName, arguments, returnSort,
-                                                            this.exprTranslator.translateExpr(f.getBody(), environment));
-        this.functionsMap.put(functionName, funcDef);
-        return funcDef;
-    }    
-    
-    private int getArityofExpr(Expr expr)
-    {
-        return expr.type().arity();    
-    }
-
-    private void translateFact(String factName, Expr factExpr)
-    {
-        this.smtProgram.addAssertion(new Assertion(factName, this.exprTranslator.translateExpr(factExpr)));
-    }
-
-    private void translateAssertion(String assertionName, Expr assertionExpr)
-    {
-        Expression expression = this.exprTranslator.translateExpr(assertionExpr);
-        this.smtProgram.addAssertion(new Assertion(assertionName, UnaryExpression.Op.NOT.make(expression)));
-    }
-
-
-
-
-
 
     /**
-     * This is to sort out the function dependencies so that 
-     * we can print them in the right order
+     * uninterpretedIntValue is injective: (forall x. inverse(value(x)) = x).
+     * Added only when integers are used.
      */
-    private void sortFunctionDependency(String callingFuncName, Expr expr, Map<String, List<String>> dependency)
+    void translateIntegerAssertions()
     {
-        if(expr instanceof ExprUnary)
-        {
-            ExprUnary exprUnary = (ExprUnary)expr;
-            switch (exprUnary.op)
-            {
-                case NOOP       :
-                case NO         : 
-                case SOME       : 
-                case ONE        : 
-                case LONE       : 
-                case TRANSPOSE  : 
-                case CLOSURE    :
-                case RCLOSURE   : 
-                case ONEOF      :
-                case LONEOF     :
-                case SOMEOF     : 
-                case SETOF      :
-                case CARDINALITY:
-                case NOT        : sortFunctionDependency(callingFuncName, exprUnary.sub, dependency); break;
-                case CAST2INT   :
-                case CAST2SIGINT : return;
-                default:
-                {
-                    throw new UnsupportedOperationException("Not supported yet: " + exprUnary.op);
-                }
-            }            
-        } 
-        else if(expr instanceof ExprBinary)
-        {
-            sortFunctionDependency(callingFuncName, ((ExprBinary)expr).left, dependency);
-            sortFunctionDependency(callingFuncName, ((ExprBinary)expr).right, dependency);
-        }
-        else if(expr instanceof ExprQt)
-        {
-            for (Decl decl: ((ExprQt)expr).decls)
-            {
-                sortFunctionDependency(callingFuncName, decl.expr, dependency);
-            }            
-            sortFunctionDependency(callingFuncName, ((ExprQt)expr).sub, dependency);
-        }
-        else if(expr instanceof ExprList)
-        {
-            for(Expr argExpr : ((ExprList)expr).args)
-            {
-                sortFunctionDependency(callingFuncName, argExpr, dependency);
-            }            
-        }
-        else if(expr instanceof ExprCall)
-        {
-            for(Expr e : ((ExprCall)expr).args)
-            {
-                sortFunctionDependency(callingFuncName, e, dependency);
-            }
-            addToDependency(callingFuncName, ((ExprCall)expr).fun.label, dependency);
-        }
-        else if(expr instanceof ExprLet)
-        {
-            sortFunctionDependency(callingFuncName, ((ExprLet)expr).expr, dependency);
-            sortFunctionDependency(callingFuncName, ((ExprLet)expr).sub, dependency);
-        }
-        else if(expr instanceof ExprITE)
-        {
-            sortFunctionDependency(callingFuncName, ((ExprITE)expr).cond, dependency);
-            sortFunctionDependency(callingFuncName, ((ExprITE)expr).left, dependency);
-            sortFunctionDependency(callingFuncName, ((ExprITE)expr).right, dependency);
-        }        
-        else if((expr instanceof ExprConstant) || (expr instanceof Sig.Field) || (expr instanceof Sig)
-                || (expr instanceof ExprVar))
+        if (functionsMap.containsKey(uninterpretedIntValueName + "Inverse"))
         {
             return;
         }
-        else 
-        {
-            throw new UnsupportedOperationException();
-        }
-    }    
-    
-    private void addToDependency(String key, String value, Map<String, List<String>> dependency)
-    {
-        if(dependency.containsKey(key))        
-        {
-            dependency.get(key).add(value);
-        }
-        else
-        {
-            List<String> values = new ArrayList<>();
-            values.add(value);
-            dependency.put(key, values);
-        }
+        FunctionDeclaration inverse = new FunctionDeclaration(uninterpretedIntValueName + "Inverse", intSort, uninterpretedInt);
+        addFunction(inverse);
+        VariableDeclaration x = new VariableDeclaration("x", uninterpretedInt, null);
+        Expression value = new FunctionCallExpression(uninterpretedIntValue, x.getVariable());
+        Expression inverseValue = new FunctionCallExpression(inverse, value);
+        Expression forAll = QuantifiedExpression.Op.FORALL.make(BinaryExpression.Op.EQ.make(inverseValue, x.getVariable()), x);
+        smtProgram.addAssertion(new Assertion(uninterpretedIntValueName + " is injective", forAll));
     }
-    
-    private void organizeDependency(Map<String, List<String>> dependency, List<String> orderedFunctions)
+
+    @Override
+    public ConstantDeclaration getUninterpretedIntConstant(IntConstant intConstant)
     {
-        for(Map.Entry<String, List<String>> entry : dependency.entrySet())
-        {
-            for(String dFuncName : entry.getValue())
-            {
-                if(dependency.containsKey(dFuncName))
-                {
-                    organizeDependency(dFuncName, dependency, orderedFunctions);                   
-                }
-                else if(!orderedFunctions.contains(dFuncName))
-                {
-                    orderedFunctions.add(dFuncName);
-                }
-            }
-            if(!orderedFunctions.contains(entry.getKey()))
-            {
-                orderedFunctions.add(entry.getKey());
-            }            
-        }
+        translateIntegerAssertions();
+        return super.getUninterpretedIntConstant(intConstant);
+    }
+
+    /**
+     * Functions and predicates are inlined where they are called (see ExprTranslator.inline),
+     * except the functions of util/ordering which are defined in SignatureTranslator.
+     */
+    private void translateFunctionsAndPredicates()
+    {
         for (CompModule module: this.alloyModel.getAllReachableModules())
         {
-            for (Func f : module.getAllFunc())
+            for (Func func : module.getAllFunc())
             {
-                if (!orderedFunctions.contains(f.label) && f.isPrivate == null)
-                {
-                    orderedFunctions.add(f.label);
-                }
+                funcNames.add(func.label);
+                this.nameToFuncMap.put(func.label, func);
             }
         }
-    }
-    
-    private void organizeDependency(String dFuncName, Map<String, List<String>> dependency, List<String> orderedFunctions)
-    {
-        for(String funcName : dependency.get(dFuncName))
-        {
-            if(dependency.containsKey(funcName))
-            {
-                organizeDependency(funcName, dependency, orderedFunctions);
-            }
-            else if(!orderedFunctions.contains(funcName))             
-            {
-                orderedFunctions.add(funcName);
-            }
-        }
-        if(!orderedFunctions.contains(dFuncName))
-        {
-            orderedFunctions.add(dFuncName);
-        }         
-    }
-    
-    
-    private boolean isSetComprehension(Expr expr)
-    {
-        if(expr instanceof ExprUnary)
-        {
-            if(((ExprUnary)expr).op == ExprUnary.Op.NOOP) 
-            {
-                return (((ExprUnary)expr).sub instanceof ExprQt) && ((ExprQt)((ExprUnary)expr).sub).op == ExprQt.Op.COMPREHENSION;
-            }
-        }
-        return false;
     }
 
     /**
@@ -762,8 +413,9 @@ public class Alloy2SmtTranslator extends AbstractTranslator
 
     /**
      * @param commandIndex the index of the run command
+     * @param includeScope whether to bound the signatures by the scope of the command
      * @return an assertion that represents the translation
-     * of the command
+     * of the command, which includes the facts of the model
      */
     public Assertion translateCommand(int commandIndex, boolean includeScope)
     {
@@ -773,145 +425,102 @@ public class Alloy2SmtTranslator extends AbstractTranslator
 
         if(includeScope)
         {
-            Map<Sig, Map<Sig, Integer>> childrenScope = new HashMap<>();
-            for (Sig signature: reachableSigs)
-            {
-                if (signature instanceof Sig.PrimSig)
-                {
-                    Optional<CommandScope> optional = command.scope
-                            .stream()
-                            .filter(s -> s.sig == signature)
-                            .findFirst();
-                    int scope = 0;
-                    BinaryExpression.Op op;
-                    if (optional.isPresent())
-                    {
-                        CommandScope commandScope = optional.get();
-                        if(commandScope.isExact || alloyModel.getExactSigs().contains(signature))
-                        {
-                            op = BinaryExpression.Op.EQ;
-                        }
-                        else
-                        {
-                            op = BinaryExpression.Op.SUBSET;
-                        }
-                        scope = commandScope.endingScope;
-                    }
-                    else
-                    {
-                        if(alloyModel.getExactSigs().contains(signature))
-                        {
-                            op = BinaryExpression.Op.EQ;
-                        }
-                        else
-                        {
-                            op = BinaryExpression.Op.SUBSET;
-                        }
-
-                        if(signature.isTopLevel())
-                        {
-                            if(signature.isAbstract == null)
-                            {
-                                // no scope specification is given, default value is used
-                                scope = command.overall == -1 ? Alloy2SmtTranslator.DefaultScope: command.overall;
-                            }
-                            else
-                            {
-                                childrenScope.put(signature, new HashMap<>());
-                                // the scope is the sum of its children
-                                scope = getScope((Sig.PrimSig) signature, command, childrenScope);
-                            }
-                        }
-                        else
-                        {
-                            // the signature has no implicit bound
-                        }
-                    }
-
-                    Expression variable = signaturesMap.get(signature).getVariable();
-
-                    if(scope >= 1)
-                    {
-                        List<VariableDeclaration> declarations = new ArrayList<>();
-                        Sort sort = signature.type().is_int()? AbstractTranslator.uninterpretedInt: AbstractTranslator.atomSort;
-                        VariableDeclaration firstAtom = new VariableDeclaration(TranslatorUtils.getNewAtomName(), sort, null);
-                        declarations.add(firstAtom);
-                        Expression firstTuple = new MultiArityExpression(MultiArityExpression.Op.MKTUPLE, firstAtom.getVariable());
-                        Expression set = UnaryExpression.Op.SINGLETON.make(firstTuple);
-                        for (int i = 1; i < scope; i++)
-                        {
-                            VariableDeclaration declaration = new VariableDeclaration(TranslatorUtils.getNewAtomName(), sort, null);
-                            declarations.add(declaration);
-                            Expression tuple = new MultiArityExpression(MultiArityExpression.Op.MKTUPLE, declaration.getVariable());
-                            Expression singleton = UnaryExpression.Op.SINGLETON.make(tuple);
-                            set = BinaryExpression.Op.UNION.make(singleton, set);
-                        }
-
-                        Expression constraint = op.make(variable, set);
-                        if(declarations.size() > 1)
-                        {
-                            List<Expression> expressions = declarations
-                                    .stream().map(d -> d.getVariable())
-                                    .collect(Collectors.toList());
-                            Expression distinct = MultiArityExpression.Op.DISTINCT.make(expressions);
-                            constraint = BinaryExpression.Op.AND.make(constraint, distinct);
-                        }
-                        Expression exists = QuantifiedExpression.Op.EXISTS.make(constraint, declarations);
-                        expression = BinaryExpression.Op.AND.make(expression, exists);
-                    }
-                }
-            }
+            SigScopes scopes = SigScopes.compute(A4Reporter.NOP, alloyModel.getAllReachableSigs(), command);
+            expression = ExprTranslator.and(expression, translateScope(scopes));
+            expression = ExprTranslator.and(expression, breakOrderingSymmetries(scopes));
         }
 
-        Assertion assertion = new Assertion(command.toString(), expression);
-        return assertion;
+        return new Assertion(command.toString(), expression);
     }
 
-    private int getScope(Sig.PrimSig parent, Command command,
-                         Map<Sig, Map<Sig, Integer>> childrenScope)
+    /**
+     * The scope of a command bounds the number of atoms of each signature with
+     * the scope Alloy computes for the Kodkod translation:
+     * S = {x1, ..., xn} for an exact scope n and S in {x1, ..., xn} otherwise.
+     */
+    private Expression translateScope(SigScopes scopes)
     {
-        int scopeSum = 0;
-        Map<Sig, Integer> parentMap = childrenScope.get(parent);
-        for (Sig signature: parent.children())
+        Expression constraints = BoolConstant.True;
+        for (Sig signature : reachableSigs)
         {
-            if(signature.isAbstract == null)
+            if (!(signature instanceof Sig.PrimSig) || signature.type().is_int())
             {
-                Optional<CommandScope> optional = command.scope
-                        .stream()
-                        .filter(s -> s.sig == signature)
-                        .findFirst();
-                if (optional.isPresent())
-                {
-                    CommandScope commandScope = optional.get();
-                    scopeSum += commandScope.endingScope;
-                    parentMap.put(signature, commandScope.endingScope);
-                }
-                else
-                {
-                    if(signature.isOne != null)
-                    {
-                        scopeSum += 1;
-                    }
-                    else
-                    {
-                        // for some reason, the default scope is not used here
-                        scopeSum += 0;
-                    }
-                }
+                continue;
             }
-            else
+            int scope = scopes.scope(signature);
+            if (scope < 0)
             {
-                childrenScope.put(signature, new HashMap<>());
-                int scope = getScope((Sig.PrimSig) signature, command, childrenScope);
-                parentMap.put(signature, scope);
-                scopeSum += scope;
+                // bounded by the scope of its parent
+                continue;
             }
+            Expression variable = signaturesMap.get(signature).getVariable();
+            boolean exact = scopes.isExact(signature);
+            if (scope == 0)
+            {
+                constraints = ExprTranslator.and(constraints, ExprTranslator.mkEmpty(variable));
+                continue;
+            }
+            List<VariableDeclaration> declarations = new ArrayList<>();
+            List<Expression> atoms = new ArrayList<>();
+            for (int i = 0; i < scope; i++)
+            {
+                VariableDeclaration declaration = new VariableDeclaration(TranslatorUtils.getNewAtomName(), AbstractTranslator.atomSort, null);
+                declarations.add(declaration);
+                atoms.add(MultiArityExpression.Op.MKTUPLE.make(declaration.getVariable()));
+            }
+            Expression set = ExprTranslator.mkSetOutOfTuples(atoms);
+            Expression constraint = exact ?
+                    ExprTranslator.and(TranslatorUtils.makeDistinct(declarations.stream().map(d -> (Expression) d.getVariable()).collect(Collectors.toList())),
+                            BinaryExpression.Op.EQ.make(variable, set)) :
+                    BinaryExpression.Op.SUBSET.make(variable, set);
+            constraints = ExprTranslator.and(constraints, QuantifiedExpression.Op.EXISTS.make(constraint, declarations));
         }
+        return constraints;
+    }
 
-        if(scopeSum == 0) // no explicit scope for children is given
+    /**
+     * Like Kodkod, fixes the total order of a signature ordered by util/ordering whose
+     * scope n is exact: the signature is {c0, ..., cn-1} for distinct constants, with
+     * ci < ci+1. Every instance is isomorphic to one with this order, because the atoms
+     * of the signature are interchangeable.
+     */
+    private Expression breakOrderingSymmetries(SigScopes scopes)
+    {
+        Expression constraints = BoolConstant.True;
+        for (Ordering ordering : orderings)
         {
-            scopeSum = command.overall == -1 ? Alloy2SmtTranslator.DefaultScope: command.overall;
+            int n = scopes.scope(ordering.sig);
+            if (n <= 0 || !scopes.isExact(ordering.sig))
+            {
+                continue;
+            }
+            List<Expression> atoms = new ArrayList<>();
+            for (int i = 0; i < n; i++)
+            {
+                ConstantDeclaration atom = new ConstantDeclaration(TranslatorUtils.getNewAtomName(), atomSort);
+                smtProgram.addConstantDeclaration(atom);
+                atoms.add(atom.getVariable());
+            }
+            List<Expression> elements = new ArrayList<>();
+            List<Expression> pairs = new ArrayList<>();
+            for (int i = 0; i < n; i++)
+            {
+                elements.add(MultiArityExpression.Op.MKTUPLE.make(atoms.get(i)));
+                Expression mapping = new FunctionCallExpression(ordering.mapping, atoms.get(i));
+                constraints = ExprTranslator.and(constraints, BinaryExpression.Op.EQ.make(mapping, IntConstant.getInstance(i)));
+                if (i + 1 < n)
+                {
+                    pairs.add(MultiArityExpression.Op.MKTUPLE.make(atoms.get(i), atoms.get(i + 1)));
+                }
+            }
+            constraints = ExprTranslator.and(constraints, TranslatorUtils.makeDistinct(atoms));
+            Expression sig = signaturesMap.get(ordering.sig).getVariable();
+            constraints = ExprTranslator.and(constraints, BinaryExpression.Op.EQ.make(sig, ExprTranslator.mkSetOutOfTuples(elements)));
+            Expression next = pairs.isEmpty() ? UnaryExpression.Op.EMPTYSET.make(setOfBinaryAtomSort) : ExprTranslator.mkSetOutOfTuples(pairs);
+            constraints = ExprTranslator.and(constraints, BinaryExpression.Op.EQ.make(ordering.next.getVariable(), next));
+            constraints = ExprTranslator.and(constraints, BinaryExpression.Op.EQ.make(ordering.first.getVariable(), atoms.get(0)));
+            constraints = ExprTranslator.and(constraints, BinaryExpression.Op.EQ.make(ordering.last.getVariable(), atoms.get(n - 1)));
         }
-        return scopeSum;
+        return constraints;
     }
 }

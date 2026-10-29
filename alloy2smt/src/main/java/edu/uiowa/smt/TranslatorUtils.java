@@ -321,7 +321,7 @@ public class TranslatorUtils
 
     public static String getFriendlyAtom(String uninterpretedConstant, String replacement)
     {
-        return uninterpretedConstant.replaceFirst("@uc_Atom_", replacement);
+        return uninterpretedConstant.replaceFirst("@Atom_", replacement);
     }
 
     public static String getOriginalName(String name)

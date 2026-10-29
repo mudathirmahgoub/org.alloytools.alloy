@@ -75,6 +75,22 @@ public class UnaryExpression extends Expression
                 }
             } break;
             case SINGLETON: break;
+            case IS_SINGLETON:
+            {
+                if(!(expr.getSort() instanceof  SetSort))
+                {
+                    throw new RuntimeException(String.format("The sort '%1$s' of expression '%2$s' is not a set", expr.getSort(), expr));
+                }
+            } break;
+            case IDEN:
+            {
+                if(!(expr.getSort() instanceof  SetSort &&
+                        ((SetSort) expr.getSort()).elementSort instanceof TupleSort &&
+                        ((TupleSort)((SetSort) expr.getSort()).elementSort).elementSorts.size() == 1))
+                {
+                    throw new RuntimeException(String.format("The sort '%1$s' of expression '%2$s' is not a unary relation", expr.getSort(), expr));
+                }
+            } break;
             default:
                 throw new UnsupportedOperationException();
         }
@@ -98,12 +114,14 @@ public class UnaryExpression extends Expression
     public enum Op 
     {	        
         NOT ("not"),
-        COMPLEMENT ("complement"),
-        TRANSPOSE ("transpose"),
-        TCLOSURE("tclosure"),
-        SINGLETON("singleton"),
-        UNIVSET("as univset"),
-        EMPTYSET("as emptyset");
+        COMPLEMENT ("set.complement"),
+        TRANSPOSE ("rel.transpose"),
+        TCLOSURE("rel.tclosure"),
+        SINGLETON("set.singleton"),
+        UNIVSET("as set.universe"),
+        EMPTYSET("as set.empty"),
+        IS_SINGLETON("set.is_singleton"),
+        IDEN("rel.iden");
 
         private final String opStr;
 
@@ -122,12 +140,14 @@ public class UnaryExpression extends Expression
             switch (operator)
             {
                 case"not"           : return NOT;
-                case "complement"   : return COMPLEMENT;
-                case "transpose"    : return TRANSPOSE;
-                case "tclosure"     : return TCLOSURE;
-                case "singleton"    : return SINGLETON;
-                case "as univset"   : return UNIVSET;
-                case "as emptyset"  : return EMPTYSET;
+                case "set.complement"   : return COMPLEMENT;
+                case "rel.transpose"    : return TRANSPOSE;
+                case "rel.tclosure"     : return TCLOSURE;
+                case "set.singleton"    : return SINGLETON;
+                case "as set.universe"  : return UNIVSET;
+                case "as set.empty"     : return EMPTYSET;
+                case "set.is_singleton" : return IS_SINGLETON;
+                case "rel.iden"         : return IDEN;
                 default:
                     throw new UnsupportedOperationException("Operator " + operator + " is not defined");
             }
@@ -166,6 +186,13 @@ public class UnaryExpression extends Expression
                 return expr.getSort();
             case UNIVSET:
                 return expr.getSort();
+            case IS_SINGLETON:
+                return AbstractTranslator.boolSort;
+            case IDEN:
+            {
+                Sort element = ((TupleSort)((SetSort) expr.getSort()).elementSort).elementSorts.get(0);
+                return new SetSort(new TupleSort(element, element));
+            }
             default:
                 throw new UnsupportedOperationException();
         }

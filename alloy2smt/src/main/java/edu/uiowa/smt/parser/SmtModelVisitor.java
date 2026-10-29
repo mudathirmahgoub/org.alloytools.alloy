@@ -252,11 +252,11 @@ public class SmtModelVisitor extends SmtBaseVisitor<SmtAst>
     {
         if(ctx.AtomPrefix() != null)
         {
-            return new UninterpretedConstant(ctx.getText(), AbstractTranslator.atomSort);
+            return new UninterpretedConstant(ctx.AtomPrefix().getText() + ctx.Integer().getText(), AbstractTranslator.atomSort);
         }
         if(ctx.UninterpretedIntPrefix() != null)
         {
-            return new UninterpretedConstant(ctx.getText(), AbstractTranslator.uninterpretedInt);
+            return new UninterpretedConstant(ctx.UninterpretedIntPrefix().getText() + ctx.Integer().getText(), AbstractTranslator.uninterpretedInt);
         }
         throw new UnsupportedOperationException(String.format("Unknown constant value '%s'", ctx.getText()));
     }

@@ -7,7 +7,9 @@
  */
 
 package edu.uiowa.alloy2smt;
+import edu.mit.csail.sdg.ast.Command;
 import edu.uiowa.alloy2smt.translators.Translation;
+import edu.uiowa.alloy2smt.translators.TranslatorOptions;
 import edu.uiowa.smt.AbstractTranslator;
 import edu.uiowa.smt.printers.SmtLibPrettyPrinter;
 import org.apache.commons.cli.*;
@@ -55,6 +57,31 @@ public class Main
         return true;        
     } 
 
+    /**
+     * Writes a standalone SMT-LIB script for each command of the model: name_index.smt2.
+     * A command that can not be translated is reported on the standard error.
+     */
+    private static void exportCommands(String inputFile, String directory, TranslatorOptions options, boolean includeScope) throws IOException
+    {
+        Translation translation = Utils.translateFromFile(inputFile, options);
+        String name = new File(inputFile).getName().replaceFirst("\\.als$", "");
+        Files.createDirectories(Paths.get(directory));
+        for (int i = 0; i < translation.getCommands().size(); i++)
+        {
+            try
+            {
+                String script = translation.translateCommandScript(i, includeScope);
+                Command alloyCommand = translation.getCommands().get(i);
+                String header = String.format("; %s\n; %s\n", inputFile, alloyCommand.toString().replace('\n', ' '));
+                Files.write(Paths.get(directory, name + "_" + i + ".smt2"), (header + script).getBytes(StandardCharsets.UTF_8));
+            }
+            catch (Exception exception)
+            {
+                System.err.println(inputFile + " command " + i + ": " + exception);
+            }
+        }
+    }
+
     public static void main(String[] args)
     {
         Options             options             = new Options();
@@ -62,10 +89,32 @@ public class Main
         
         options.addOption(Option.builder("i").longOpt("input").desc("Input Alloy model").hasArg().build());
         options.addOption(Option.builder("o").longOpt("output").desc("SMT-LIB model output").hasArg().build());
+        options.addOption(Option.builder("d").longOpt("directory").desc("Write one standalone SMT-LIB script per command in this directory").hasArg().build());
+        options.addOption(Option.builder("q").longOpt("quantifiers").desc("Translation of quantifiers: 'hybrid' (forall, exists, set.filter; default), 'fo' (forall, exists) or 'set' (set.all, set.some, set.filter)").hasArg().build());
+        options.addOption(Option.builder("s").longOpt("scope").desc("Bound the signatures by the scope of each command").build());
 
         try
         {
             CommandLine command = commandLineParser.parse(options, args);
+
+            TranslatorOptions translatorOptions = new TranslatorOptions();
+            if (command.hasOption("q"))
+            {
+                String quantifiers = command.getOptionValue("q").trim();
+                switch (quantifiers)
+                {
+                    case "fo": translatorOptions.quantifiers = TranslatorOptions.Quantifiers.FIRST_ORDER; break;
+                    case "set": translatorOptions.quantifiers = TranslatorOptions.Quantifiers.SET; break;
+                    default: translatorOptions.quantifiers = TranslatorOptions.Quantifiers.HYBRID; break;
+                }
+            }
+            boolean includeScope = command.hasOption("s");
+
+            if (command.hasOption("d"))
+            {
+                exportCommands(command.getOptionValue("i").trim(), command.getOptionValue("d").trim(), translatorOptions, includeScope);
+                return;
+            }
 
             Translation translation;
             String      defaultOutputFile;
@@ -76,8 +125,7 @@ public class Main
 
                 if (isValidInputFilePath(inputFile))
                 {
-                    String alloy      = new String(Files.readAllBytes(Paths.get(inputFile)), StandardCharsets.UTF_8);
-                    translation       = Utils.translate(alloy);
+                    translation       = Utils.translateFromFile(inputFile, translatorOptions);
                     defaultOutputFile = OUTPUT_DIR + SEP + new File(inputFile).getName() + ".smt2";
                 } else
                 {
@@ -113,6 +161,8 @@ public class Main
             }
             try (Formatter formatter = new Formatter(outputFile))
             {
+                // push and pop need incremental solving, set before the logic
+                formatter.format("%s\n", "(set-option :incremental true)");
                 formatter.format("%s\n", translation.getSmtScript());
 
                 System.out.println("\n");
@@ -121,7 +171,7 @@ public class Main
                 // translate all alloy commands
                 for (int i = 0; i < translation.getCommands().size(); i++)
                 {
-                    String commandTranslation = translation.translateCommand(i, false);
+                    String commandTranslation = translation.translateCommand(i, includeScope);
 
                     commandTranslation         =    SmtLibPrettyPrinter.PUSH + "\n" + commandTranslation +
                             SmtLibPrettyPrinter.CHECK_SAT + "\n" + SmtLibPrettyPrinter.GET_MODEL + "\n" +

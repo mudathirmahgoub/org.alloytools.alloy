@@ -73,10 +73,11 @@ public class Translation
 
         Alloy2SmtTranslator commandTranslator = new Alloy2SmtTranslator(translator);
 
-        // store old declarations and definitions
+        // store old declarations, definitions and assertions
         List<Sort>                sorts                 = new ArrayList<>(commandTranslator.smtProgram.getSorts());
         List<ConstantDeclaration> constantDeclarations  = new ArrayList<>(commandTranslator.smtProgram.getConstantDeclarations());
         List<FunctionDeclaration> functionDeclarations  = new ArrayList<>(commandTranslator.smtProgram.getFunctions());
+        List<Assertion>           assertions            = new ArrayList<>(commandTranslator.smtProgram.getAssertions());
 
 
         Assertion           assertion   =  commandTranslator.translateCommand(commandIndex, includeScope);
@@ -97,36 +98,53 @@ public class Translation
                 .filter(((Predicate<FunctionDeclaration>) new HashSet<>(functionDeclarations)::contains).negate())
                 .collect(Collectors.toList());
 
+        // auxiliary assertions added while translating the command (e.g. comprehension and arithmetic axioms)
+        List<Assertion> newAssertions = commandTranslator.smtProgram
+                .getAssertions().stream()
+                .filter(((Predicate<Assertion>) new HashSet<>(assertions)::contains).negate())
+                .collect(Collectors.toList());
 
         // get the translation for new declarations and definitions
-        StringBuilder stringBuilder = new StringBuilder();
+        SmtLibPrettyPrinter printer = new SmtLibPrettyPrinter();
         for (Sort sort : newSorts)
         {
-            SmtLibPrettyPrinter printer = new SmtLibPrettyPrinter();
             printer.visit(sort);
-            stringBuilder.append(printer.getSmtLib());
         }
 
         for (ConstantDeclaration declaration : newConstantDeclarations)
         {
-            SmtLibPrettyPrinter printer = new SmtLibPrettyPrinter();
             printer.visit(declaration);
-            stringBuilder.append(printer.getSmtLib());
         }
 
         for (FunctionDeclaration declaration : newFunctionDeclarations)
         {
-            SmtLibPrettyPrinter printer = new SmtLibPrettyPrinter();
-            printer.visit(declaration);
-            stringBuilder.append(printer.getSmtLib());
+            if (declaration instanceof FunctionDefinition)
+            {
+                printer.visit((FunctionDefinition) declaration);
+            }
+            else
+            {
+                printer.visit(declaration);
+            }
+        }
+
+        for (Assertion newAssertion : newAssertions)
+        {
+            printer.visit(newAssertion);
         }
 
         // get the translation for the command assertion
-        SmtLibPrettyPrinter printer     = new SmtLibPrettyPrinter();
         printer.visit(assertion);
-        stringBuilder.append(printer.getSmtLib());
-        
-        return stringBuilder.toString();
+
+        return printer.getSmtLib();
+    }
+
+    /**
+     * @return a standalone smt script that checks the satisfiability of the given command
+     */
+    public String translateCommandScript(int commandIndex, boolean includeScope)
+    {
+        return getSmtScript() + translateCommand(commandIndex, includeScope) + SmtLibPrettyPrinter.CHECK_SAT + "\n";
     }
 
     /**
@@ -135,7 +153,8 @@ public class Translation
      */
     public String translateAllCommandsWithCheckSat(boolean includeScope)
     {
-        StringBuilder stringBuilder = new StringBuilder(getSmtScript());
+        // push and pop need incremental solving, set before the logic
+        StringBuilder stringBuilder = new StringBuilder("(set-option :incremental true)\n" + getSmtScript());
         for (int i = 0; i < translator.commands.size() ; i++)
         {
             stringBuilder.append(SmtLibPrettyPrinter.PUSH + "\n");

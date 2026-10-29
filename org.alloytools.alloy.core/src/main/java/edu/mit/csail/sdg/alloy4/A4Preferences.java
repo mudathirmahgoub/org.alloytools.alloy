@@ -725,20 +725,35 @@ public class A4Preferences {
 
     public static final String KODKOD = "Kodkod";
 
-    public static final String CVC4 = "CVC4";
+    public static final String CVC5 = "cvc5";
 
-    public static final StringChoicePref RelationalSolver                   = new StringChoicePref("Relational Solver", Arrays.asList(KODKOD, CVC4), KODKOD);
+    /** The solver of commands: Kodkod (SAT based) or cvc5 (SMT based, using its theory of finite relations). */
+    public static final StringChoicePref RelationalSolver = new StringChoicePref("RelationalSolver", "Relational solver", Arrays.asList(KODKOD, CVC5), KODKOD);
 
-    public static final IntChoicePref                Cvc4Timeout            = new IntChoicePref("Cvc4Timeout", "CVC4 timeout", Arrays.asList(30000, 60000, 120000, 300000, 600000), 30000){
+    public static final IntChoicePref Cvc5Timeout = new IntChoicePref("Cvc5Timeout", "cvc5 timeout", Arrays.asList(30000, 60000, 120000, 300000, 600000), 30000) {
+
         @Override
-        public Object renderValueShort(Integer value)
-        {
+        public Object renderValueShort(Integer value) {
             double valueInMinutes = value / 60000.0;
             return valueInMinutes + " minutes";
         }
     };
 
-    public static final BooleanPref Cvc4IncludeCommandScope = new BooleanPref("Cvc4IncludeCommandScope", "CVC4 include scope", false);
+    /** Whether cvc5 bounds the signatures by the scope of the command, as Kodkod does. */
+    public static final BooleanPref Cvc5IncludeCommandScope = new BooleanPref("Cvc5IncludeCommandScope", "cvc5 include scope", true);
+
+    public static final String CVC5_HYBRID = "hybrid";
+
+    public static final String CVC5_FIRST_ORDER = "forall/exists";
+
+    public static final String CVC5_SET = "set.all/set.some";
+
+    /**
+     * The translation of quantifiers for cvc5: hybrid (forall/exists, and set.filter for
+     * comprehensions, one and lone), first-order forall/exists, or the bounded set
+     * quantifiers set.all/set.some.
+     */
+    public static final StringChoicePref Cvc5Quantifiers = new StringChoicePref("Cvc5Quantifiers", "cvc5 quantifiers", Arrays.asList(CVC5_HYBRID, CVC5_FIRST_ORDER, CVC5_SET), CVC5_HYBRID);
 
     public static final DelayedChoicePref<SATFactory> Solver               = new DelayedChoicePref<SATFactory>("SatSolver2", "Solver", SATFactory.getAllSolvers(), SATFactory.DEFAULT) {
 

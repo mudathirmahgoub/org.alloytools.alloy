@@ -45,6 +45,11 @@ import static edu.mit.csail.sdg.alloy4.A4Preferences.TabSize;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.Unrolls;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.VerbosityPref;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.WarningNonfatal;
+import static edu.mit.csail.sdg.alloy4.A4Preferences.RelationalSolver;
+import static edu.mit.csail.sdg.alloy4.A4Preferences.KODKOD;
+import static edu.mit.csail.sdg.alloy4.A4Preferences.Cvc5Timeout;
+import static edu.mit.csail.sdg.alloy4.A4Preferences.Cvc5IncludeCommandScope;
+import static edu.mit.csail.sdg.alloy4.A4Preferences.Cvc5Quantifiers;
 import static edu.mit.csail.sdg.alloy4.A4Preferences.Welcome;
 import static edu.mit.csail.sdg.alloy4.OurUtil.menu;
 import static edu.mit.csail.sdg.alloy4.OurUtil.menuItem;
@@ -81,6 +86,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.Set;
@@ -1136,19 +1143,19 @@ public final class SimpleGUI implements ComponentListener, Listener {
 
         WorkerEngine.WorkerTask task;
 
-        Map<String, String > alloyFiles = text.takeSnapshot();
-        int resolutionMode              = (Version.experimental && ImplicitThis.get()) ? 2 : 1;
-        if(RelationalSolver.get().equals(KODKOD)) {
-            SimpleTask1 task = new SimpleTask1();
-            task.bundleIndex = i;
-            task.bundleWarningNonFatal = WarningNonfatal.get();
-            task.map = alloyFiles;
-            task.options = opt.dup();
-            task.resolutionMode = resolutionMode;
-            task.tempdir = maketemp(frame);
-        }
-        else{
-            task = new Cvc4Task(alloyFiles, opt.originalFilename, resolutionMode, i);
+        Map<String,String> alloyFiles = text.takeSnapshot();
+        int resolutionMode = (Version.experimental && ImplicitThis.get()) ? 2 : 1;
+        if (RelationalSolver.get().equals(KODKOD)) {
+            SimpleTask1 task1 = new SimpleTask1();
+            task1.bundleIndex = i;
+            task1.bundleWarningNonFatal = WarningNonfatal.get();
+            task1.map = alloyFiles;
+            task1.options = opt.dup();
+            task1.resolutionMode = resolutionMode;
+            task1.tempdir = maketemp(frame);
+            task = task1;
+        } else {
+            task = new Cvc5Task(alloyFiles, opt.originalFilename, resolutionMode, i);
         }
         try {
             runmenu.setEnabled(false);
@@ -1384,8 +1391,9 @@ public final class SimpleGUI implements ComponentListener, Listener {
             optmenu.addSeparator();
 
             addToMenu(optmenu, RelationalSolver);
-            addToMenu(optmenu, Cvc4Timeout);
-            addToMenu(optmenu, Cvc4IncludeCommandScope);
+            addToMenu(optmenu, Cvc5Timeout);
+            addToMenu(optmenu, Cvc5IncludeCommandScope);
+            addToMenu(optmenu, Cvc5Quantifiers);
             addToMenu(optmenu, Solver);
             addToMenu(optmenu, SkolemDepth);
             JMenu cmMenu = addToMenu(optmenu, CoreMinimization);
@@ -1753,21 +1761,21 @@ public final class SimpleGUI implements ComponentListener, Listener {
             SimpleCallback1 cb = new SimpleCallback1(SimpleGUI.this, viz, log, VerbosityPref.get().ordinal(), latestAlloyVersionName, latestAlloyVersion);
 
             WorkerEngine.WorkerTask task;
-            if(RelationalSolver.get().equals(KODKOD)) {
-                SimpleTask2 task = new SimpleTask2();
-                task.filename = arg[0];
-                task.index = Integer.valueOf(arg[1]);
-            }
-            else{
+            if (RelationalSolver.get().equals(KODKOD)) {
+                SimpleTask2 task2 = new SimpleTask2();
+                task2.filename = arg[0];
+                task2.index = Integer.valueOf(arg[1]);
+                task = task2;
+            } else {
                 try {
-                    task = new Cvc4EnumerationTask(arg);
+                    task = new Cvc5EnumerationTask(arg[0]);
                 } catch (Exception exception) {
                     StringWriter stringWriter = new StringWriter();
                     exception.printStackTrace(new PrintWriter(stringWriter));
                     log.logBold(stringWriter.toString());
                     log.logDivider();
                     log.flush();
-                    return arg;
+                    return arg[0];
                 }
             }
 
@@ -1785,7 +1793,8 @@ public final class SimpleGUI implements ComponentListener, Listener {
                 doStop(2);
                 return arg[0];
             }
-            subrunningTask = task.index < 1 ? 2 : 3; // [electrum] whether global iteration
+            // [electrum] whether global iteration
+            subrunningTask = task instanceof SimpleTask2 && ((SimpleTask2) task).index < 1 ? 2 : 3;
             runmenu.setEnabled(false);
             runbutton.setVisible(false);
             showbutton.setEnabled(false);

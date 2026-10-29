@@ -10,7 +10,7 @@ package edu.uiowa.smt.smtAst;
 
 import edu.uiowa.smt.printers.SmtAstVisitor;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class LetExpression extends Expression
@@ -20,7 +20,7 @@ public class LetExpression extends Expression
 
     public LetExpression(Map<String, Expression> letVars, Expression expr)
     {
-        this.letVariables = new HashMap<>();
+        this.letVariables = new LinkedHashMap<>();
         this.expr = expr;
         for (Map.Entry<String, Expression> var : letVars.entrySet())
         {
@@ -60,18 +60,49 @@ public class LetExpression extends Expression
     @Override
     public boolean equals(Object object)
     {
-        throw new UnsupportedOperationException();
+        if(object == this)
+        {
+            return true;
+        }
+        if(!(object instanceof LetExpression))
+        {
+            return false;
+        }
+        LetExpression let = (LetExpression) object;
+        return letVariables.equals(let.letVariables) && expr.equals(let.expr);
+    }
+
+    private boolean binds(Expression expression)
+    {
+        return expression instanceof Variable && letVariables.containsKey(((Variable) expression).getName());
     }
 
     @Override
     public Expression substitute(Variable oldVariable, Variable newVariable)
     {
-        throw new UnsupportedOperationException();
+        Map<String, Expression> newVariables = new LinkedHashMap<>();
+        for (Map.Entry<String, Expression> entry : letVariables.entrySet())
+        {
+            newVariables.put(entry.getKey(), entry.getValue().substitute(oldVariable, newVariable));
+        }
+        // the let variables are bound in the body (parallel let)
+        Expression body = binds(oldVariable) ? expr : expr.substitute(oldVariable, newVariable);
+        return new LetExpression(newVariables, body);
     }
 
     @Override
     public Expression replace(Expression oldExpression, Expression newExpression)
     {
-        throw new UnsupportedOperationException();
+        if(oldExpression.equals(this))
+        {
+            return newExpression;
+        }
+        Map<String, Expression> newVariables = new LinkedHashMap<>();
+        for (Map.Entry<String, Expression> entry : letVariables.entrySet())
+        {
+            newVariables.put(entry.getKey(), entry.getValue().replace(oldExpression, newExpression));
+        }
+        Expression body = binds(oldExpression) ? expr : expr.replace(oldExpression, newExpression);
+        return new LetExpression(newVariables, body);
     }
 }

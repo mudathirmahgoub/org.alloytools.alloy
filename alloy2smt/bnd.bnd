@@ -1,0 +1,27 @@
+# Translation of Alloy models into SMT-LIB for the theory of finite relations of cvc5
+
+-buildpath: \
+	org.alloytools.alloy.core;version=latest,\
+	org.alloytools.pardinus.core;version=latest,\
+	org.alloytools.api;version=latest,\
+	org.antlr.antlr4-runtime,\
+	org.apache.commons.cli,\
+	com.fasterxml.jackson.core.jackson-annotations,\
+	com.fasterxml.jackson.core.jackson-core,\
+	com.fasterxml.jackson.core.jackson-databind
+
+# junit-jupiter-api and apiguardian-api are not bundles: they are named by groupId:artifactId
+-testpath: \
+	org.junit.jupiter:junit-jupiter-api,\
+	org.opentest4j,\
+	org.apiguardian:apiguardian-api,\
+	biz.aQute.wrapper.junit,\
+	biz.aQute.wrapper.hamcrest
+
+# the tests run the cvc5 binary on the example models
+-nojunit: true
+-nojunitosgi: true
+
+Export-Package: \
+	edu.uiowa.alloy2smt.*,\
+	edu.uiowa.smt.*

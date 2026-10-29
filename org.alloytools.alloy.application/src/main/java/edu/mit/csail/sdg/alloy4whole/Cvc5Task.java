@@ -17,6 +17,8 @@ import edu.uiowa.smt.parser.antlr.SmtLexer;
 import edu.uiowa.smt.parser.antlr.SmtParser;
 import edu.uiowa.smt.AbstractTranslator;
 import edu.uiowa.alloy2smt.translators.Translation;
+import edu.uiowa.alloy2smt.translators.TranslatorOptions;
+import edu.uiowa.smt.cvc5.Cvc5Process;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -27,13 +29,17 @@ import java.util.*;
 import java.util.stream.Collectors;
 import edu.mit.csail.sdg.alloy4whole.instances.*;
 
-import static edu.mit.csail.sdg.alloy4.A4Preferences.Cvc4Timeout;
-import static edu.mit.csail.sdg.alloy4.A4Preferences.Cvc4IncludeCommandScope;
+import static edu.mit.csail.sdg.alloy4.A4Preferences.Cvc5Timeout;
+import static edu.mit.csail.sdg.alloy4.A4Preferences.Cvc5IncludeCommandScope;
+import static edu.mit.csail.sdg.alloy4.A4Preferences.CVC5_FIRST_ORDER;
+import static edu.mit.csail.sdg.alloy4.A4Preferences.CVC5_SET;
+import static edu.mit.csail.sdg.alloy4.A4Preferences.Cvc5Quantifiers;
 
-public class Cvc4Task implements WorkerEngine.WorkerTask
+public class Cvc5Task implements WorkerEngine.WorkerTask
 {
     public static final String tempDirectory        = System.getProperty("java.io.tmpdir");
-    private static final String TIMEOUT_OPTION      = "tlimit" ;
+    // the time limit of each check-sat
+    private static final String TIMEOUT_OPTION      = "tlimit-per" ;
 
     private final Map<String, String>   alloyFiles;
     private final String                originalFileName;
@@ -43,12 +49,12 @@ public class Cvc4Task implements WorkerEngine.WorkerTask
     private final List<CommandResult>   commandResults = new ArrayList<>();
 
     // only one process for alloy editor
-    public static Cvc4Process cvc4Process;
+    public static Cvc5Process cvc5Process;
     private WorkerEngine.WorkerCallback workerCallback;
     private Translation translation;
     public static String lastXmlFile;
 
-    Cvc4Task(Map<String, String> alloyFiles, String originalFileName, int resolutionMode, int targetCommandIndex)
+    Cvc5Task(Map<String, String> alloyFiles, String originalFileName, int resolutionMode, int targetCommandIndex)
     {
         this.alloyFiles         = alloyFiles;
         this.originalFileName   = originalFileName;
@@ -74,13 +80,19 @@ public class Cvc4Task implements WorkerEngine.WorkerTask
 
             if (smtScript != null)
             {
-                cvc4Process = Cvc4Process.start(workerCallback);
+                if (cvc5Process != null)
+                {
+                    cvc5Process.destroy();
+                }
+                callbackPlain("Executing command: " + Cvc5Process.getCommand() + "\n\n");
+                cvc5Process = Cvc5Process.start();
 
-                cvc4Process.sendCommand(smtScript);
-
-                String options =  setSolverOptions(cvc4Process, translation);
+                // these options can not be changed after the logic is set by the script
+                String options =  setSolverOptions(cvc5Process);
 
                 callbackPlain(options);
+
+                cvc5Process.sendCommand(smtScript);
 
                 CommandResult commandResult;
 
@@ -91,10 +103,10 @@ public class Cvc4Task implements WorkerEngine.WorkerTask
                     for (int index = 0; index < translation.getCommands().size() - 1; index++)
                     {
                         // (push)
-                        cvc4Process.sendCommand(SmtLibPrettyPrinter.PUSH);
+                        cvc5Process.sendCommand(SmtLibPrettyPrinter.PUSH);
                         commandResult = solveCommand(index);
                         // (pop)
-                        cvc4Process.sendCommand(SmtLibPrettyPrinter.POP);
+                        cvc5Process.sendCommand(SmtLibPrettyPrinter.POP);
                         this.commandResults.add(commandResult);
                     }
 
@@ -117,7 +129,7 @@ public class Cvc4Task implements WorkerEngine.WorkerTask
                 }
 
                 //ToDo: review when to destroy the process
-                //cvc4Process.destroy();
+                //cvc5Process.destroy();
             }
             else
             {
@@ -168,31 +180,33 @@ public class Cvc4Task implements WorkerEngine.WorkerTask
         }
     }
 
-    public static String setSolverOptions(Cvc4Process cvc4Process, Translation translation) throws IOException
+    public static String setSolverOptions(Cvc5Process cvc5Process) throws IOException
     {
-        Map<String, String> options = new HashMap<>();
+        Map<String, String> options = new LinkedHashMap<>();
 
-        // (set-option :tlimit 30000)
-        options.put(TIMEOUT_OPTION, Cvc4Timeout.get().toString());
+        // push and pop
+        options.put("incremental", "true");
+        // (set-option :tlimit-per 30000)
+        options.put(TIMEOUT_OPTION, Cvc5Timeout.get().toString());
 
         String script = TranslatorUtils.translateOptions(options);
-        cvc4Process.sendCommand(script);
+        cvc5Process.sendCommand(script);
 
         return script;
     }
 
     private CommandResult solveCommand(int index) throws Exception
     {
-        String commandTranslation = translation.translateCommand(index, Cvc4IncludeCommandScope.get());
+        String commandTranslation = translation.translateCommand(index, Cvc5IncludeCommandScope.get());
 
         Command command = translation.getCommands().get(index);
 
         callbackBold("Executing " + command.label + "\n");
 
-        if(! Cvc4IncludeCommandScope.get())
+        if(! Cvc5IncludeCommandScope.get())
         {
             ErrorWarning warning = new ErrorWarning(command.pos, "The scope in '" + command +
-                    "' is ignored by cvc4");
+                    "' is ignored by cvc5");
             callbackWarning(warning);
         }
 
@@ -201,7 +215,7 @@ public class Cvc4Task implements WorkerEngine.WorkerTask
 
         // (check-sat)
         callbackPlain( commandTranslation + SmtLibPrettyPrinter.CHECK_SAT);
-        String result = cvc4Process.sendCommand(commandTranslation + SmtLibPrettyPrinter.CHECK_SAT);
+        String result = cvc5Process.sendCommand(commandTranslation + SmtLibPrettyPrinter.CHECK_SAT);
 
         final long endSolve     = System.currentTimeMillis();
         long duration		    = (endSolve - startSolve);
@@ -228,16 +242,16 @@ public class Cvc4Task implements WorkerEngine.WorkerTask
                     }
                     else
                     {
-                        callbackPlain("The satResult is unsat\n");
+                        callbackPlain("The result is unsat\n");
                     }
                     break;
                 default:
-                    callbackPlain("The satResult is unknown\n");
+                    callbackPlain("The result is unknown\n");
             }
         }
         else
         {
-            callbackPlain("No satResult returned from cvc4\n");
+            callbackPlain("No result returned from cvc5\n");
             commandResult.result = "";
         }
 
@@ -269,7 +283,7 @@ public class Cvc4Task implements WorkerEngine.WorkerTask
 
 
     /**
-     * gets a model from cvc4 if the satResult is sat and saves it into a new xml file
+     * gets a model from cvc5 if the result is sat and saves it into a new xml file
      * and return its path
      * @param commandIndex the index of the sat command
      * @param duration the solving duration in milli seconds
@@ -278,7 +292,7 @@ public class Cvc4Task implements WorkerEngine.WorkerTask
      */
     private String prepareInstance(int commandIndex, long duration) throws Exception
     {
-        String smtModel = cvc4Process.sendCommand(SmtLibPrettyPrinter.GET_MODEL);
+        String smtModel = cvc5Process.sendCommand(SmtLibPrettyPrinter.GET_MODEL);
 
         callbackPlain("A model has been found\n");
         callbackPlain(smtModel + "\n");
@@ -367,7 +381,7 @@ public class Cvc4Task implements WorkerEngine.WorkerTask
     {
         Signature signature  = new Signature();
         signature.label         = "Operations";
-        Sig.SubsetSig operations = new Sig.SubsetSig(signature.label, Arrays.asList(Sig.SIGINT));
+        Sig.SubsetSig operations = new Sig.SubsetSig(null, signature.label, null, Arrays.asList(Sig.SIGINT));
         signature.id            = translation.getSigId(operations);
         signature.parentId = translation.getSigId(Sig.SIGINT);
         signature.types.add(new Type(signature.parentId));
@@ -663,14 +677,14 @@ public class Cvc4Task implements WorkerEngine.WorkerTask
 
     private Translation translateToSMT() throws IOException
     {
-        Translation translation = Utils.translate(alloyFiles, originalFileName, resolutionMode);
+        Translation translation = Utils.translate(alloyFiles, originalFileName, resolutionMode, getTranslatorOptions());
 
         callbackBold("Translation output");
         callbackPlain(translation.getSmtScript());
 
         // output the smt file
         File smtFile        = File.createTempFile("tmp", ".smt2", new File(tempDirectory));
-        String allCommands  = translation.translateAllCommandsWithCheckSat(Cvc4IncludeCommandScope.get());
+        String allCommands  = translation.translateAllCommandsWithCheckSat(Cvc5IncludeCommandScope.get());
         Formatter formatter = new Formatter(smtFile);
         formatter.format("%s", allCommands);
         formatter.close();
@@ -685,6 +699,16 @@ public class Cvc4Task implements WorkerEngine.WorkerTask
         callbackPlain("\nGenerated a mapping file: " + jsonFile.getAbsolutePath() +"\n");
 
         return translation;
+    }
+
+    static TranslatorOptions getTranslatorOptions()
+    {
+        switch (Cvc5Quantifiers.get())
+        {
+            case CVC5_FIRST_ORDER: return new TranslatorOptions(TranslatorOptions.Quantifiers.FIRST_ORDER);
+            case CVC5_SET: return new TranslatorOptions(TranslatorOptions.Quantifiers.SET);
+            default: return new TranslatorOptions(TranslatorOptions.Quantifiers.HYBRID);
+        }
     }
 
     public static SmtModel parseModel(String model)

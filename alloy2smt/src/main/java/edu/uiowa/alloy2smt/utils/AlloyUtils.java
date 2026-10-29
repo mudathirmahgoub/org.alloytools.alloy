@@ -8,11 +8,7 @@ import edu.uiowa.smt.AbstractTranslator;
 import edu.uiowa.smt.TranslatorUtils;
 import edu.uiowa.smt.smtAst.*;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Formatter;
 import java.util.List;
 import java.util.Map;
 
@@ -21,14 +17,14 @@ public class AlloyUtils
     public static List<CommandResult> runAlloyString(String alloy, boolean includeScope) throws Exception
     {
         Translation translation = Utils.translate(alloy);
-        Cvc4Task task = new Cvc4Task();
+        Cvc5Task task = new Cvc5Task();
         return task.run(translation, includeScope);
     }
 
     public static List<CommandResult> runAlloyFileTimeout(int timeout, String fileName, boolean includeScope) throws Exception
     {
         Translation translation = Utils.translateFromFile(fileName);
-        Cvc4Task task = new Cvc4Task(timeout);
+        Cvc5Task task = new Cvc5Task(timeout);
         return task.run(translation, includeScope);
     }
 
@@ -36,53 +32,21 @@ public class AlloyUtils
     public static List<CommandResult> runAlloyFile(String fileName, boolean includeScope) throws Exception
     {
         Translation translation = Utils.translateFromFile(fileName);
-        Cvc4Task task = new Cvc4Task();
+        Cvc5Task task = new Cvc5Task();
         return task.run(translation, includeScope);
     }
 
-    public synchronized static CommandResult runAlloyFile(String fileName, boolean includeScope, int commandIndex) throws Exception
+    public static CommandResult runAlloyFile(String fileName, boolean includeScope, int commandIndex) throws Exception
     {
         Translation translation = Utils.translateFromFile(fileName);
-        Cvc4Task task = new Cvc4Task();
-        CommandResult result =  task.run(translation, includeScope, commandIndex);
-            /*
-             id_lock.acquire()
-            app.unique_id = app.unique_id + 1
-            app.robots_dictionary[app.unique_id] = None
-            client_directory = app.upload_directory + '/' + str(app.unique_id)
-            if not os.path.exists(client_directory):
-                os.makedirs(client_directory)
-            id_lock.release()
-            return jsonify({'id': app.unique_id})
-             */
-            int index = 0;
-            String smtFile = fileName.replace(".als", "") + "_" + index + "_" + result.satResult + ".smt2";
-            while(Files.exists(Paths.get(smtFile)))
-            {
-                index ++;
-                smtFile = fileName.replace(".als", "") + "_" + index + "_" + result.satResult + ".smt2";
-            }
-
-            try (Formatter formatter = new Formatter(smtFile))
-            {
-                if(result.satResult.equals("sat"))
-                {
-                    formatter.format("%s\n", "; EXPECT: sat");
-                }
-                if(result.satResult.equals("unsat"))
-                {
-                    formatter.format("%s\n", "; EXPECT: unsat");
-                }
-                formatter.format("%s\n", result.smtProgram);
-            }
-
-        return result;
+        Cvc5Task task = new Cvc5Task();
+        return task.run(translation, includeScope, commandIndex);
     }
 
     public static CommandResult runAlloyFileTimeout(int timeout, String fileName, boolean includeScope, int commandIndex) throws Exception
     {
         Translation translation = Utils.translateFromFile(fileName);
-        Cvc4Task task = new Cvc4Task(timeout);
+        Cvc5Task task = new Cvc5Task(timeout);
         return task.run(translation, includeScope, commandIndex);
     }
 

@@ -6,7 +6,12 @@
 	org.alloytools.alloy.core;version=latest,\
 	aQute.libg,\
 	org.alloytools.api,\
-	org.alloytools.pardinus.core
+	org.alloytools.pardinus.core,\
+	alloy2smt;version=latest,\
+	org.antlr.antlr4-runtime,\
+	com.fasterxml.jackson.core.jackson-annotations,\
+	com.fasterxml.jackson.core.jackson-core,\
+	com.fasterxml.jackson.core.jackson-databind
 -testpath: \
 	biz.aQute.wrapper.junit, \
 	biz.aQute.wrapper.hamcrest, \
@@ -16,3 +21,4 @@ Private-Package: \
 	edu.mit.csail.sdg.alloy4graph,\
 	edu.mit.csail.sdg.alloy4viz,\
 	edu.mit.csail.sdg.alloy4whole,\
+	edu.mit.csail.sdg.alloy4whole.instances,\

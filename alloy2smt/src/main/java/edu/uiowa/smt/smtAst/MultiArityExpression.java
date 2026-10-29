@@ -113,8 +113,8 @@ public class MultiArityExpression extends Expression
 
     public enum Op 
     {        
-        MKTUPLE ("mkTuple"),
-        INSERT ("insert"),
+        MKTUPLE ("tuple"),
+        INSERT ("set.insert"),
         DISTINCT ("distinct");
 
         private final String opStr;
@@ -129,12 +129,17 @@ public class MultiArityExpression extends Expression
             return new MultiArityExpression(this, exprs);
         }
 
+        public MultiArityExpression make(Expression ... exprs)
+        {
+            return new MultiArityExpression(this, exprs);
+        }
+
        public static Op getOp(String operator)
        {
            switch (operator)
            {
-               case "mkTuple"   : return MKTUPLE;
-               case "insert"    : return INSERT;
+               case "tuple"     : return MKTUPLE;
+               case "set.insert": return INSERT;
                case "distinct"  : return DISTINCT;
                default:
                    throw new UnsupportedOperationException("Operator " + operator + " is not defined");

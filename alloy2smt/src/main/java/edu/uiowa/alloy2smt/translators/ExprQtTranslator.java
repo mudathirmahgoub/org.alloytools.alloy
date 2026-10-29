@@ -24,16 +24,235 @@ public class ExprQtTranslator
         this.translator = exprTranslator.translator;
     }
 
+    // whether the solver skolemizes the quantifier: an existential in a positive position or a universal in a negative position
+    private static boolean isSkolemized(ExprQt exprQt, Environment environment)
+    {
+        switch (exprQt.op)
+        {
+            case SOME: return environment.existsIsSkolemized();
+            case ALL:
+            case NO: return environment.forallIsSkolemized();
+            default: return false;
+        }
+    }
+
     Expression translateExprQt(ExprQt exprQt, Environment environment)
     {
-        // create a new scope for quantified variables
+        // a skolemized quantifier is cheaper than a set quantifier: the solver replaces it with constants
+        if (translator.options.useSetQuantifiers() && hasOnlyOneOfDeclarations(exprQt) && !isSkolemized(exprQt, environment))
+        {
+            List<List<Decl>> groups = groupIndependentDeclarations(exprQt);
+            switch (exprQt.op)
+            {
+                case ALL: return translateSetQuantifier(true, exprQt, groups, 0, environment);
+                case SOME: return translateSetQuantifier(false, exprQt, groups, 0, environment);
+                // no x | f is all x | not f: (not (set.some ...)) is much harder for the solver
+                case NO: return exprTranslator.translateExpr(ExprQt.Op.ALL.make(exprQt.pos, null, exprQt.decls, exprQt.sub.not()), environment);
+                case ONE:
+                case LONE:
+                case COMPREHENSION:
+                {
+                    if (groups.size() == 1)
+                    {
+                        Expression filter = translateFilter(exprQt, groups.get(0), environment);
+                        switch (exprQt.op)
+                        {
+                            case ONE: return exprTranslator.mkOne(filter, environment);
+                            case LONE: return exprTranslator.mkLone(filter, environment);
+                            default: return filter;
+                        }
+                    }
+                }
+                break;
+                default:
+                    throw new UnsupportedOperationException();
+            }
+        }
+        if (translator.options.useFilter() && hasOnlyOneOfDeclarations(exprQt) &&
+            (exprQt.op == ExprQt.Op.ONE || exprQt.op == ExprQt.Op.LONE || exprQt.op == ExprQt.Op.COMPREHENSION))
+        {
+            List<List<Decl>> groups = groupIndependentDeclarations(exprQt);
+            if (groups.size() == 1)
+            {
+                Expression filter = translateFilter(exprQt, groups.get(0), environment);
+                switch (exprQt.op)
+                {
+                    case ONE: return exprTranslator.mkOne(filter, environment);
+                    case LONE: return exprTranslator.mkLone(filter, environment);
+                    default: return filter;
+                }
+            }
+        }
+        return translateFirstOrderQuantifier(exprQt, environment);
+    }
+
+    /*
+     * Translation with the bounded set quantifiers set.all, set.some and set.filter.
+     */
+
+    // x: e where x ranges over the tuples of e
+    private static boolean isOneOf(Expr expr)
+    {
+        if (expr instanceof Sig)
+        {
+            return true;
+        }
+        if (expr instanceof ExprUnary)
+        {
+            ExprUnary.Op op = ((ExprUnary) expr).op;
+            return op == ExprUnary.Op.ONEOF || (op == ExprUnary.Op.NOOP && ((ExprUnary) expr).sub.type().arity() == 1);
+        }
+        return false;
+    }
+
+    private static boolean hasOnlyOneOfDeclarations(ExprQt exprQt)
+    {
+        return exprQt.decls.stream().allMatch(decl -> isOneOf(decl.expr));
+    }
+
+    /**
+     * Groups consecutive declarations whose ranges do not mention the variables of the group.
+     * Each group is quantified at once over the product of its ranges.
+     */
+    private static List<List<Decl>> groupIndependentDeclarations(ExprQt exprQt)
+    {
+        List<List<Decl>> groups = new ArrayList<>();
+        List<Decl> group = new ArrayList<>();
+        for (Decl decl : exprQt.decls)
+        {
+            boolean dependent = group.stream()
+                                     .flatMap(d -> d.names.stream())
+                                     .anyMatch(name -> decl.expr.hasVar((ExprVar) name));
+            if (dependent)
+            {
+                groups.add(group);
+                group = new ArrayList<>();
+            }
+            group.add(decl);
+        }
+        groups.add(group);
+        return groups;
+    }
+
+    private Expression translateSetQuantifier(boolean all, ExprQt exprQt, List<List<Decl>> groups, int index, Environment environment)
+    {
+        if (index == groups.size())
+        {
+            return exprTranslator.translateExpr(exprQt.sub, environment);
+        }
+        List<Decl> group = groups.get(index);
+        Expression range = groupRange(group, environment);
+        return all ?
+                exprTranslator.forAllIn(range, (tuple, env) ->
+                        bindGroup(group, tuple, env, newEnv -> ExprTranslator.implies(
+                                getDisjointConstraints(group, newEnv),
+                                translateSetQuantifier(true, exprQt, groups, index + 1, newEnv))), environment) :
+                exprTranslator.someIn(range, (tuple, env) ->
+                        bindGroup(group, tuple, env, newEnv -> ExprTranslator.and(
+                                getDisjointConstraints(group, newEnv),
+                                translateSetQuantifier(false, exprQt, groups, index + 1, newEnv))), environment);
+    }
+
+    private Expression translateFilter(ExprQt exprQt, List<Decl> group, Environment environment)
+    {
+        Expression range = groupRange(group, environment);
+        return exprTranslator.filter(range, (tuple, env) ->
+                bindGroup(group, tuple, env, newEnv -> ExprTranslator.and(
+                        getDisjointConstraints(group, newEnv),
+                        exprTranslator.translateExpr(exprQt.sub, newEnv))), environment);
+    }
+
+    // the product of the ranges of the variables in the group
+    private Expression groupRange(List<Decl> group, Environment environment)
+    {
+        Expression product = null;
+        for (Decl decl : group)
+        {
+            Expression range = ExprTranslator.toSet(exprTranslator.translateExpr(decl.expr, environment));
+            for (int i = 0; i < decl.names.size(); i++)
+            {
+                product = product == null ? range : BinaryExpression.Op.PRODUCT.make(product, range);
+            }
+        }
+        return product;
+    }
+
+    /**
+     * Binds each variable of the group to its components of the tuple and translates the body.
+     */
+    private Expression bindGroup(List<Decl> group, Expression tuple, Environment environment,
+                                 java.util.function.Function<Environment, Expression> body)
+    {
         Environment newEnvironment = new Environment(environment);
+        List<String> names = group.stream().flatMap(d -> d.names.stream()).map(n -> n.label).collect(Collectors.toList());
+        if (names.size() == 1)
+        {
+            newEnvironment.put(names.get(0), tuple);
+            return body.apply(newEnvironment);
+        }
+        List<Integer> arities = group.stream()
+                                     .flatMap(d -> d.names.stream().map(n -> d.expr.type().arity()))
+                                     .collect(Collectors.toList());
+        Map<String, Expression> bindings = new LinkedHashMap<>();
+        int offset = 0;
+        for (int i = 0; i < names.size(); i++)
+        {
+            List<Expression> components = new ArrayList<>();
+            for (int j = 0; j < arities.get(i); j++)
+            {
+                components.add(BinaryExpression.Op.TUPSEL.make(IntConstant.getInstance(offset++), tuple));
+            }
+            Expression value = MultiArityExpression.Op.MKTUPLE.make(components);
+            VariableDeclaration variable = new VariableDeclaration(names.get(i), value.getSort(), null);
+            bindings.put(names.get(i), value);
+            newEnvironment.put(names.get(i), variable.getVariable());
+        }
+        return new LetExpression(bindings, body.apply(newEnvironment));
+    }
+
+    private Expression getDisjointConstraints(List<Decl> group, Environment environment)
+    {
+        Expression constraints = BoolConstant.True;
+        for (Decl decl : group)
+        {
+            if (decl.disjoint != null && decl.names.size() > 1)
+            {
+                for (int i = 0; i < decl.names.size(); i++)
+                {
+                    for (int j = i + 1; j < decl.names.size(); j++)
+                    {
+                        Expression x = environment.get(decl.names.get(i).label);
+                        Expression y = environment.get(decl.names.get(j).label);
+                        Expression notEqual = UnaryExpression.Op.NOT.make(BinaryExpression.Op.EQ.make(x, y));
+                        constraints = ExprTranslator.and(constraints, notEqual);
+                    }
+                }
+            }
+        }
+        return constraints;
+    }
+
+    /*
+     * Translation with first-order quantifiers
+     */
+
+    private Expression translateFirstOrderQuantifier(ExprQt exprQt, Environment environment)
+    {
+        // create a new scope for quantified variables
+        Environment newEnvironment;
+        switch (exprQt.op)
+        {
+            case ALL:
+            case SOME: newEnvironment = new Environment(environment); break;
+            case NO: newEnvironment = environment.flipped(); break;
+            default: newEnvironment = environment.withPolarity(Environment.Polarity.BOTH); break;
+        }
+        newEnvironment.setSkolemizable(isSkolemized(exprQt, environment));
         Map<String, Expression> ranges = new LinkedHashMap<>();
 
         // this variable maintains the multiplicity constraints for declared variables
         // x: [one, lone, some, set] e
-        Expression multiplicityConstraints = BoolConstant.True;
-        multiplicityConstraints = declareQuantifiedVariables(exprQt, newEnvironment, ranges, multiplicityConstraints);
+        Expression multiplicityConstraints = declareQuantifiedVariables(exprQt, newEnvironment, ranges);
 
         Expression quantifiersConstraints = multiplicityConstraints;
 
@@ -43,7 +262,7 @@ public class ExprQtTranslator
         {
             quantifiersConstraints = BinaryExpression.Op.AND.make(quantifiersConstraints, disjointConstraints);
         }
-        
+
         // translate the body of the quantified expression
         Expression body = exprTranslator.translateExpr(exprQt.sub, newEnvironment);
 
@@ -56,22 +275,22 @@ public class ExprQtTranslator
             case SOME:
                 return translateSomeQuantifier(body, ranges, newEnvironment, quantifiersConstraints);
             case ONE:
-                    return translateOneQuantifier(body, ranges, newEnvironment, quantifiersConstraints);
+                return translateOneQuantifier(body, ranges, newEnvironment, quantifiersConstraints);
             case LONE:
-                    return translateLoneQuantifier(body, ranges, newEnvironment, quantifiersConstraints);
+                return translateLoneQuantifier(body, ranges, newEnvironment, quantifiersConstraints);
             case COMPREHENSION:
                 return translateComprehension(exprQt, body, ranges, newEnvironment);
             default:
                 throw new UnsupportedOperationException();
         }
-//        throw new UnsupportedOperationException();
     }
 
-    private Expression declareQuantifiedVariables(ExprQt exprQt, Environment newEnvironment, Map<String, Expression> ranges, Expression multiplicityConstraints)
+    private Expression declareQuantifiedVariables(ExprQt exprQt, Environment newEnvironment, Map<String, Expression> ranges)
     {
+        Expression multiplicityConstraints = BoolConstant.True;
         for (Decl decl : exprQt.decls)
         {
-            Expression range = exprTranslator.translateExpr(decl.expr, newEnvironment);
+            Expression range = ExprTranslator.toSet(exprTranslator.translateExpr(decl.expr, newEnvironment));
             for (ExprHasName name : decl.names)
             {
                 ranges.put(name.label, range);
@@ -79,8 +298,8 @@ public class ExprQtTranslator
                 SetSort setSort = (SetSort) range.getSort();
                 VariableDeclaration variable;
                 variable = getVariableDeclaration(decl.expr, label, setSort, range);
-                Expression constraint = getMultiplicityConstraint(decl.expr, variable, setSort);
-                multiplicityConstraints = BinaryExpression.Op.AND.make(multiplicityConstraints, constraint);
+                Expression constraint = getMultiplicityConstraint(decl.expr, variable, setSort, newEnvironment);
+                multiplicityConstraints = ExprTranslator.and(multiplicityConstraints, constraint);
                 newEnvironment.put(name.label, variable.getVariable());
             }
         }
@@ -101,24 +320,10 @@ public class ExprQtTranslator
                 {
                     for (int j = i + 1; j < decl.names.size(); j++)
                     {
-                        Expression variableI = newEnvironment.get(decl.names.get(i).label);
-                        Expression variableJ = newEnvironment.get(decl.names.get(j).label);
-
-                        if(variableJ.getSort() instanceof UninterpretedSort)
-                        {
-                            throw new UnsupportedOperationException();
-                        }
-
-                        if(variableJ.getSort() instanceof TupleSort)
-                        {
-                            variableI = UnaryExpression.Op.SINGLETON.make(variableI);
-                            variableJ = UnaryExpression.Op.SINGLETON.make(variableJ);
-                        }
-
+                        Expression variableI = ExprTranslator.toSet(newEnvironment.get(decl.names.get(i).label));
+                        Expression variableJ = ExprTranslator.toSet(newEnvironment.get(decl.names.get(j).label));
                         Expression intersect = BinaryExpression.Op.INTERSECTION.make(variableI, variableJ);
-                        Expression emptySet = UnaryExpression.Op.EMPTYSET.make(variableI.getSort());
-                        Expression equal = BinaryExpression.Op.EQ.make(intersect, emptySet);
-                        disjointConstraints = BinaryExpression.Op.AND.make(disjointConstraints, equal);
+                        disjointConstraints = ExprTranslator.and(disjointConstraints, ExprTranslator.mkEmpty(intersect));
                     }
                 }
             }
@@ -170,7 +375,7 @@ public class ExprQtTranslator
             }
             else if (sort instanceof TupleSort || sort instanceof UninterpretedSort)
             {
-                quantifiedArguments.add((VariableDeclaration) variable.getDeclaration());
+                quantifiedArguments.add(new VariableDeclaration(variable.getName(), sort, null));
             }
             else
             {
@@ -187,7 +392,13 @@ public class ExprQtTranslator
         }
         else
         {
-            List<Expression> expressions = AlloyUtils.getFunctionCallArguments(quantifiedArguments, argumentsMap);
+            // set arguments are quantified with their elements
+            List<Expression> expressions = new ArrayList<>();
+            for (int i = 0; i < quantifiedArguments.size(); i++)
+            {
+                Expression variable = quantifiedArguments.get(i).getVariable();
+                expressions.add(variable.getSort().equals(argumentSorts.get(i)) ? variable : UnaryExpression.Op.SINGLETON.make(variable));
+            }
             setFunctionExpression = new FunctionCallExpression(setFunction, expressions);
         }
 
@@ -204,8 +415,9 @@ public class ExprQtTranslator
         Expression equivalence = BinaryExpression.Op.EQ.make(tupleMember, and);
 
         // add variables defined in functions, predicates or let expression to the list of quantifiers
-        quantifiedArguments.addAll(quantifiedVariables);
-        Expression forAll = QuantifiedExpression.Op.FORALL.make(equivalence, quantifiedArguments);
+        List<VariableDeclaration> quantifiers = new ArrayList<>(quantifiedArguments);
+        quantifiers.addAll(quantifiedVariables);
+        Expression forAll = QuantifiedExpression.Op.FORALL.make(equivalence, quantifiers);
 
         Assertion assertion = new Assertion(exprQt.toString(), forAll);
         translator.smtProgram.addAssertion(assertion);
@@ -253,33 +465,14 @@ public class ExprQtTranslator
         if(expr instanceof ExprBinary)
         {
             ExprBinary.Op multiplicityOperator = ((ExprBinary) expr).op;
-            switch (multiplicityOperator)
+            if (multiplicityOperator.isArrow)
             {
-                case ARROW              :
-                case ANY_ARROW_SOME     :
-                case ANY_ARROW_ONE      :
-                case ANY_ARROW_LONE     :
-                case SOME_ARROW_ANY     :
-                case SOME_ARROW_SOME    :
-                case SOME_ARROW_ONE     :
-                case SOME_ARROW_LONE    :
-                case ONE_ARROW_ANY      :
-                case ONE_ARROW_SOME     :
-                case ONE_ARROW_ONE      :
-                case ONE_ARROW_LONE     :
-                case LONE_ARROW_ANY     :
-                case LONE_ARROW_SOME    :
-                case LONE_ARROW_ONE     :
-                case LONE_ARROW_LONE    :
-                {
-                    VariableDeclaration declaration = new VariableDeclaration(variableName, setSort, null);
-                    Expression subset = BinaryExpression.Op.SUBSET.make(declaration.getVariable(), range);
-                    declaration.setConstraint(subset);
-                    return declaration;
-                }
-                default:
-                    throw new UnsupportedOperationException();
+                VariableDeclaration declaration = new VariableDeclaration(variableName, setSort, null);
+                Expression subset = BinaryExpression.Op.SUBSET.make(declaration.getVariable(), range);
+                declaration.setConstraint(subset);
+                return declaration;
             }
+            throw new UnsupportedOperationException();
         }
         throw new UnsupportedOperationException();
     }
@@ -292,52 +485,31 @@ public class ExprQtTranslator
         return declaration;
     }
 
-    private Expression getMultiplicityConstraint(Expr expr, VariableDeclaration variable, SetSort setSort)
+    private Expression getMultiplicityConstraint(Expr expr, VariableDeclaration variable, SetSort setSort, Environment environment)
     {
         if(expr instanceof ExprUnary)
         {
             ExprUnary.Op multiplicityOperator = ((ExprUnary) expr).op;
-            Expression emptySet = UnaryExpression.Op.EMPTYSET.make(setSort);
             switch (multiplicityOperator)
             {
                 case NOOP: // same as ONEOF
                 case ONEOF:
-                {
-                    // variable.getSort() is a tuple sort, so there is no constraint
-                    return BoolConstant.True;
-                }
-                case SOMEOF:
-                {
-                    // the set is not empty
-                    Expression empty = BinaryExpression.Op.EQ.make(variable.getVariable(), emptySet);
-                    Expression notEmpty = UnaryExpression.Op.NOT.make(empty);
-                    return notEmpty;
-                }
                 case SETOF:
-                {
-                    // variable.getSort() is a set, so there is no constraint
                     return BoolConstant.True;
-                }
+                case SOMEOF:
+                    return ExprTranslator.mkNonEmpty(variable.getVariable());
                 case LONEOF:
-                {
-                    // either the set is empty or a singleton
-                    Expression empty = BinaryExpression.Op.EQ.make(variable.getVariable(), emptySet);
-                    VariableDeclaration singleElement = new VariableDeclaration(TranslatorUtils.getNewAtomName(), setSort.elementSort, null);
-                    Expression singleton = UnaryExpression.Op.SINGLETON.make(singleElement.getVariable());
-                    Expression isSingleton = BinaryExpression.Op.EQ.make(variable.getVariable(), singleton);
-                    Expression emptyOrSingleton = BinaryExpression.Op.OR.make(empty, isSingleton);
-                    Expression exists = QuantifiedExpression.Op.EXISTS.make(emptyOrSingleton, singleElement);
-                    return exists;
-                }
+                    return exprTranslator.mkLone(variable.getVariable(), environment);
                 default:
                     throw new UnsupportedOperationException();
             }
         }
         if(expr instanceof ExprBinary)
         {
-            return BoolConstant.True;
+            // x: A m -> n B
+            return exprBinaryTranslator.isIn(variable.getVariable(), expr, environment);
         }
-        throw new UnsupportedOperationException();
+        return BoolConstant.True;
     }
 
     private Expression translateAllQuantifier(Expression body, Map<String, Expression> ranges,
@@ -353,10 +525,9 @@ public class ExprQtTranslator
                                                               .collect(Collectors.toList());
 
         Expression memberOrSubset = getMemberOrSubsetExpressions(ranges, environment);
-        Expression and = BinaryExpression.Op.AND.make(memberOrSubset, multiplicityConstraints);
+        Expression and = ExprTranslator.and(memberOrSubset, multiplicityConstraints);
         Expression implies = BinaryExpression.Op.IMPLIES.make(and, body);
-        Expression forAll = QuantifiedExpression.Op.FORALL.make(implies, quantifiedVariables);
-        return forAll;
+        return QuantifiedExpression.Op.FORALL.make(implies, quantifiedVariables);
     }
 
     private Expression translateNoQuantifier(Expression body, Map<String, Expression> ranges,
@@ -379,10 +550,9 @@ public class ExprQtTranslator
                                                               .collect(Collectors.toList());
 
         Expression and = getMemberOrSubsetExpressions(ranges, environment);
-        and = BinaryExpression.Op.AND.make(and, multiplicityConstraints);
+        and = ExprTranslator.and(and, multiplicityConstraints);
         and = BinaryExpression.Op.AND.make(and, body);
-        Expression exists = QuantifiedExpression.Op.EXISTS.make(and, quantifiedVariables);
-        return exists;
+        return QuantifiedExpression.Op.EXISTS.make(and, quantifiedVariables);
     }
 
     private Expression getMemberOrSubsetExpressions(Map<String, Expression> ranges, Environment environment)
@@ -404,7 +574,7 @@ public class ExprQtTranslator
             {
                 throw new UnsupportedOperationException(variable.getSort().toString());
             }
-            and = BinaryExpression.Op.AND.make(and, memberOrSubset);
+            and = ExprTranslator.and(and, memberOrSubset);
         }
         return and;
     }
@@ -424,7 +594,7 @@ public class ExprQtTranslator
 
         Expression oldMemberOrSubset = getMemberOrSubsetExpressions(ranges, environment);
 
-        Expression existsAnd = BinaryExpression.Op.AND.make(oldMemberOrSubset, multiplicityConstraints);
+        Expression existsAnd = ExprTranslator.and(oldMemberOrSubset, multiplicityConstraints);
 
         existsAnd = BinaryExpression.Op.AND.make(existsAnd, body);
 
@@ -440,22 +610,22 @@ public class ExprQtTranslator
             VariableDeclaration newVariable = new VariableDeclaration(TranslatorUtils.getNewAtomName(), oldVariable.getSort(), null);
             if(oldVariable.getConstraint() != null)
             {
-                Expression newConstraint = oldVariable.getConstraint().substitute(oldVariable.getVariable(), newVariable.getVariable());
+                Expression newConstraint = oldVariable.getConstraint().replace(oldVariable.getVariable(), newVariable.getVariable());
                 newVariable.setConstraint(newConstraint);
             }
 
             newVariables.add(newVariable);
-            newBody = newBody.substitute(oldVariable.getVariable(), newVariable.getVariable());
-            newMultiplicityConstraints = newMultiplicityConstraints.substitute(oldVariable.getVariable(), newVariable.getVariable());
+            newBody = newBody.replace(oldVariable.getVariable(), newVariable.getVariable());
+            newMultiplicityConstraints = newMultiplicityConstraints.replace(oldVariable.getVariable(), newVariable.getVariable());
 
-            oldEqualNew = BinaryExpression.Op.AND.make(oldEqualNew, BinaryExpression.Op.EQ.make(oldVariable.getVariable(), newVariable.getVariable()));
+            oldEqualNew = ExprTranslator.and(oldEqualNew, BinaryExpression.Op.EQ.make(oldVariable.getVariable(), newVariable.getVariable()));
             if (newVariable.getSort() instanceof TupleSort)
             {
-                newMemberOrSubset = BinaryExpression.Op.AND.make(newMemberOrSubset, BinaryExpression.Op.MEMBER.make(newVariable.getVariable(), entry.getValue()));
+                newMemberOrSubset = ExprTranslator.and(newMemberOrSubset, BinaryExpression.Op.MEMBER.make(newVariable.getVariable(), entry.getValue()));
             }
             else if (newVariable.getSort() instanceof SetSort)
             {
-                newMemberOrSubset = BinaryExpression.Op.AND.make(newMemberOrSubset, BinaryExpression.Op.SUBSET.make(newVariable.getVariable(), entry.getValue()));
+                newMemberOrSubset = ExprTranslator.and(newMemberOrSubset, BinaryExpression.Op.SUBSET.make(newVariable.getVariable(), entry.getValue()));
             }
             else
             {
@@ -467,14 +637,13 @@ public class ExprQtTranslator
         newBody = UnaryExpression.Op.NOT.make(newBody);
         Expression notOldEqualNew = UnaryExpression.Op.NOT.make(oldEqualNew);
 
-        Expression forAllAnd = BinaryExpression.Op.AND.make(newMemberOrSubset, newMultiplicityConstraints);
+        Expression forAllAnd = ExprTranslator.and(newMemberOrSubset, newMultiplicityConstraints);
         forAllAnd = BinaryExpression.Op.AND.make(forAllAnd, notOldEqualNew);
 
         Expression implies = BinaryExpression.Op.IMPLIES.make(forAllAnd, newBody);
         Expression forAll = QuantifiedExpression.Op.FORALL.make(implies,  newVariables);
         existsAnd = BinaryExpression.Op.AND.make(existsAnd, forAll);
-        Expression exists = QuantifiedExpression.Op.EXISTS.make(existsAnd, oldVariables);
-        return exists;
+        return QuantifiedExpression.Op.EXISTS.make(existsAnd, oldVariables);
     }
 
     private Expression translateLoneQuantifier(Expression body, Map<String, Expression> ranges,
@@ -486,7 +655,6 @@ public class ExprQtTranslator
         Expression notBody = UnaryExpression.Op.NOT.make(body);
         Expression allNot = translateAllQuantifier(notBody, ranges, environment, multiplicityConstraints);
         Expression one = translateOneQuantifier(body, ranges, environment, multiplicityConstraints);
-        Expression or = BinaryExpression.Op.OR.make(allNot, one);
-        return or;
+        return BinaryExpression.Op.OR.make(allNot, one);
     }
 }

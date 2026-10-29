@@ -2,18 +2,16 @@ package edu.uiowa.alloy2smt.translators;
 
 import edu.mit.csail.sdg.ast.Expr;
 import edu.mit.csail.sdg.ast.ExprBinary;
+import edu.mit.csail.sdg.ast.ExprCall;
 import edu.mit.csail.sdg.ast.ExprConstant;
 import edu.mit.csail.sdg.ast.ExprUnary;
-import edu.uiowa.alloy2smt.utils.AlloyUtils;
 import edu.uiowa.smt.AbstractTranslator;
 import edu.uiowa.smt.Environment;
-import edu.uiowa.smt.TranslatorUtils;
 import edu.uiowa.smt.smtAst.*;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import java.util.Map;
 
 public class ExprBinaryTranslator
 {
@@ -30,38 +28,40 @@ public class ExprBinaryTranslator
     {
         switch (expr.op)
         {
-            case ARROW              : return translateArrow(expr, environment);
-            case ANY_ARROW_SOME     : return translateAnyArrowSome(expr, environment);
-            case ANY_ARROW_ONE      : return translateAnyArrowOne(expr, environment);
-            case ANY_ARROW_LONE     : return translateAnyArrowLone(expr, environment);
-            case SOME_ARROW_ANY     : return translateSomeArrowAny(expr, environment);
-            case SOME_ARROW_SOME    : return translateSomeArrowSome(expr, environment);
-            case SOME_ARROW_ONE     : return translateSomeArrowOne(expr, environment);
-            case SOME_ARROW_LONE    : return translateSomeArrowLone(expr, environment);
-            case ONE_ARROW_ANY      : return translateOneArrowAny(expr, environment);
-            case ONE_ARROW_SOME     : return translateOneArrowSome(expr, environment);
-            case ONE_ARROW_ONE      : return translateOneArrowOne(expr, environment);
-            case ONE_ARROW_LONE     : return translateOneArrowLone(expr, environment);
-            case LONE_ARROW_ANY     : return translateLoneArrowAny(expr, environment);
-            case LONE_ARROW_SOME    : return translateLoneArrowSome(expr, environment);
-            case LONE_ARROW_ONE     : return translateLoneArrowOne(expr, environment);
-            case LONE_ARROW_LONE    : return translateLoneArrowLone(expr, environment);
+            // multiplicities only matter in declarations and on the right of 'in'
+            // (see isIn), elsewhere an arrow denotes the product
+            case ARROW              :
+            case ANY_ARROW_SOME     :
+            case ANY_ARROW_ONE      :
+            case ANY_ARROW_LONE     :
+            case SOME_ARROW_ANY     :
+            case SOME_ARROW_SOME    :
+            case SOME_ARROW_ONE     :
+            case SOME_ARROW_LONE    :
+            case ONE_ARROW_ANY      :
+            case ONE_ARROW_SOME     :
+            case ONE_ARROW_ONE      :
+            case ONE_ARROW_LONE     :
+            case LONE_ARROW_ANY     :
+            case LONE_ARROW_SOME    :
+            case LONE_ARROW_ONE     :
+            case LONE_ARROW_LONE    : return BinaryExpression.Op.PRODUCT.make(translateSet(expr.left, environment), translateSet(expr.right, environment));
             case ISSEQ_ARROW_LONE   : throw new UnsupportedOperationException();
-            
+
             // Relational operators
-            case JOIN               : return translateJoin(expr, environment);
+            case JOIN               : return BinaryExpression.Op.JOIN.make(translateSet(expr.left, environment), translateSet(expr.right, environment));
             case DOMAIN             : return translateDomainRestriction(expr, environment);
             case RANGE              : return translateRangeRestriction(expr, environment);
             case INTERSECT          : return translateSetOperation(expr, BinaryExpression.Op.INTERSECTION, environment);
             case PLUSPLUS           : return translatePlusPlus(expr, environment);
-            case EQUALS             : return translateEqComparison(expr, BinaryExpression.Op.EQ, environment);
-            case NOT_EQUALS         : return UnaryExpression.Op.NOT.make(translateEqComparison(expr, BinaryExpression.Op.EQ, environment));
+            case EQUALS             : return translateEqComparison(expr, environment);
+            case NOT_EQUALS         : return UnaryExpression.Op.NOT.make(translateEqComparison(expr, environment));
 
             // Set op
             case PLUS               : return translateSetOperation(expr, BinaryExpression.Op.UNION, environment);
             case MINUS              : return translateSetOperation(expr, BinaryExpression.Op.SETMINUS, environment);
-            
-            // Arithmetic operators            
+
+            // Arithmetic operators
             case IPLUS              : return translateArithmetic(expr, BinaryExpression.Op.PLUS, environment);
             case IMINUS             : return translateArithmetic(expr, BinaryExpression.Op.MINUS, environment);
             case MUL                : return translateArithmetic(expr, BinaryExpression.Op.MULTIPLY, environment);
@@ -72,1138 +72,175 @@ public class ExprBinaryTranslator
             case LTE                : return translateComparison(expr, BinaryExpression.Op.LTE, environment);
             case GT                 : return translateComparison(expr, BinaryExpression.Op.GT, environment);
             case GTE                : return translateComparison(expr, BinaryExpression.Op.GTE, environment);
-            case IN                 : return translateSubsetOperation(expr, BinaryExpression.Op.SUBSET, environment);
-            case NOT_IN             : return translateSubsetOperation(expr, null, environment);
-            case IMPLIES            : return translateImplies(expr, environment);            
-            case AND                : return translateAnd(expr, environment);
-            case OR                 : return translateOr(expr, environment);
-            case IFF                : return translateEqComparison(expr, BinaryExpression.Op.EQ, environment);
+            case IN                 : return isIn(translateSet(expr.left, environment), expr.right, environment);
+            case NOT_IN             : return UnaryExpression.Op.NOT.make(isIn(translateSet(expr.left, environment), expr.right, environment.flipped()));
+            case IMPLIES            : return BinaryExpression.Op.IMPLIES.make(exprTranslator.translateExpr(expr.left, environment.flipped()), exprTranslator.translateExpr(expr.right, environment));
+            case AND                : return BinaryExpression.Op.AND.make(exprTranslator.translateExpr(expr.left, environment), exprTranslator.translateExpr(expr.right, environment));
+            case OR                 : return BinaryExpression.Op.OR.make(exprTranslator.translateExpr(expr.left, environment), exprTranslator.translateExpr(expr.right, environment));
+            case IFF                : return BinaryExpression.Op.EQ.make(exprTranslator.translateExpr(expr.left, environment.withPolarity(Environment.Polarity.BOTH)),
+                                                                         exprTranslator.translateExpr(expr.right, environment.withPolarity(Environment.Polarity.BOTH)));
             case NOT_LT             : return translateComparison(expr, BinaryExpression.Op.GTE, environment);
             case NOT_LTE            : return translateComparison(expr, BinaryExpression.Op.GT, environment);
             case NOT_GT             : return translateComparison(expr, BinaryExpression.Op.LTE, environment);
             case NOT_GTE            : return translateComparison(expr, BinaryExpression.Op.LT, environment);
             case SHL                : throw new UnsupportedOperationException();
             case SHA                : throw new UnsupportedOperationException();
-            case SHR                : throw new UnsupportedOperationException();            
+            case SHR                : throw new UnsupportedOperationException();
             default                 : throw new UnsupportedOperationException();
         }
     }
 
-    private Expression translateOneArrowOne(ExprBinary expr, Environment environment)
+    private Expression translateSet(Expr expr, Environment environment)
     {
-        FunctionDeclaration multiplicitySet = translator.multiplicityVariableMap.get(expr);
-
-        if(multiplicitySet != null)
+        Expression expression = ExprTranslator.toSet(exprTranslator.translateExpr(expr, environment));
+        if (expression.getSort().equals(AbstractTranslator.setOfIntSortTuple))
         {
-            return multiplicitySet.getVariable();
+            expression = translator.handleIntConstant(expression);
+        }
+        return expression;
+    }
+
+    private static Expr deNoop(Expr expr)
+    {
+        while (expr instanceof ExprUnary && ((ExprUnary) expr).op == ExprUnary.Op.NOOP)
+        {
+            expr = ((ExprUnary) expr).sub;
+        }
+        return expr;
+    }
+
+    /**
+     * Translates (left in right), where right may contain multiplicities, following
+     * the semantics of TranslateAlloyToKodkod.isIn.
+     */
+    Expression isIn(Expression left, Expr right, Environment environment)
+    {
+        right = deNoop(right);
+        if (right instanceof ExprUnary)
+        {
+            ExprUnary unary = (ExprUnary) right;
+            switch (unary.op)
+            {
+                case ONEOF:
+                    return BinaryExpression.Op.AND.make(exprTranslator.mkOne(left, environment), isIn(left, unary.sub, environment));
+                case LONEOF:
+                    return BinaryExpression.Op.AND.make(exprTranslator.mkLone(left, environment), isIn(left, unary.sub, environment));
+                case SOMEOF:
+                    return BinaryExpression.Op.AND.make(ExprTranslator.mkNonEmpty(left), isIn(left, unary.sub, environment));
+                case SETOF:
+                    return isIn(left, unary.sub, environment);
+                case EXACTLYOF:
+                    return BinaryExpression.Op.EQ.make(left, translateSet(unary.sub, environment));
+                default:
+                    break;
+            }
+        }
+        if (right instanceof ExprBinary && ((ExprBinary) right).op.isArrow && hasMultiplicity(right))
+        {
+            return isInArrow(left, (ExprBinary) right, environment);
+        }
+        return ExprTranslator.mkSubset(left, translateSet(right, environment));
+    }
+
+    private static boolean hasMultiplicity(Expr expr)
+    {
+        expr = deNoop(expr);
+        if (expr instanceof ExprUnary)
+        {
+            ExprUnary.Op op = ((ExprUnary) expr).op;
+            return op == ExprUnary.Op.ONEOF || op == ExprUnary.Op.LONEOF || op == ExprUnary.Op.SOMEOF || op == ExprUnary.Op.EXACTLYOF;
+        }
+        if (expr instanceof ExprBinary && ((ExprBinary) expr).op.isArrow)
+        {
+            ExprBinary binary = (ExprBinary) expr;
+            return binary.op != ExprBinary.Op.ARROW || hasMultiplicity(binary.left) || hasMultiplicity(binary.right);
+        }
+        return false;
+    }
+
+    private enum Multiplicity {ANY, SOME, ONE, LONE}
+
+    private static Multiplicity leftMultiplicity(ExprBinary.Op op)
+    {
+        switch (op)
+        {
+            case SOME_ARROW_ANY: case SOME_ARROW_SOME: case SOME_ARROW_ONE: case SOME_ARROW_LONE: return Multiplicity.SOME;
+            case ONE_ARROW_ANY: case ONE_ARROW_SOME: case ONE_ARROW_ONE: case ONE_ARROW_LONE: return Multiplicity.ONE;
+            case LONE_ARROW_ANY: case LONE_ARROW_SOME: case LONE_ARROW_ONE: case LONE_ARROW_LONE: return Multiplicity.LONE;
+            default: return Multiplicity.ANY;
+        }
+    }
+
+    private static Multiplicity rightMultiplicity(ExprBinary.Op op)
+    {
+        switch (op)
+        {
+            case ANY_ARROW_SOME: case SOME_ARROW_SOME: case ONE_ARROW_SOME: case LONE_ARROW_SOME: return Multiplicity.SOME;
+            case ANY_ARROW_ONE: case SOME_ARROW_ONE: case ONE_ARROW_ONE: case LONE_ARROW_ONE: return Multiplicity.ONE;
+            case ANY_ARROW_LONE: case SOME_ARROW_LONE: case ONE_ARROW_LONE: case LONE_ARROW_LONE: return Multiplicity.LONE;
+            default: return Multiplicity.ANY;
+        }
+    }
+
+    private Expression multiplicity(Multiplicity multiplicity, Expression set, Environment environment)
+    {
+        switch (multiplicity)
+        {
+            case SOME: return ExprTranslator.mkNonEmpty(set);
+            case ONE: return exprTranslator.mkOne(set, environment);
+            case LONE: return exprTranslator.mkLone(set, environment);
+            default: return BoolConstant.True;
+        }
+    }
+
+    /**
+     * r in A m -> n B is translated into
+     * r in A -> B and
+     * (all a: A | n a.r and a.r in B) and
+     * (all b: B | m r.b and r.b in A)
+     * where the inner 'in' handle the multiplicities nested in A and B.
+     */
+    private Expression isInArrow(Expression relation, ExprBinary arrow, Environment environment)
+    {
+        Expression A = translateSet(arrow.left, environment);
+        Expression B = translateSet(arrow.right, environment);
+        Expression result = BinaryExpression.Op.SUBSET.make(relation, BinaryExpression.Op.PRODUCT.make(A, B));
+
+        Multiplicity right = rightMultiplicity(arrow.op);
+        if (right != Multiplicity.ANY || hasMultiplicity(arrow.right))
+        {
+            Expression all = exprTranslator.forAllIn(A, (a, env) ->
+            {
+                Expression image = ExprTranslator.joinTupleLeft(a, relation);
+                return ExprTranslator.and(multiplicity(right, image, env), isInArrowSide(image, arrow.right, env));
+            }, environment);
+            result = BinaryExpression.Op.AND.make(result, all);
         }
 
-        SetSort sort = new SetSort(new TupleSort(AlloyUtils.getExprSorts(expr)));
-        multiplicitySet = new FunctionDeclaration(TranslatorUtils.getNewSetName(), sort);
-        translator.multiplicityVariableMap.put(expr, multiplicitySet);
-        translator.smtProgram.addFunction(multiplicitySet);
-
-        Expression A = exprTranslator.translateExpr(expr.left, environment);
-        Expression B = exprTranslator.translateExpr(expr.right, environment);
-
-        Expression product = BinaryExpression.Op.PRODUCT.make(A, B);
-        Expression subset = BinaryExpression.Op.SUBSET.make(multiplicitySet.getVariable(), product);
-
-        translator.smtProgram.addAssertion(new Assertion(expr.toString() + " subset constraint", subset));
-
-        SetSort ASort = (SetSort) A.getSort();
-        SetSort BSort = (SetSort) B.getSort();
-
-        VariableDeclaration x = new VariableDeclaration("__x__", ASort.elementSort, null);
-        VariableDeclaration y = new VariableDeclaration("__y__", BSort.elementSort, null);
-        Expression xMemberA = BinaryExpression.Op.MEMBER.make(x.getVariable(), A);
-        Expression yMemberB = BinaryExpression.Op.MEMBER.make(y.getVariable(), B);
-
-        VariableDeclaration u = new VariableDeclaration("__u__", ASort.elementSort, null);
-        VariableDeclaration v = new VariableDeclaration("__v__", BSort.elementSort, null);
-        Expression uMemberA = BinaryExpression.Op.MEMBER.make(u.getVariable(), A);
-        Expression vMemberB = BinaryExpression.Op.MEMBER.make(v.getVariable(), B);
-
-        // multiplicitySet subset of A one -> one B
-        // and
-        // forall x in A . exists y in B . xy in multiplicitySet and
-        //       forall v in B. v != y implies xv not in  multiplicitySet
-        // and
-        // forall y in B . exists x in A . xy in multiplicitySet and
-        //       forall u in A. u != x implies uy not in  multiplicitySet
-
-        Expression xyTuple = getTupleConcatenation(ASort, BSort, x, y);
-        Expression xvTuple = getTupleConcatenation(ASort, BSort, x, v);
-        Expression uyTuple = getTupleConcatenation(ASort, BSort, u, y);
-
-        Expression xyMember = BinaryExpression.Op.MEMBER.make(xyTuple, multiplicitySet.getVariable());
-        Expression xvMember = BinaryExpression.Op.MEMBER.make(xvTuple, multiplicitySet.getVariable());
-        Expression uyMember = BinaryExpression.Op.MEMBER.make(uyTuple, multiplicitySet.getVariable());
-
-        Expression notXV = UnaryExpression.Op.NOT.make(xvMember);
-        Expression notUY = UnaryExpression.Op.NOT.make(uyMember);
-
-        Expression vEqualY = BinaryExpression.Op.EQ.make(v.getVariable(), y.getVariable());
-        Expression notVEqualY = UnaryExpression.Op.NOT.make(vEqualY);
-
-        Expression vImplies = BinaryExpression.Op.IMPLIES.make(BinaryExpression.Op.AND.make(vMemberB, notVEqualY), notXV);
-        Expression forAllV = QuantifiedExpression.Op.FORALL.make(vImplies, v);
-
-        Expression uEqualX = BinaryExpression.Op.EQ.make(u.getVariable(), x.getVariable());
-        Expression notUEqualX = UnaryExpression.Op.NOT.make(uEqualX);
-
-        Expression uImplies = BinaryExpression.Op.IMPLIES.make(BinaryExpression.Op.AND.make(uMemberA, notUEqualX), notUY);
-        Expression forAllU = QuantifiedExpression.Op.FORALL.make(uImplies, u);
-
-        Expression existsYBody = BinaryExpression.Op.AND.make(BinaryExpression.Op.AND.make(yMemberB, xyMember), forAllV);
-
-        Expression existsY = QuantifiedExpression.Op.EXISTS.make(existsYBody, y);
-        Expression xImplies = BinaryExpression.Op.IMPLIES.make(xMemberA, existsY);
-        Expression forAllX = QuantifiedExpression.Op.FORALL.make(xImplies, x);
-        translator.smtProgram.addAssertion(new Assertion(expr.toString() + " west", forAllX));
-
-        Expression existsXBody = BinaryExpression.Op.AND.make(BinaryExpression.Op.AND.make(xMemberA, xyMember), forAllU);
-
-        Expression existsX = QuantifiedExpression.Op.EXISTS.make(existsXBody, x);
-        Expression yImplies = BinaryExpression.Op.IMPLIES.make(yMemberB, existsX);
-        Expression forAllY = QuantifiedExpression.Op.FORALL.make(yImplies, y);
-        translator.smtProgram.addAssertion(new Assertion(expr.toString() + " east", forAllY));
-
-        return multiplicitySet.getVariable();
-    }
-
-    private Expression translateOneArrowSome(ExprBinary expr, Environment environment)
-    {
-        FunctionDeclaration multiplicitySet = translator.multiplicityVariableMap.get(expr);
-
-        if(multiplicitySet != null)
+        Multiplicity left = leftMultiplicity(arrow.op);
+        if (left != Multiplicity.ANY || hasMultiplicity(arrow.left))
         {
-            return multiplicitySet.getVariable();
+            Expression all = exprTranslator.forAllIn(B, (b, env) ->
+            {
+                Expression image = ExprTranslator.joinTupleRight(relation, b);
+                return ExprTranslator.and(multiplicity(left, image, env), isInArrowSide(image, arrow.left, env));
+            }, environment);
+            result = BinaryExpression.Op.AND.make(result, all);
         }
-
-        SetSort sort = new SetSort(new TupleSort(AlloyUtils.getExprSorts(expr)));
-        multiplicitySet = new FunctionDeclaration(TranslatorUtils.getNewSetName(), sort);
-        translator.multiplicityVariableMap.put(expr, multiplicitySet);
-        translator.smtProgram.addFunction(multiplicitySet);
-
-        Expression A = exprTranslator.translateExpr(expr.left, environment);
-        Expression B = exprTranslator.translateExpr(expr.right, environment);
-
-        Expression product = BinaryExpression.Op.PRODUCT.make(A, B);
-        Expression subset = BinaryExpression.Op.SUBSET.make(multiplicitySet.getVariable(), product);
-
-        translator.smtProgram.addAssertion(new Assertion(expr.toString() + " subset constraint", subset));
-
-        SetSort ASort = (SetSort) A.getSort();
-        SetSort BSort = (SetSort) B.getSort();
-
-        VariableDeclaration x = new VariableDeclaration("__x__", ASort.elementSort, null);
-        VariableDeclaration y = new VariableDeclaration("__y__", BSort.elementSort, null);
-        Expression xMemberA = BinaryExpression.Op.MEMBER.make(x.getVariable(), A);
-        Expression yMemberB = BinaryExpression.Op.MEMBER.make(y.getVariable(), B);
-
-        VariableDeclaration u = new VariableDeclaration("__u__", ASort.elementSort, null);
-        Expression uMemberA = BinaryExpression.Op.MEMBER.make(u.getVariable(), A);
-
-        // multiplicitySet subset of A one -> some B
-        // and
-        // forall x in A . exists y in B . xy in multiplicitySet
-        // and
-        // forall y in B . exists x in A . xy in multiplicitySet and
-        //       forall u in A. u != x implies uy not in  multiplicitySet
-
-        Expression xyTuple = getTupleConcatenation(ASort, BSort, x, y);
-        Expression uyTuple = getTupleConcatenation(ASort, BSort, u, y);
-
-        Expression xyMember = BinaryExpression.Op.MEMBER.make(xyTuple, multiplicitySet.getVariable());
-
-        Expression uyMember = BinaryExpression.Op.MEMBER.make(uyTuple, multiplicitySet.getVariable());
-
-        Expression notUY = UnaryExpression.Op.NOT.make(uyMember);
-
-        Expression uEqualX = BinaryExpression.Op.EQ.make(u.getVariable(), x.getVariable());
-        Expression notUEqualX = UnaryExpression.Op.NOT.make(uEqualX);
-
-        Expression uImplies = BinaryExpression.Op.IMPLIES.make(BinaryExpression.Op.AND.make(uMemberA, notUEqualX), notUY);
-        Expression forAllU = QuantifiedExpression.Op.FORALL.make(uImplies, u);
-
-        Expression existsYBody = BinaryExpression.Op.AND.make(yMemberB, xyMember);
-
-        Expression existsY = QuantifiedExpression.Op.EXISTS.make(existsYBody, y);
-        Expression xImplies = BinaryExpression.Op.IMPLIES.make(xMemberA, existsY);
-        Expression forAllX = QuantifiedExpression.Op.FORALL.make(xImplies, x);
-        translator.smtProgram.addAssertion(new Assertion(expr.toString() + " west", forAllX));
-
-        Expression existsXBody = BinaryExpression.Op.AND.make(BinaryExpression.Op.AND.make(xMemberA, xyMember), forAllU);
-
-        Expression existsX = QuantifiedExpression.Op.EXISTS.make(existsXBody, x);
-        Expression yImplies = BinaryExpression.Op.IMPLIES.make(yMemberB, existsX);
-        Expression forAllY = QuantifiedExpression.Op.FORALL.make(yImplies, y);
-        translator.smtProgram.addAssertion(new Assertion(expr.toString() + " east", forAllY));
-
-        return multiplicitySet.getVariable();
+        return result;
     }
 
-    private Expression translateOneArrowAny(ExprBinary expr, Environment environment)
+    // a.r in B is implied by r in A -> B, unless B has multiplicities
+    private Expression isInArrowSide(Expression image, Expr side, Environment environment)
     {
-        FunctionDeclaration multiplicitySet = translator.multiplicityVariableMap.get(expr);
-
-        if(multiplicitySet != null)
+        if (hasMultiplicity(side))
         {
-            return multiplicitySet.getVariable();
+            return isIn(image, side, environment);
         }
-
-        SetSort sort = new SetSort(new TupleSort(AlloyUtils.getExprSorts(expr)));
-        multiplicitySet = new FunctionDeclaration(TranslatorUtils.getNewSetName(), sort);
-        translator.multiplicityVariableMap.put(expr, multiplicitySet);
-        translator.smtProgram.addFunction(multiplicitySet);
-
-        Expression A = exprTranslator.translateExpr(expr.left, environment);
-        Expression B = exprTranslator.translateExpr(expr.right, environment);
-
-        Expression product = BinaryExpression.Op.PRODUCT.make(A, B);
-        Expression subset = BinaryExpression.Op.SUBSET.make(multiplicitySet.getVariable(), product);
-
-        translator.smtProgram.addAssertion(new Assertion(expr.toString() + " subset constraint", subset));
-
-        SetSort ASort = (SetSort) A.getSort();
-        SetSort BSort = (SetSort) B.getSort();
-
-        VariableDeclaration x = new VariableDeclaration("__x__", ASort.elementSort, null);
-        VariableDeclaration y = new VariableDeclaration("__y__", BSort.elementSort, null);
-        Expression xMemberA = BinaryExpression.Op.MEMBER.make(x.getVariable(), A);
-        Expression yMemberB = BinaryExpression.Op.MEMBER.make(y.getVariable(), B);
-
-        VariableDeclaration u = new VariableDeclaration("__u__", ASort.elementSort, null);
-        Expression uMemberA = BinaryExpression.Op.MEMBER.make(u.getVariable(), A);
-
-        // multiplicitySet subset of A one -> set B
-        // and
-        // forall y in B . exists x in A . xy in multiplicitySet and
-        //       forall u in A. u != x implies uy not in  multiplicitySet
-
-        Expression xyTuple = getTupleConcatenation(ASort, BSort, x, y);
-        Expression uyTuple = getTupleConcatenation(ASort, BSort, u, y);
-
-        Expression xyMember = BinaryExpression.Op.MEMBER.make(xyTuple, multiplicitySet.getVariable());
-
-        Expression uyMember = BinaryExpression.Op.MEMBER.make(uyTuple, multiplicitySet.getVariable());
-
-        Expression notUY = UnaryExpression.Op.NOT.make(uyMember);
-
-        Expression uEqualX = BinaryExpression.Op.EQ.make(u.getVariable(), x.getVariable());
-        Expression notUEqualX = UnaryExpression.Op.NOT.make(uEqualX);
-
-        Expression uImplies = BinaryExpression.Op.IMPLIES.make(BinaryExpression.Op.AND.make(uMemberA, notUEqualX), notUY);
-        Expression forAllU = QuantifiedExpression.Op.FORALL.make(uImplies, u);
-
-        Expression existsXBody = BinaryExpression.Op.AND.make(BinaryExpression.Op.AND.make(xMemberA, xyMember), forAllU);
-
-        Expression existsX = QuantifiedExpression.Op.EXISTS.make(existsXBody, x);
-        Expression yImplies = BinaryExpression.Op.IMPLIES.make(yMemberB, existsX);
-        Expression forAllY = QuantifiedExpression.Op.FORALL.make(yImplies, y);
-        translator.smtProgram.addAssertion(new Assertion(expr.toString() + " east", forAllY));
-
-        return multiplicitySet.getVariable();
+        return BoolConstant.True;
     }
 
-    private Expression translateSomeArrowOne(ExprBinary expr, Environment environment)
-    {
-        FunctionDeclaration multiplicitySet = translator.multiplicityVariableMap.get(expr);
-
-        if(multiplicitySet != null)
-        {
-            return multiplicitySet.getVariable();
-        }
-
-        SetSort sort = new SetSort(new TupleSort(AlloyUtils.getExprSorts(expr)));
-        multiplicitySet = new FunctionDeclaration(TranslatorUtils.getNewSetName(), sort);
-        translator.multiplicityVariableMap.put(expr, multiplicitySet);
-        translator.smtProgram.addFunction(multiplicitySet);
-
-        Expression A = exprTranslator.translateExpr(expr.left, environment);
-        Expression B = exprTranslator.translateExpr(expr.right, environment);
-
-        Expression product = BinaryExpression.Op.PRODUCT.make(A, B);
-        Expression subset = BinaryExpression.Op.SUBSET.make(multiplicitySet.getVariable(), product);
-
-        translator.smtProgram.addAssertion(new Assertion(expr.toString() + " subset constraint", subset));
-
-        SetSort ASort = (SetSort) A.getSort();
-        SetSort BSort = (SetSort) B.getSort();
-
-        VariableDeclaration x = new VariableDeclaration("__x__", ASort.elementSort, null);
-        VariableDeclaration y = new VariableDeclaration("__y__", BSort.elementSort, null);
-        Expression xMemberA = BinaryExpression.Op.MEMBER.make(x.getVariable(), A);
-        Expression yMemberB = BinaryExpression.Op.MEMBER.make(y.getVariable(), B);
-
-        VariableDeclaration v = new VariableDeclaration("__v__", BSort.elementSort, null);
-        Expression vMemberB = BinaryExpression.Op.MEMBER.make(v.getVariable(), B);
-
-        // multiplicitySet subset of A some -> one B
-        // and
-        // forall x in A . exists y in B . xy in multiplicitySet and
-        //       forall v in B. v != y implies xv not in  multiplicitySet
-        // and
-        // forall y in B . exists x in A . xy in multiplicitySet
-
-        Expression xyTuple = getTupleConcatenation(ASort, BSort, x, y);
-        Expression xvTuple = getTupleConcatenation(ASort, BSort, x, v);
-
-        Expression xyMember = BinaryExpression.Op.MEMBER.make(xyTuple, multiplicitySet.getVariable());
-        Expression xvMember = BinaryExpression.Op.MEMBER.make(xvTuple, multiplicitySet.getVariable());
-
-        Expression notXV = UnaryExpression.Op.NOT.make(xvMember);
-
-        Expression vEqualY = BinaryExpression.Op.EQ.make(v.getVariable(), y.getVariable());
-        Expression notVEqualY = UnaryExpression.Op.NOT.make(vEqualY);
-
-        Expression vImplies = BinaryExpression.Op.IMPLIES.make(BinaryExpression.Op.AND.make(vMemberB, notVEqualY), notXV);
-        Expression forAllV = QuantifiedExpression.Op.FORALL.make(vImplies, v);
-
-        Expression existsYBody = BinaryExpression.Op.AND.make(BinaryExpression.Op.AND.make(yMemberB, xyMember), forAllV);
-
-        Expression existsY = QuantifiedExpression.Op.EXISTS.make( existsYBody, y);
-        Expression xImplies = BinaryExpression.Op.IMPLIES.make(xMemberA, existsY);
-        Expression forAllX = QuantifiedExpression.Op.FORALL.make(xImplies, x);
-        translator.smtProgram.addAssertion(new Assertion(expr.toString() + " west", forAllX));
-
-        Expression existsXBody = BinaryExpression.Op.AND.make(xMemberA, xyMember);
-
-        Expression existsX = QuantifiedExpression.Op.EXISTS.make(existsXBody, x);
-        Expression yImplies = BinaryExpression.Op.IMPLIES.make(yMemberB, existsX);
-        Expression forAllY = QuantifiedExpression.Op.FORALL.make(yImplies, y);
-        translator.smtProgram.addAssertion(new Assertion(expr.toString() + " east", forAllY));
-
-        return multiplicitySet.getVariable();
-    }
-
-    private Expression translateAnyArrowOne(ExprBinary expr, Environment environment)
-    {
-        FunctionDeclaration multiplicitySet = translator.multiplicityVariableMap.get(expr);
-
-        if(multiplicitySet != null)
-        {
-            return multiplicitySet.getVariable();
-        }
-
-        SetSort sort = new SetSort(new TupleSort(AlloyUtils.getExprSorts(expr)));
-        multiplicitySet = new FunctionDeclaration(TranslatorUtils.getNewSetName(), sort);
-        translator.multiplicityVariableMap.put(expr, multiplicitySet);
-        translator.smtProgram.addFunction(multiplicitySet);
-
-        Expression A = exprTranslator.translateExpr(expr.left, environment);
-        Expression B = exprTranslator.translateExpr(expr.right, environment);
-
-        Expression product = BinaryExpression.Op.PRODUCT.make(A, B);
-        Expression subset = BinaryExpression.Op.SUBSET.make(multiplicitySet.getVariable(), product);
-
-        translator.smtProgram.addAssertion(new Assertion(expr.toString() + " subset constraint", subset));
-
-        SetSort ASort = (SetSort) A.getSort();
-        SetSort BSort = (SetSort) B.getSort();
-
-        VariableDeclaration x = new VariableDeclaration("__x__", ASort.elementSort, null);
-        VariableDeclaration y = new VariableDeclaration("__y__", BSort.elementSort, null);
-        Expression xMemberA = BinaryExpression.Op.MEMBER.make(x.getVariable(), A);
-        Expression yMemberB = BinaryExpression.Op.MEMBER.make(y.getVariable(), B);
-
-        VariableDeclaration v = new VariableDeclaration("__v__", BSort.elementSort, null);
-        Expression vMemberB = BinaryExpression.Op.MEMBER.make(v.getVariable(), B);
-
-        // multiplicitySet subset of A set -> one B
-        // and
-        // forall x in A . exists y in B . xy in multiplicitySet and
-        //       forall v in B. v != y implies xv not in  multiplicitySet
-
-        Expression xyTuple = getTupleConcatenation(ASort, BSort, x, y);
-        Expression xvTuple = getTupleConcatenation(ASort, BSort, x, v);
-
-        Expression xyMember = BinaryExpression.Op.MEMBER.make(xyTuple, multiplicitySet.getVariable());
-        Expression xvMember = BinaryExpression.Op.MEMBER.make(xvTuple, multiplicitySet.getVariable());
-
-        Expression notXV = UnaryExpression.Op.NOT.make(xvMember);
-
-        Expression vEqualY = BinaryExpression.Op.EQ.make(v.getVariable(), y.getVariable());
-        Expression notVEqualY = UnaryExpression.Op.NOT.make(vEqualY);
-
-        Expression vImplies = BinaryExpression.Op.IMPLIES.make(BinaryExpression.Op.AND.make(vMemberB, notVEqualY), notXV);
-        Expression forAllV = QuantifiedExpression.Op.FORALL.make(vImplies, v);
-
-        Expression existsYBody = BinaryExpression.Op.AND.make(BinaryExpression.Op.AND.make(yMemberB, xyMember), forAllV);
-
-        Expression existsY = QuantifiedExpression.Op.EXISTS.make(existsYBody, y);
-        Expression xImplies = BinaryExpression.Op.IMPLIES.make(xMemberA, existsY);
-        Expression forAllX = QuantifiedExpression.Op.FORALL.make(xImplies, x);
-        translator.smtProgram.addAssertion(new Assertion(expr.toString() + " west", forAllX));
-
-        return multiplicitySet.getVariable();
-    }
-
-    private Expression translateSomeArrowSome(ExprBinary expr, Environment environment)
-    {
-        FunctionDeclaration multiplicitySet = translator.multiplicityVariableMap.get(expr);
-
-        if(multiplicitySet != null)
-        {
-            return multiplicitySet.getVariable();
-        }
-
-        SetSort sort = new SetSort(new TupleSort(AlloyUtils.getExprSorts(expr)));
-        multiplicitySet = new FunctionDeclaration(TranslatorUtils.getNewSetName(), sort);
-        translator.multiplicityVariableMap.put(expr, multiplicitySet);
-        translator.smtProgram.addFunction(multiplicitySet);
-
-        Expression A = exprTranslator.translateExpr(expr.left, environment);
-        Expression B = exprTranslator.translateExpr(expr.right, environment);
-
-        Expression product = BinaryExpression.Op.PRODUCT.make(A, B);
-        Expression subset = BinaryExpression.Op.SUBSET.make(multiplicitySet.getVariable(), product);
-
-        translator.smtProgram.addAssertion(new Assertion(expr.toString() + " subset constraint", subset));
-
-        SetSort ASort = (SetSort) A.getSort();
-        SetSort BSort = (SetSort) B.getSort();
-
-        VariableDeclaration x = new VariableDeclaration("__x__", ASort.elementSort, null);
-        VariableDeclaration y = new VariableDeclaration("__y__", BSort.elementSort, null);
-        Expression xMemberA = BinaryExpression.Op.MEMBER.make(x.getVariable(), A);
-        Expression yMemberB = BinaryExpression.Op.MEMBER.make(y.getVariable(), B);
-
-        // multiplicitySet subset of A some -> some B
-        // and
-        // forall x in A . exists y in B . xy in multiplicitySet
-        // and
-        // forall y in B . exists x in A . xy in multiplicitySet
-
-        Expression xyTuple = getTupleConcatenation(ASort, BSort, x, y);
-
-        Expression xyMember = BinaryExpression.Op.MEMBER.make(xyTuple, multiplicitySet.getVariable());
-
-        Expression existsYBody = BinaryExpression.Op.AND.make(yMemberB, xyMember);
-        Expression existsY = QuantifiedExpression.Op.EXISTS.make(existsYBody, y);
-        Expression xImplies = BinaryExpression.Op.IMPLIES.make(xMemberA, existsY);
-        Expression forAllX = QuantifiedExpression.Op.FORALL.make(xImplies, x);
-        translator.smtProgram.addAssertion(new Assertion(expr.toString() + " west", forAllX));
-
-        Expression existsXBody = BinaryExpression.Op.AND.make(xMemberA, xyMember);
-
-        Expression existsX = QuantifiedExpression.Op.EXISTS.make(existsXBody, x);
-        Expression yImplies = BinaryExpression.Op.IMPLIES.make(yMemberB, existsX);
-        Expression forAllY = QuantifiedExpression.Op.FORALL.make(yImplies, y);
-        translator.smtProgram.addAssertion(new Assertion(expr.toString() + " east", forAllY));
-
-        return multiplicitySet.getVariable();
-    }
-
-    private Expression translateSomeArrowAny(ExprBinary expr, Environment environment)
-    {
-        FunctionDeclaration multiplicitySet = translator.multiplicityVariableMap.get(expr);
-
-        if(multiplicitySet != null)
-        {
-            return multiplicitySet.getVariable();
-        }
-
-        SetSort sort = new SetSort(new TupleSort(AlloyUtils.getExprSorts(expr)));
-        multiplicitySet = new FunctionDeclaration(TranslatorUtils.getNewSetName(), sort);
-        translator.multiplicityVariableMap.put(expr, multiplicitySet);
-        translator.smtProgram.addFunction(multiplicitySet);
-
-        Expression A = exprTranslator.translateExpr(expr.left, environment);
-        Expression B = exprTranslator.translateExpr(expr.right, environment);
-
-        Expression product = BinaryExpression.Op.PRODUCT.make(A, B);
-        Expression subset = BinaryExpression.Op.SUBSET.make(multiplicitySet.getVariable(), product);
-
-        translator.smtProgram.addAssertion(new Assertion(expr.toString() + " subset constraint", subset));
-
-        SetSort ASort = (SetSort) A.getSort();
-        SetSort BSort = (SetSort) B.getSort();
-
-        VariableDeclaration x = new VariableDeclaration("__x__", ASort.elementSort, null);
-        VariableDeclaration y = new VariableDeclaration("__y__", BSort.elementSort, null);
-        Expression xMemberA = BinaryExpression.Op.MEMBER.make(x.getVariable(), A);
-        Expression yMemberB = BinaryExpression.Op.MEMBER.make(y.getVariable(), B);
-
-        // multiplicitySet subset of A some -> set B
-        // and
-        // forall y in B . exists x in A . xy in multiplicitySet
-
-        Expression xyTuple = getTupleConcatenation(ASort, BSort, x, y);
-
-        Expression xyMember = BinaryExpression.Op.MEMBER.make(xyTuple, multiplicitySet.getVariable());
-
-        Expression existsXBody = BinaryExpression.Op.AND.make(xMemberA, xyMember);
-        Expression existsX = QuantifiedExpression.Op.EXISTS.make(existsXBody, x);
-        Expression yImplies = BinaryExpression.Op.IMPLIES.make(yMemberB, existsX);
-        Expression forAllY = QuantifiedExpression.Op.FORALL.make(yImplies, y);
-        translator.smtProgram.addAssertion(new Assertion(expr.toString() + " east", forAllY));
-
-        return multiplicitySet.getVariable();
-    }
-
-    private Expression translateAnyArrowSome(ExprBinary expr, Environment environment)
-    {
-        FunctionDeclaration multiplicitySet = translator.multiplicityVariableMap.get(expr);
-
-        if(multiplicitySet != null)
-        {
-            return multiplicitySet.getVariable();
-        }
-
-        SetSort sort = new SetSort(new TupleSort(AlloyUtils.getExprSorts(expr)));
-        multiplicitySet = new FunctionDeclaration(TranslatorUtils.getNewSetName(), sort);
-        translator.multiplicityVariableMap.put(expr, multiplicitySet);
-        translator.smtProgram.addFunction(multiplicitySet);
-
-        Expression A = exprTranslator.translateExpr(expr.left, environment);
-        Expression B = exprTranslator.translateExpr(expr.right, environment);
-
-        Expression product = BinaryExpression.Op.PRODUCT.make(A, B);
-        Expression subset = BinaryExpression.Op.SUBSET.make(multiplicitySet.getVariable(), product);
-
-        translator.smtProgram.addAssertion(new Assertion(expr.toString() + " subset constraint", subset));
-
-        SetSort ASort = (SetSort) A.getSort();
-        SetSort BSort = (SetSort) B.getSort();
-
-        VariableDeclaration x = new VariableDeclaration("__x__", ASort.elementSort, null);
-        VariableDeclaration y = new VariableDeclaration("__y__", BSort.elementSort, null);
-        Expression xMemberA = BinaryExpression.Op.MEMBER.make(x.getVariable(), A);
-        Expression yMemberB = BinaryExpression.Op.MEMBER.make(y.getVariable(), B);
-
-        // multiplicitySet subset of A set -> some B
-        // and
-        // forall x in A . exists y in B . xy in multiplicitySet
-
-        Expression xyTuple = getTupleConcatenation(ASort, BSort, x, y);
-
-        Expression xyMember = BinaryExpression.Op.MEMBER.make(xyTuple, multiplicitySet.getVariable());
-
-        Expression existsYBody = BinaryExpression.Op.AND.make(yMemberB, xyMember);
-        Expression existsY = QuantifiedExpression.Op.EXISTS.make(existsYBody, y);
-        Expression xImplies = BinaryExpression.Op.IMPLIES.make(xMemberA, existsY);
-        Expression forAllX = QuantifiedExpression.Op.FORALL.make(xImplies, x);
-        translator.smtProgram.addAssertion(new Assertion(expr.toString() + " west", forAllX));
-
-        return multiplicitySet.getVariable();
-    }
-
-    private Expression translateOneArrowLone(ExprBinary expr, Environment environment)
-    {
-        FunctionDeclaration multiplicitySet = translator.multiplicityVariableMap.get(expr);
-
-        if(multiplicitySet != null)
-        {
-            return multiplicitySet.getVariable();
-        }
-
-        SetSort sort = new SetSort(new TupleSort(AlloyUtils.getExprSorts(expr)));
-        multiplicitySet = new FunctionDeclaration(TranslatorUtils.getNewSetName(), sort);
-        translator.multiplicityVariableMap.put(expr, multiplicitySet);
-        translator.smtProgram.addFunction(multiplicitySet);
-
-        Expression A = exprTranslator.translateExpr(expr.left, environment);
-        Expression B = exprTranslator.translateExpr(expr.right, environment);
-
-        Expression product = BinaryExpression.Op.PRODUCT.make(A, B);
-        Expression subset = BinaryExpression.Op.SUBSET.make(multiplicitySet.getVariable(), product);
-
-        translator.smtProgram.addAssertion(new Assertion(expr.toString() + " subset constraint", subset));
-
-        SetSort ASort = (SetSort) A.getSort();
-        SetSort BSort = (SetSort) B.getSort();
-
-        VariableDeclaration x = new VariableDeclaration("__x__", ASort.elementSort, null);
-        VariableDeclaration y = new VariableDeclaration("__y__", BSort.elementSort, null);
-        Expression xMemberA = BinaryExpression.Op.MEMBER.make(x.getVariable(), A);
-        Expression yMemberB = BinaryExpression.Op.MEMBER.make(y.getVariable(), B);
-
-        VariableDeclaration u = new VariableDeclaration("__u__", ASort.elementSort, null);
-        VariableDeclaration v = new VariableDeclaration("__v__", BSort.elementSort, null);
-        Expression uMemberA = BinaryExpression.Op.MEMBER.make(u.getVariable(), A);
-        Expression vMemberB = BinaryExpression.Op.MEMBER.make(v.getVariable(), B);
-
-        // multiplicitySet subset of A one -> lone B
-        // and
-        // forall x in A .
-        //      (forall y in B. xy not in multiplicitySet)
-        //      or
-        //      (exists y in B . xy in multiplicitySet and
-        //          forall v in B. v != y implies xv not in  multiplicitySet)
-        // and
-        // forall y in B . exists x in A . xy in multiplicitySet and
-        //       forall u in A. u != x implies uy not in  multiplicitySet
-
-
-        Expression xyTuple = getTupleConcatenation(ASort, BSort, x, y);
-        Expression xvTuple = getTupleConcatenation(ASort, BSort, x, v);
-        Expression uyTuple = getTupleConcatenation(ASort, BSort, u, y);
-
-        Expression xyMember = BinaryExpression.Op.MEMBER.make(xyTuple, multiplicitySet.getVariable());
-        Expression xvMember = BinaryExpression.Op.MEMBER.make(xvTuple, multiplicitySet.getVariable());
-        Expression uyMember = BinaryExpression.Op.MEMBER.make(uyTuple, multiplicitySet.getVariable());
-
-        Expression notXY = UnaryExpression.Op.NOT.make(xyMember);
-        Expression notXV = UnaryExpression.Op.NOT.make(xvMember);
-        Expression notUY = UnaryExpression.Op.NOT.make(uyMember);
-
-        Expression vEqualY = BinaryExpression.Op.EQ.make(v.getVariable(), y.getVariable());
-        Expression notVEqualY = UnaryExpression.Op.NOT.make(vEqualY);
-
-        Expression vImplies = BinaryExpression.Op.IMPLIES.make(BinaryExpression.Op.AND.make(vMemberB, notVEqualY), notXV);
-        Expression forAllV = QuantifiedExpression.Op.FORALL.make(vImplies, v);
-
-        Expression uEqualX = BinaryExpression.Op.EQ.make(u.getVariable(), x.getVariable());
-        Expression notUEqualX = UnaryExpression.Op.NOT.make(uEqualX);
-
-        Expression uImplies = BinaryExpression.Op.IMPLIES.make(BinaryExpression.Op.AND.make(uMemberA, notUEqualX), notUY);
-        Expression forAllU = QuantifiedExpression.Op.FORALL.make(uImplies, u);
-
-        Expression existsYBody = BinaryExpression.Op.AND.make(BinaryExpression.Op.AND.make(yMemberB, xyMember), forAllV);
-
-        Expression existsY = QuantifiedExpression.Op.EXISTS.make(existsYBody, y);
-        Expression lone = BinaryExpression.Op.OR.make(QuantifiedExpression.Op.FORALL.make(notXY, y), existsY);
-        Expression xImplies = BinaryExpression.Op.IMPLIES.make(xMemberA, lone);
-        Expression forAllX = QuantifiedExpression.Op.FORALL.make(xImplies, x);
-        translator.smtProgram.addAssertion(new Assertion(expr.toString() + " west", forAllX));
-
-        Expression existsXBody = BinaryExpression.Op.AND.make(BinaryExpression.Op.AND.make(xMemberA, xyMember), forAllU);
-
-        Expression existsX = QuantifiedExpression.Op.EXISTS.make(existsXBody, x);
-        Expression yImplies = BinaryExpression.Op.IMPLIES.make(yMemberB, existsX);
-        Expression forAllY = QuantifiedExpression.Op.FORALL.make(yImplies, y);
-        translator.smtProgram.addAssertion(new Assertion(expr.toString() + " east", forAllY));
-
-        return multiplicitySet.getVariable();
-    }
-
-    private Expression translateSomeArrowLone(ExprBinary expr, Environment environment)
-    {
-        FunctionDeclaration multiplicitySet = translator.multiplicityVariableMap.get(expr);
-
-        if(multiplicitySet != null)
-        {
-            return multiplicitySet.getVariable();
-        }
-
-        SetSort sort = new SetSort(new TupleSort(AlloyUtils.getExprSorts(expr)));
-        multiplicitySet = new FunctionDeclaration(TranslatorUtils.getNewSetName(), sort);
-        translator.multiplicityVariableMap.put(expr, multiplicitySet);
-        translator.smtProgram.addFunction(multiplicitySet);
-
-        Expression A = exprTranslator.translateExpr(expr.left, environment);
-        Expression B = exprTranslator.translateExpr(expr.right, environment);
-
-        Expression product = BinaryExpression.Op.PRODUCT.make(A, B);
-        Expression subset = BinaryExpression.Op.SUBSET.make(multiplicitySet.getVariable(), product);
-
-        translator.smtProgram.addAssertion(new Assertion(expr.toString() + " subset constraint", subset));
-
-        SetSort ASort = (SetSort) A.getSort();
-        SetSort BSort = (SetSort) B.getSort();
-
-        VariableDeclaration x = new VariableDeclaration("__x__", ASort.elementSort, null);
-        VariableDeclaration y = new VariableDeclaration("__y__", BSort.elementSort, null);
-        Expression xMemberA = BinaryExpression.Op.MEMBER.make(x.getVariable(), A);
-        Expression yMemberB = BinaryExpression.Op.MEMBER.make(y.getVariable(), B);
-
-        VariableDeclaration v = new VariableDeclaration("__v__", BSort.elementSort, null);
-        Expression vMemberB = BinaryExpression.Op.MEMBER.make(v.getVariable(), B);
-
-        // multiplicitySet subset of A some -> lone B
-        // and
-        // forall x in A .
-        //      (forall y in B. xy not in multiplicitySet)
-        //      or
-        //      (exists y in B . xy in multiplicitySet and
-        //          forall v in B. v != y implies xv not in  multiplicitySet)
-        // and
-        // forall y in B . exists x in A . xy in multiplicitySet
-
-        Expression xyTuple = getTupleConcatenation(ASort, BSort, x, y);
-        Expression xvTuple = getTupleConcatenation(ASort, BSort, x, v);
-
-        Expression xyMember = BinaryExpression.Op.MEMBER.make(xyTuple, multiplicitySet.getVariable());
-        Expression xvMember = BinaryExpression.Op.MEMBER.make(xvTuple, multiplicitySet.getVariable());
-
-        Expression notXY = UnaryExpression.Op.NOT.make(xyMember);
-        Expression notXV = UnaryExpression.Op.NOT.make(xvMember);
-
-        Expression vEqualY = BinaryExpression.Op.EQ.make(v.getVariable(), y.getVariable());
-        Expression notVEqualY = UnaryExpression.Op.NOT.make(vEqualY);
-
-        Expression vImplies = BinaryExpression.Op.IMPLIES.make(BinaryExpression.Op.AND.make(vMemberB, notVEqualY), notXV);
-        Expression forAllV = QuantifiedExpression.Op.FORALL.make(vImplies, v);
-
-        Expression existsYBody = BinaryExpression.Op.AND.make(BinaryExpression.Op.AND.make(yMemberB, xyMember), forAllV);
-
-        Expression existsY = QuantifiedExpression.Op.EXISTS.make(existsYBody, y);
-        Expression lone = BinaryExpression.Op.OR.make(QuantifiedExpression.Op.FORALL.make(notXY, y), existsY);
-        Expression xImplies = BinaryExpression.Op.IMPLIES.make(xMemberA, lone);
-        Expression forAllX = QuantifiedExpression.Op.FORALL.make(xImplies, x);
-        translator.smtProgram.addAssertion(new Assertion(expr.toString() + " west", forAllX));
-
-        Expression existsXBody = BinaryExpression.Op.AND.make(xMemberA, xyMember);
-
-        Expression existsX = QuantifiedExpression.Op.EXISTS.make(existsXBody, x);
-        Expression yImplies = BinaryExpression.Op.IMPLIES.make(yMemberB, existsX);
-        Expression forAllY = QuantifiedExpression.Op.FORALL.make(yImplies, y);
-        translator.smtProgram.addAssertion(new Assertion(expr.toString() + " east", forAllY));
-
-        return multiplicitySet.getVariable();
-    }
-
-    private Expression translateAnyArrowLone(ExprBinary expr, Environment environment)
-    {
-        FunctionDeclaration multiplicitySet = translator.multiplicityVariableMap.get(expr);
-
-        if(multiplicitySet != null)
-        {
-            return multiplicitySet.getVariable();
-        }
-
-        SetSort sort = new SetSort(new TupleSort(AlloyUtils.getExprSorts(expr)));
-        multiplicitySet = new FunctionDeclaration(TranslatorUtils.getNewSetName(), sort);
-        translator.multiplicityVariableMap.put(expr, multiplicitySet);
-        translator.smtProgram.addFunction(multiplicitySet);
-
-        Expression A = exprTranslator.translateExpr(expr.left, environment);
-        Expression B = exprTranslator.translateExpr(expr.right, environment);
-
-        Expression product = BinaryExpression.Op.PRODUCT.make(A, B);
-        Expression subset = BinaryExpression.Op.SUBSET.make(multiplicitySet.getVariable(), product);
-
-        translator.smtProgram.addAssertion(new Assertion(expr.toString() + " subset constraint", subset));
-
-        SetSort ASort = (SetSort) A.getSort();
-        SetSort BSort = (SetSort) B.getSort();
-
-        VariableDeclaration x = new VariableDeclaration("__x__", ASort.elementSort, null);
-        VariableDeclaration y = new VariableDeclaration("__y__", BSort.elementSort, null);
-        Expression xMemberA = BinaryExpression.Op.MEMBER.make(x.getVariable(), A);
-        Expression yMemberB = BinaryExpression.Op.MEMBER.make(y.getVariable(), B);
-
-        VariableDeclaration v = new VariableDeclaration("__v__", BSort.elementSort, null);
-        Expression vMemberB = BinaryExpression.Op.MEMBER.make(v.getVariable(), B);
-
-        // multiplicitySet subset of A set -> lone B
-        // and
-        // forall x in A .
-        //      (forall y in B. xy not in multiplicitySet)
-        //      or
-        //      (exists y in B . xy in multiplicitySet and
-        //          forall v in B. v != y implies xv not in  multiplicitySet)
-
-        Expression xyTuple = getTupleConcatenation(ASort, BSort, x, y);
-        Expression xvTuple = getTupleConcatenation(ASort, BSort, x, v);
-
-        Expression xyMember = BinaryExpression.Op.MEMBER.make(xyTuple, multiplicitySet.getVariable());
-        Expression xvMember = BinaryExpression.Op.MEMBER.make(xvTuple, multiplicitySet.getVariable());
-
-        Expression notXY = UnaryExpression.Op.NOT.make(xyMember);
-        Expression notXV = UnaryExpression.Op.NOT.make(xvMember);
-
-        Expression vEqualY = BinaryExpression.Op.EQ.make(v.getVariable(), y.getVariable());
-        Expression notVEqualY = UnaryExpression.Op.NOT.make(vEqualY);
-
-        Expression vImplies = BinaryExpression.Op.IMPLIES.make(BinaryExpression.Op.AND.make(vMemberB, notVEqualY), notXV);
-        Expression forAllV = QuantifiedExpression.Op.FORALL.make(vImplies, v);
-
-        Expression existsYBody = BinaryExpression.Op.AND.make(BinaryExpression.Op.AND.make(yMemberB, xyMember), forAllV);
-
-        Expression existsY = QuantifiedExpression.Op.EXISTS.make(existsYBody, y);
-        Expression lone = BinaryExpression.Op.OR.make(QuantifiedExpression.Op.FORALL.make(notXY, y), existsY);
-        Expression xImplies = BinaryExpression.Op.IMPLIES.make(xMemberA, lone);
-        Expression forAllX = QuantifiedExpression.Op.FORALL.make(xImplies, x);
-        translator.smtProgram.addAssertion(new Assertion(expr.toString() + " west", forAllX));
-        return multiplicitySet.getVariable();
-    }
-
-    private Expression translateLoneArrowLone(ExprBinary expr, Environment environment)
-    {
-        FunctionDeclaration multiplicitySet = translator.multiplicityVariableMap.get(expr);
-
-        if(multiplicitySet != null)
-        {
-            return multiplicitySet.getVariable();
-        }
-
-        SetSort sort = new SetSort(new TupleSort(AlloyUtils.getExprSorts(expr)));
-        multiplicitySet = new FunctionDeclaration(TranslatorUtils.getNewSetName(), sort);
-        translator.multiplicityVariableMap.put(expr, multiplicitySet);
-        translator.smtProgram.addFunction(multiplicitySet);
-
-        Expression A = exprTranslator.translateExpr(expr.left, environment);
-        Expression B = exprTranslator.translateExpr(expr.right, environment);
-
-        Expression product = BinaryExpression.Op.PRODUCT.make(A, B);
-        Expression subset = BinaryExpression.Op.SUBSET.make(multiplicitySet.getVariable(), product);
-
-        translator.smtProgram.addAssertion(new Assertion(expr.toString() + " subset constraint", subset));
-
-        SetSort ASort = (SetSort) A.getSort();
-        SetSort BSort = (SetSort) B.getSort();
-
-        VariableDeclaration x = new VariableDeclaration("__x__", ASort.elementSort, null);
-        VariableDeclaration y = new VariableDeclaration("__y__", BSort.elementSort, null);
-        Expression xMemberA = BinaryExpression.Op.MEMBER.make(x.getVariable(), A);
-        Expression yMemberB = BinaryExpression.Op.MEMBER.make(y.getVariable(), B);
-
-        VariableDeclaration u = new VariableDeclaration("__u__", ASort.elementSort, null);
-        VariableDeclaration v = new VariableDeclaration("__v__", BSort.elementSort, null);
-        Expression uMemberA = BinaryExpression.Op.MEMBER.make(u.getVariable(), A);
-        Expression vMemberB = BinaryExpression.Op.MEMBER.make(v.getVariable(), B);
-
-        // multiplicitySet subset of A lone -> lone B
-        // and
-        // forall x in A .
-        //      (forall y in B. xy not in multiplicitySet)
-        //      or
-        //      (exists y in B . xy in multiplicitySet and
-        //          forall v in B. v != y implies xv not in  multiplicitySet)
-        // and
-        // forall y in B.
-        //      (forall x in A. xy not in multiplicitySet)
-        //      or
-        //      (exists x in A . xy in multiplicitySet and
-        //          forall u in A. u != x implies uy not in  multiplicitySet)
-
-
-        Expression xyTuple = getTupleConcatenation(ASort, BSort, x, y);
-        Expression xvTuple = getTupleConcatenation(ASort, BSort, x, v);
-        Expression uyTuple = getTupleConcatenation(ASort, BSort, u, y);
-
-        Expression xyMember = BinaryExpression.Op.MEMBER.make(xyTuple, multiplicitySet.getVariable());
-        Expression xvMember = BinaryExpression.Op.MEMBER.make(xvTuple, multiplicitySet.getVariable());
-        Expression uyMember = BinaryExpression.Op.MEMBER.make(uyTuple, multiplicitySet.getVariable());
-
-        Expression notXY = UnaryExpression.Op.NOT.make(xyMember);
-        Expression notXV = UnaryExpression.Op.NOT.make(xvMember);
-        Expression notUY = UnaryExpression.Op.NOT.make(uyMember);
-
-        Expression vEqualY = BinaryExpression.Op.EQ.make(v.getVariable(), y.getVariable());
-        Expression notVEqualY = UnaryExpression.Op.NOT.make(vEqualY);
-
-        Expression vImplies = BinaryExpression.Op.IMPLIES.make(BinaryExpression.Op.AND.make(vMemberB, notVEqualY), notXV);
-        Expression forAllV = QuantifiedExpression.Op.FORALL.make(vImplies, v);
-
-        Expression uEqualX = BinaryExpression.Op.EQ.make(u.getVariable(), x.getVariable());
-        Expression notUEqualX = UnaryExpression.Op.NOT.make(uEqualX);
-
-        Expression uImplies = BinaryExpression.Op.IMPLIES.make(BinaryExpression.Op.AND.make(uMemberA, notUEqualX), notUY);
-        Expression forAllU = QuantifiedExpression.Op.FORALL.make(uImplies, u);
-
-        Expression existsYBody = BinaryExpression.Op.AND.make(BinaryExpression.Op.AND.make(yMemberB, xyMember), forAllV);
-
-        Expression existsY = QuantifiedExpression.Op.EXISTS.make(existsYBody, y);
-        Expression loneWest = BinaryExpression.Op.OR.make(QuantifiedExpression.Op.FORALL.make(notXY, y), existsY);
-        Expression xImplies = BinaryExpression.Op.IMPLIES.make(xMemberA, loneWest);
-        Expression forAllX = QuantifiedExpression.Op.FORALL.make(xImplies, x);
-        translator.smtProgram.addAssertion(new Assertion(expr.toString() + " west", forAllX));
-
-        Expression existsXBody = BinaryExpression.Op.AND.make(BinaryExpression.Op.AND.make(xMemberA, xyMember), forAllU);
-
-        Expression existsX = QuantifiedExpression.Op.EXISTS.make(existsXBody, x);
-        Expression loneEast = BinaryExpression.Op.OR.make(QuantifiedExpression.Op.FORALL.make(notXY, x), existsX);
-        Expression yImplies = BinaryExpression.Op.IMPLIES.make(yMemberB, loneEast);
-        Expression forAllY = QuantifiedExpression.Op.FORALL.make(yImplies, y);
-        translator.smtProgram.addAssertion(new Assertion(expr.toString() + " east", forAllY));
-
-        return multiplicitySet.getVariable();
-    }
-
-    private Expression translateLoneArrowOne(ExprBinary expr, Environment environment)
-    {
-        FunctionDeclaration multiplicitySet = translator.multiplicityVariableMap.get(expr);
-
-        if(multiplicitySet != null)
-        {
-            return multiplicitySet.getVariable();
-        }
-
-        SetSort sort = new SetSort(new TupleSort(AlloyUtils.getExprSorts(expr)));
-        multiplicitySet = new FunctionDeclaration(TranslatorUtils.getNewSetName(), sort);
-        translator.multiplicityVariableMap.put(expr, multiplicitySet);
-        translator.smtProgram.addFunction(multiplicitySet);
-
-        Expression A = exprTranslator.translateExpr(expr.left, environment);
-        Expression B = exprTranslator.translateExpr(expr.right, environment);
-
-        Expression product = BinaryExpression.Op.PRODUCT.make(A, B);
-        Expression subset = BinaryExpression.Op.SUBSET.make(multiplicitySet.getVariable(), product);
-
-        translator.smtProgram.addAssertion(new Assertion(expr.toString() + " subset constraint", subset));
-
-        SetSort ASort = (SetSort) A.getSort();
-        SetSort BSort = (SetSort) B.getSort();
-
-        VariableDeclaration x = new VariableDeclaration("__x__", ASort.elementSort, null);
-        VariableDeclaration y = new VariableDeclaration("__y__", BSort.elementSort, null);
-        Expression xMemberA = BinaryExpression.Op.MEMBER.make(x.getVariable(), A);
-        Expression yMemberB = BinaryExpression.Op.MEMBER.make(y.getVariable(), B);
-
-        VariableDeclaration u = new VariableDeclaration("__u__", ASort.elementSort, null);
-        VariableDeclaration v = new VariableDeclaration("__v__", BSort.elementSort, null);
-        Expression uMemberA = BinaryExpression.Op.MEMBER.make(u.getVariable(), A);
-        Expression vMemberB = BinaryExpression.Op.MEMBER.make(v.getVariable(), B);
-
-        // multiplicitySet subset of A lone -> one B
-        // and
-        // forall x in A .
-        //      (exists y in B . xy in multiplicitySet and
-        //          forall v in B. v != y implies xv not in  multiplicitySet)
-        // and
-        // forall y in B.
-        //      (forall x in A. xy not in multiplicitySet)
-        //      or
-        //      (exists x in A . xy in multiplicitySet and
-        //          forall u in A. u != x implies uy not in  multiplicitySet)
-
-
-        Expression xyTuple = getTupleConcatenation(ASort, BSort, x, y);
-        Expression xvTuple = getTupleConcatenation(ASort, BSort, x, v);
-        Expression uyTuple = getTupleConcatenation(ASort, BSort, u, y);
-
-        Expression xyMember = BinaryExpression.Op.MEMBER.make(xyTuple, multiplicitySet.getVariable());
-        Expression xvMember = BinaryExpression.Op.MEMBER.make(xvTuple, multiplicitySet.getVariable());
-        Expression uyMember = BinaryExpression.Op.MEMBER.make(uyTuple, multiplicitySet.getVariable());
-
-        Expression notXY = UnaryExpression.Op.NOT.make(xyMember);
-        Expression notXV = UnaryExpression.Op.NOT.make(xvMember);
-        Expression notUY = UnaryExpression.Op.NOT.make(uyMember);
-
-        Expression vEqualY = BinaryExpression.Op.EQ.make(v.getVariable(), y.getVariable());
-        Expression notVEqualY = UnaryExpression.Op.NOT.make(vEqualY);
-
-        Expression vImplies = BinaryExpression.Op.IMPLIES.make(BinaryExpression.Op.AND.make(vMemberB, notVEqualY), notXV);
-        Expression forAllV = QuantifiedExpression.Op.FORALL.make(vImplies, v);
-
-        Expression uEqualX = BinaryExpression.Op.EQ.make(u.getVariable(), x.getVariable());
-        Expression notUEqualX = UnaryExpression.Op.NOT.make(uEqualX);
-
-        Expression uImplies = BinaryExpression.Op.IMPLIES.make(BinaryExpression.Op.AND.make(uMemberA, notUEqualX), notUY);
-        Expression forAllU = QuantifiedExpression.Op.FORALL.make(uImplies, u);
-
-        Expression existsYBody = BinaryExpression.Op.AND.make(BinaryExpression.Op.AND.make(yMemberB, xyMember), forAllV);
-
-        Expression existsY = QuantifiedExpression.Op.EXISTS.make(existsYBody, y);
-        Expression xImplies = BinaryExpression.Op.IMPLIES.make(xMemberA, existsY);
-        Expression forAllX = QuantifiedExpression.Op.FORALL.make(xImplies, x);
-        translator.smtProgram.addAssertion(new Assertion(expr.toString() + " west", forAllX));
-
-        Expression existsXBody = BinaryExpression.Op.AND.make(BinaryExpression.Op.AND.make(xMemberA, xyMember), forAllU);
-
-        Expression existsX = QuantifiedExpression.Op.EXISTS.make(existsXBody, x);
-        Expression loneEast = BinaryExpression.Op.OR.make(QuantifiedExpression.Op.FORALL.make(notXY, x), existsX);
-        Expression yImplies = BinaryExpression.Op.IMPLIES.make(yMemberB, loneEast);
-        Expression forAllY = QuantifiedExpression.Op.FORALL.make(yImplies, y);
-        translator.smtProgram.addAssertion(new Assertion(expr.toString() + " east", forAllY));
-
-        return multiplicitySet.getVariable();
-    }
-
-    private Expression translateLoneArrowSome(ExprBinary expr, Environment environment)
-    {
-        FunctionDeclaration multiplicitySet = translator.multiplicityVariableMap.get(expr);
-
-        if(multiplicitySet != null)
-        {
-            return multiplicitySet.getVariable();
-        }
-
-        SetSort sort = new SetSort(new TupleSort(AlloyUtils.getExprSorts(expr)));
-        multiplicitySet = new FunctionDeclaration(TranslatorUtils.getNewSetName(), sort);
-        translator.multiplicityVariableMap.put(expr, multiplicitySet);
-        translator.smtProgram.addFunction(multiplicitySet);
-
-        Expression A = exprTranslator.translateExpr(expr.left, environment);
-        Expression B = exprTranslator.translateExpr(expr.right, environment);
-
-        Expression product = BinaryExpression.Op.PRODUCT.make(A, B);
-        Expression subset = BinaryExpression.Op.SUBSET.make(multiplicitySet.getVariable(), product);
-
-        translator.smtProgram.addAssertion(new Assertion(expr.toString() + " subset constraint", subset));
-
-        SetSort ASort = (SetSort) A.getSort();
-        SetSort BSort = (SetSort) B.getSort();
-
-        VariableDeclaration x = new VariableDeclaration("__x__", ASort.elementSort, null);
-        VariableDeclaration y = new VariableDeclaration("__y__", BSort.elementSort, null);
-        Expression xMemberA = BinaryExpression.Op.MEMBER.make(x.getVariable(), A);
-        Expression yMemberB = BinaryExpression.Op.MEMBER.make(y.getVariable(), B);
-
-        VariableDeclaration u = new VariableDeclaration("__u__", ASort.elementSort, null);
-        Expression uMemberA = BinaryExpression.Op.MEMBER.make(u.getVariable(), A);
-
-        // multiplicitySet subset of A lone -> some B
-        // and
-        // forall x in A .
-        //      (exists y in B . xy in multiplicitySet
-        // and
-        // forall y in B.
-        //      (forall x in A. xy not in multiplicitySet)
-        //      or
-        //      (exists x in A . xy in multiplicitySet and
-        //          forall u in A. u != x implies uy not in  multiplicitySet)
-
-
-        Expression xyTuple = getTupleConcatenation(ASort, BSort, x, y);
-        Expression uyTuple = getTupleConcatenation(ASort, BSort, u, y);
-
-        Expression xyMember = BinaryExpression.Op.MEMBER.make(xyTuple, multiplicitySet.getVariable());
-        Expression uyMember = BinaryExpression.Op.MEMBER.make(uyTuple, multiplicitySet.getVariable());
-
-        Expression notXY = UnaryExpression.Op.NOT.make(xyMember);
-        Expression notUY = UnaryExpression.Op.NOT.make(uyMember);
-
-
-        Expression uEqualX = BinaryExpression.Op.EQ.make(u.getVariable(), x.getVariable());
-        Expression notUEqualX = UnaryExpression.Op.NOT.make(uEqualX);
-
-        Expression uImplies = BinaryExpression.Op.IMPLIES.make(BinaryExpression.Op.AND.make(uMemberA, notUEqualX), notUY);
-        Expression forAllU = QuantifiedExpression.Op.FORALL.make(uImplies, u);
-
-        Expression existsYBody = BinaryExpression.Op.AND.make(yMemberB, xyMember);
-
-        Expression existsY = QuantifiedExpression.Op.EXISTS.make(existsYBody, y);
-        Expression xImplies = BinaryExpression.Op.IMPLIES.make(xMemberA, existsY);
-        Expression forAllX = QuantifiedExpression.Op.FORALL.make(xImplies, x);
-        translator.smtProgram.addAssertion(new Assertion(expr.toString() + " west", forAllX));
-
-        Expression existsXBody = BinaryExpression.Op.AND.make(BinaryExpression.Op.AND.make(xMemberA, xyMember), forAllU);
-
-        Expression existsX = QuantifiedExpression.Op.EXISTS.make(existsXBody, x);
-        Expression loneEast = BinaryExpression.Op.OR.make(QuantifiedExpression.Op.FORALL.make(notXY, x), existsX);
-        Expression yImplies = BinaryExpression.Op.IMPLIES.make(yMemberB, loneEast);
-        Expression forAllY = QuantifiedExpression.Op.FORALL.make(yImplies, y);
-        translator.smtProgram.addAssertion(new Assertion(expr.toString() + " east", forAllY));
-
-        return multiplicitySet.getVariable();
-    }
-
-    private Expression translateLoneArrowAny(ExprBinary expr, Environment environment)
-    {
-        FunctionDeclaration multiplicitySet = translator.multiplicityVariableMap.get(expr);
-
-        if(multiplicitySet != null)
-        {
-            return multiplicitySet.getVariable();
-        }
-
-        SetSort sort = new SetSort(new TupleSort(AlloyUtils.getExprSorts(expr)));
-        multiplicitySet = new FunctionDeclaration(TranslatorUtils.getNewSetName(), sort);
-        translator.multiplicityVariableMap.put(expr, multiplicitySet);
-        translator.smtProgram.addFunction(multiplicitySet);
-
-        Expression A = exprTranslator.translateExpr(expr.left, environment);
-        Expression B = exprTranslator.translateExpr(expr.right, environment);
-
-        Expression product = BinaryExpression.Op.PRODUCT.make(A, B);
-        Expression subset = BinaryExpression.Op.SUBSET.make(multiplicitySet.getVariable(), product);
-
-        translator.smtProgram.addAssertion(new Assertion(expr.toString() + " subset constraint", subset));
-
-        SetSort ASort = (SetSort) A.getSort();
-        SetSort BSort = (SetSort) B.getSort();
-
-        VariableDeclaration x = new VariableDeclaration("__x__", ASort.elementSort, null);
-        VariableDeclaration y = new VariableDeclaration("__y__", BSort.elementSort, null);
-        Expression xMemberA = BinaryExpression.Op.MEMBER.make(x.getVariable(), A);
-        Expression yMemberB = BinaryExpression.Op.MEMBER.make(y.getVariable(), B);
-
-        VariableDeclaration u = new VariableDeclaration("__u__", ASort.elementSort, null);
-        Expression uMemberA = BinaryExpression.Op.MEMBER.make(u.getVariable(), A);
-
-        // multiplicitySet subset of A lone -> set B
-        // and
-        // forall y in B.
-        //      (forall x in A. xy not in multiplicitySet)
-        //      or
-        //      (exists x in A . xy in multiplicitySet and
-        //          forall u in A. u != x implies uy not in  multiplicitySet)
-
-
-        Expression xyTuple = getTupleConcatenation(ASort, BSort, x, y);
-        Expression uyTuple = getTupleConcatenation(ASort, BSort, u, y);
-
-        Expression xyMember = BinaryExpression.Op.MEMBER.make(xyTuple, multiplicitySet.getVariable());
-        Expression uyMember = BinaryExpression.Op.MEMBER.make(uyTuple, multiplicitySet.getVariable());
-
-        Expression notXY = UnaryExpression.Op.NOT.make(xyMember);
-        Expression notUY = UnaryExpression.Op.NOT.make(uyMember);
-
-
-        Expression uEqualX = BinaryExpression.Op.EQ.make(u.getVariable(), x.getVariable());
-        Expression notUEqualX = UnaryExpression.Op.NOT.make(uEqualX);
-
-        Expression uImplies = BinaryExpression.Op.IMPLIES.make(BinaryExpression.Op.AND.make(uMemberA, notUEqualX), notUY);
-        Expression forAllU = QuantifiedExpression.Op.FORALL.make(uImplies, u);
-        Expression existsXBody = BinaryExpression.Op.AND.make(BinaryExpression.Op.AND.make(xMemberA, xyMember), forAllU);
-
-        Expression existsX = QuantifiedExpression.Op.EXISTS.make(existsXBody, x);
-        Expression loneEast = BinaryExpression.Op.OR.make(QuantifiedExpression.Op.FORALL.make(notXY, x), existsX);
-        Expression yImplies = BinaryExpression.Op.IMPLIES.make(yMemberB, loneEast);
-        Expression forAllY = QuantifiedExpression.Op.FORALL.make(yImplies, y);
-        translator.smtProgram.addAssertion(new Assertion(expr.toString() + " east", forAllY));
-
-        return multiplicitySet.getVariable();
-    }
-
-    private Expression getTupleConcatenation(SetSort ASort, SetSort BSort, VariableDeclaration x, VariableDeclaration y)
-    {
-        List<Expression> tupleElements = new ArrayList<>();
-        for(int i = 0; i < ((TupleSort) ASort.elementSort).elementSorts.size(); i++)
-        {
-            IntConstant index = IntConstant.getInstance(i);
-            tupleElements.add(BinaryExpression.Op.TUPSEL.make(index, x.getVariable()));
-        }
-
-        for(int i = 0; i < ((TupleSort) BSort.elementSort).elementSorts.size(); i++)
-        {
-            IntConstant index = IntConstant.getInstance(i);
-            tupleElements.add(BinaryExpression.Op.TUPSEL.make(index, y.getVariable()));
-        }
-
-        return MultiArityExpression.Op.MKTUPLE.make(tupleElements);
-    }
-
-    private Expression translateImplies(ExprBinary expr, Environment environment)
-    {
-        Expression left     = exprTranslator.translateExpr(expr.left, environment);
-        Expression right    = exprTranslator.translateExpr(expr.right, environment);
-        Expression implExpr  = BinaryExpression.Op.IMPLIES.make(left, right);
-
-        return implExpr;
-    }
-    
-    private Expression translateAnd(ExprBinary expr, Environment environment)
-    {
-        Expression left     = exprTranslator.translateExpr(expr.left, environment);
-        Expression right    = exprTranslator.translateExpr(expr.right, environment);
-        Expression andExpr  = BinaryExpression.Op.AND.make(left, right);
-
-        return andExpr;
-    }
-
-    private Expression translateOr(ExprBinary expr, Environment environment)
-    {
-        Expression left     = exprTranslator.translateExpr(expr.left, environment);
-        Expression right    = exprTranslator.translateExpr(expr.right, environment);
-        Expression orExpr  = BinaryExpression.Op.OR.make(left, right);
-
-        return orExpr;
-    }    
-    
-    private Expression translateArrow(ExprBinary expr, Environment environment)
-    {
-        Expression A = exprTranslator.translateExpr(expr.left, environment);
-        Expression B = exprTranslator.translateExpr(expr.right, environment);
-        Expression product = BinaryExpression.Op.PRODUCT.make(A, B);
-        return product;
-    }
-
+    // r ++ s = (r - (dom(s) <: r)) + s
     private Expression translatePlusPlus(ExprBinary expr, Environment environment)
     {
         int rightExprArity  =  expr.right.type().arity();
@@ -1212,570 +249,243 @@ public class ExprBinaryTranslator
             // ++ is like a single + with arity 1 (i.e. is like a union)
             return translateSetOperation(expr, BinaryExpression.Op.UNION, environment);
         }
-        else 
+        Expression left     = translateSet(expr.left, environment);
+        Expression right    = translateSet(expr.right, environment);
+        List<Sort> sorts    = ExprTranslator.elementSorts(right);
+
+        Expression domain = right;
+        for(int i = sorts.size() - 1; i > 0; --i)
         {
-            Expression left     = exprTranslator.translateExpr(expr.left, environment);
-            Expression right    = exprTranslator.translateExpr(expr.right, environment);
-            Expression join     = right;            
-            
-            for(int i = 0; i < rightExprArity-1; ++i)
-            {
-                join = BinaryExpression.Op.JOIN.make(join, exprTranslator.translator.atomUniverse.getVariable());
-            }
-            for(int i = 0; i < rightExprArity-1; ++i)
-            {
-                join = BinaryExpression.Op.PRODUCT.make(join, exprTranslator.translator.atomUniverse.getVariable());
-            }            
-            
-            Expression intersection         = BinaryExpression.Op.INTERSECTION.make(join, left);
-            Expression difference           = BinaryExpression.Op.SETMINUS.make(left, intersection);
-            Expression union                = BinaryExpression.Op.UNION.make(difference, right);
-
-            return union;
-
+            domain = BinaryExpression.Op.JOIN.make(domain, ExprTranslator.universe(sorts.get(i)));
         }
+        Expression restriction = BinaryExpression.Op.PRODUCT.make(domain, ExprTranslator.universe(sorts.subList(1, sorts.size())));
+        Expression intersection = BinaryExpression.Op.INTERSECTION.make(left, restriction);
+        Expression difference   = BinaryExpression.Op.SETMINUS.make(left, intersection);
+        return BinaryExpression.Op.UNION.make(difference, right);
     }
 
+    // s <: r = (s x univ x ... x univ) & r
     private Expression translateDomainRestriction(ExprBinary expr, Environment environment)
     {
-        int arity = expr.right.type().arity();
-
-        if(arity <= 1)
+        Expression left = translateSet(expr.left, environment);
+        Expression right = translateSet(expr.right, environment);
+        List<Sort> sorts = ExprTranslator.elementSorts(right);
+        if (sorts.size() == 1)
         {
-            // arity should be greater than one
-            throw new UnsupportedOperationException();
+            return BinaryExpression.Op.INTERSECTION.make(left, right);
         }
-        else
-        {
-            Expression left = exprTranslator.translateExpr(expr.left, environment);
-            Expression right = exprTranslator.translateExpr(expr.right, environment);
-
-            for(int i = 0; i < arity - 1; ++i)
-            {
-                left = BinaryExpression.Op.PRODUCT.make(left, exprTranslator.translator.atomUniverse.getVariable());
-            }
-            BinaryExpression    intersection    = BinaryExpression.Op.INTERSECTION.make(left, right);
-            return intersection;
-        }
+        Expression product = BinaryExpression.Op.PRODUCT.make(left, ExprTranslator.universe(sorts.subList(1, sorts.size())));
+        return BinaryExpression.Op.INTERSECTION.make(product, right);
     }
 
+    // r :> s = r & (univ x ... x univ x s)
     private Expression translateRangeRestriction(ExprBinary expr, Environment environment)
     {
-        int arity = expr.left.type().arity();
-
-        if(arity <= 1)
+        Expression left = translateSet(expr.left, environment);
+        Expression right = translateSet(expr.right, environment);
+        List<Sort> sorts = ExprTranslator.elementSorts(left);
+        if (sorts.size() == 1)
         {
-            // arity should be greater than one
-            throw new UnsupportedOperationException();
+            return BinaryExpression.Op.INTERSECTION.make(left, right);
         }
-        else
-        {
-            Expression left  = exprTranslator.translateExpr(expr.left, environment);
-            Expression right = exprTranslator.translateExpr(expr.right, environment);
-            
-            for(int i = 0; i < arity - 1; ++i)
-            {
-                right = BinaryExpression.Op.PRODUCT.make(exprTranslator.translator.atomUniverse.getVariable(), right);
-            }            
-
-            BinaryExpression    intersection    = BinaryExpression.Op.INTERSECTION.make(left, right);
-
-            return intersection;
-        }
+        Expression product = BinaryExpression.Op.PRODUCT.make(ExprTranslator.universe(sorts.subList(0, sorts.size() - 1)), right);
+        return BinaryExpression.Op.INTERSECTION.make(left, product);
     }
 
     public Expression translateArithmetic(ExprBinary expr, BinaryExpression.Op op, Environment environment)
     {
-        Expression leftExpr     = exprTranslator.translateExpr(expr.left, environment);
-        Expression rightExpr    = exprTranslator.translateExpr(expr.right, environment);
-
-        FunctionDeclaration result = new FunctionDeclaration(TranslatorUtils.getNewSetName(), AbstractTranslator.setOfUninterpretedIntTuple);
-        exprTranslator.translator.smtProgram.addFunction(result);
-
-        VariableDeclaration x = new VariableDeclaration("__x__", AbstractTranslator.uninterpretedInt, null);
-        VariableDeclaration y = new VariableDeclaration("__y__", AbstractTranslator.uninterpretedInt, null);
-        VariableDeclaration z = new VariableDeclaration("__z__", AbstractTranslator.uninterpretedInt, null);
-
-        Expression xTuple = new MultiArityExpression(MultiArityExpression.Op.MKTUPLE, x.getVariable());
-        Expression yTuple = new MultiArityExpression(MultiArityExpression.Op.MKTUPLE, y.getVariable());
-        Expression zTuple = new MultiArityExpression(MultiArityExpression.Op.MKTUPLE, z.getVariable());
-
-        Expression xValue = new FunctionCallExpression(AbstractTranslator.uninterpretedIntValue, x.getVariable());
-        Expression yValue = new FunctionCallExpression(AbstractTranslator.uninterpretedIntValue, y.getVariable());
-        Expression zValue = new FunctionCallExpression(AbstractTranslator.uninterpretedIntValue, z.getVariable());
-
-        Expression xMember = BinaryExpression.Op.MEMBER.make(xTuple, leftExpr);
-        Expression yMember = BinaryExpression.Op.MEMBER.make(yTuple, rightExpr);
-        Expression zMember = BinaryExpression.Op.MEMBER.make(zTuple, result.getVariable());
-
-        Expression xyOperation = op.make(xValue, yValue);
-        Expression equal = BinaryExpression.Op.EQ.make(xyOperation, zValue);
-
-        Expression and1 = BinaryExpression.Op.AND.make(xMember, yMember);
-        Expression and2 = BinaryExpression.Op.AND.make(equal, and1);
-        Expression exists1 = QuantifiedExpression.Op.EXISTS.make(and2, x, y);
-        Expression implies1 = BinaryExpression.Op.IMPLIES.make(zMember, exists1);
-        Expression forall1 = QuantifiedExpression.Op.FORALL.make(implies1, z);
-
-        Assertion assertion1 = new Assertion(String.format("%1$s %2$s %3$s axiom1", op, leftExpr, rightExpr), forall1);
-        exprTranslator.translator.smtProgram.addAssertion(assertion1);
-
-        Expression and3 = BinaryExpression.Op.MEMBER.make(equal, zMember);
-        Expression exists2 = QuantifiedExpression.Op.EXISTS.make(and3, z);
-
-        Expression implies2 = BinaryExpression.Op.IMPLIES.make(and1, exists2);
-        Expression forall2 = QuantifiedExpression.Op.FORALL.make(implies2, x, y);
-
-        Assertion assertion2 = new Assertion(String.format("%1$s %2$s %3$s axiom2", op, leftExpr, rightExpr), forall2);
-        exprTranslator.translator.smtProgram.addAssertion(assertion2);
-
-        return result.getVariable();
+        Expression leftExpr     = translateSet(expr.left, environment);
+        Expression rightExpr    = translateSet(expr.right, environment);
+        return exprTranslator.translateArithmetic(leftExpr, rightExpr, op, environment);
     }
-    
+
+    // #set + offset, or the constant offset when set is null
+    private static class Count
+    {
+        final Expr set;
+        final int offset;
+
+        Count(Expr set, int offset)
+        {
+            this.set = set;
+            this.offset = offset;
+        }
+    }
+
+    private static Expr deCast(Expr expr)
+    {
+        while (expr instanceof ExprUnary && (((ExprUnary) expr).op == ExprUnary.Op.NOOP ||
+                ((ExprUnary) expr).op == ExprUnary.Op.CAST2INT || ((ExprUnary) expr).op == ExprUnary.Op.CAST2SIGINT))
+        {
+            expr = ((ExprUnary) expr).sub;
+        }
+        return expr;
+    }
+
+    /**
+     * @return the expression as #set + offset, or null if it is not of that form
+     */
+    private static Count count(Expr expr)
+    {
+        expr = deCast(expr);
+        if (expr instanceof ExprUnary && ((ExprUnary) expr).op == ExprUnary.Op.CARDINALITY)
+        {
+            return new Count(((ExprUnary) expr).sub, 0);
+        }
+        if (expr instanceof ExprConstant && ((ExprConstant) expr).op == ExprConstant.Op.NUMBER)
+        {
+            return new Count(null, ((ExprConstant) expr).num);
+        }
+        Expr left = null, right = null;
+        boolean plus = true;
+        if (expr instanceof ExprBinary && (((ExprBinary) expr).op == ExprBinary.Op.IPLUS || ((ExprBinary) expr).op == ExprBinary.Op.IMINUS))
+        {
+            left = ((ExprBinary) expr).left;
+            right = ((ExprBinary) expr).right;
+            plus = ((ExprBinary) expr).op == ExprBinary.Op.IPLUS;
+        }
+        else if (expr instanceof ExprCall && ((ExprCall) expr).args.size() == 2)
+        {
+            String name = ((ExprCall) expr).fun.label;
+            if (name.equals("integer/plus") || name.equals("integer/add") || name.equals("integer/minus") || name.equals("integer/sub"))
+            {
+                left = ((ExprCall) expr).args.get(0);
+                right = ((ExprCall) expr).args.get(1);
+                plus = name.equals("integer/plus") || name.equals("integer/add");
+            }
+        }
+        if (left == null)
+        {
+            return null;
+        }
+        Count l = count(left), r = count(right);
+        if (l == null || r == null)
+        {
+            return null;
+        }
+        if (r.set == null)
+        {
+            return new Count(l.set, plus ? l.offset + r.offset : l.offset - r.offset);
+        }
+        if (l.set == null && plus)
+        {
+            return new Count(r.set, l.offset + r.offset);
+        }
+        return null;
+    }
+
+    // whether the comparison involves the cardinality of a set
+    private static boolean isCardinality(ExprBinary expr)
+    {
+        Count left = count(expr.left), right = count(expr.right);
+        return left != null && right != null && (left.set != null || right.set != null);
+    }
+
+    private static BinaryExpression.Op flip(BinaryExpression.Op op)
+    {
+        switch (op)
+        {
+            case LT: return BinaryExpression.Op.GT;
+            case LTE: return BinaryExpression.Op.GTE;
+            case GT: return BinaryExpression.Op.LT;
+            case GTE: return BinaryExpression.Op.LTE;
+            default: return op;
+        }
+    }
+
+    /**
+     * Translates #A + k op #B + m where A or B may be absent (constants).
+     */
+    private Expression translateCardinality(ExprBinary expr, BinaryExpression.Op op, Environment environment)
+    {
+        Count left = count(expr.left), right = count(expr.right);
+        if (left.set == null)
+        {
+            // c op #B + m is #B flip(op) c - m
+            return translateCardinalityComparison(right.set, flip(op), left.offset - right.offset, environment);
+        }
+        if (right.set == null)
+        {
+            return translateCardinalityComparison(left.set, op, right.offset - left.offset, environment);
+        }
+        // #A op #B + d
+        int d = right.offset - left.offset;
+        if (environment.existsIsSkolemized())
+        {
+            return compareCardinalities(left.set, right.set, op, d, environment);
+        }
+        if (environment.forallIsSkolemized() && op != BinaryExpression.Op.EQ)
+        {
+            // not (#A op #B + d) is #A negated(op) #B + d, whose existential is skolemized
+            BinaryExpression.Op negated;
+            switch (op)
+            {
+                case LT: negated = BinaryExpression.Op.GTE; break;
+                case LTE: negated = BinaryExpression.Op.GT; break;
+                case GT: negated = BinaryExpression.Op.LTE; break;
+                default: negated = BinaryExpression.Op.LT; break;
+            }
+            return UnaryExpression.Op.NOT.make(compareCardinalities(left.set, right.set, negated, d, environment.flipped()));
+        }
+        throw new UnsupportedOperationException("The comparison of cardinalities is only supported where it is skolemized: " + expr);
+    }
+
+    private Expression translateCardinalityComparison(Expr set, BinaryExpression.Op op, int n, Environment environment)
+    {
+        return exprTranslator.translateCardinalityComparison(translateSet(set, environment), op, n, environment);
+    }
+
+    /**
+     * #A op #B + d for unary sets A and B, in a position where existentials are skolemized:
+     * a fresh relation f in A -> B is a partial bijection that is total on A or onto B. Then
+     * #A - #B = #(A - dom(f)) - #(B - ran(f)), where one of these differences is empty.
+     */
+    private Expression compareCardinalities(Expr leftSet, Expr rightSet, BinaryExpression.Op op, int d, Environment environment)
+    {
+        Expression A = translateSet(leftSet, environment);
+        Expression B = translateSet(rightSet, environment);
+        if (ExprTranslator.elementSorts(A).size() != 1 || ExprTranslator.elementSorts(B).size() != 1)
+        {
+            throw new UnsupportedOperationException("The comparison of cardinalities is only supported for unary sets");
+        }
+        SetSort sort = (SetSort) BinaryExpression.Op.PRODUCT.make(A, B).getSort();
+        FunctionDeclaration f = new FunctionDeclaration(edu.uiowa.smt.TranslatorUtils.getNewSetName(), sort);
+        translator.smtProgram.addFunction(f);
+        Expression relation = f.getVariable();
+        Expression transpose = UnaryExpression.Op.TRANSPOSE.make(relation);
+        Expression subset = BinaryExpression.Op.SUBSET.make(relation, BinaryExpression.Op.PRODUCT.make(A, B));
+        // functional: ~f.f in iden, injective: f.~f in iden
+        Expression functional = BinaryExpression.Op.SUBSET.make(BinaryExpression.Op.JOIN.make(transpose, relation), UnaryExpression.Op.IDEN.make(B));
+        Expression injective = BinaryExpression.Op.SUBSET.make(BinaryExpression.Op.JOIN.make(relation, transpose), UnaryExpression.Op.IDEN.make(A));
+        Expression domain = BinaryExpression.Op.JOIN.make(relation, B);
+        Expression range = BinaryExpression.Op.JOIN.make(A, relation);
+        Expression restA = BinaryExpression.Op.SETMINUS.make(A, domain);
+        Expression restB = BinaryExpression.Op.SETMINUS.make(B, range);
+        // total on A: #A - #B = -#restB, so #A op #B + d iff #restB flip(op) -d
+        Expression totalOnA = BinaryExpression.Op.AND.make(ExprTranslator.mkEmpty(restA),
+                exprTranslator.translateCardinalityComparison(restB, flip(op), -d, environment));
+        // onto B: #A - #B = #restA, so #A op #B + d iff #restA op d
+        Expression ontoB = BinaryExpression.Op.AND.make(ExprTranslator.mkEmpty(restB),
+                exprTranslator.translateCardinalityComparison(restA, op, d, environment));
+        return BinaryExpression.Op.AND.make(BinaryExpression.Op.AND.make(subset, BinaryExpression.Op.AND.make(functional, injective)),
+                BinaryExpression.Op.OR.make(totalOnA, ontoB));
+    }
+
     private Expression translateComparison(ExprBinary expr, BinaryExpression.Op op, Environment environment)
     {
-        Expression comparisonExpr = null;   
-        
-        // Right hand side is a expression and right hand side is a constant
-        if(((expr.left instanceof ExprUnary) && ((ExprUnary)expr.left).op == ExprUnary.Op.CARDINALITY && 
-                (expr.right instanceof ExprConstant)))
-        {            
-            int n               = ((ExprConstant)expr.right).num;  
-            int arity           = ((ExprUnary)expr.left).sub.type().arity();                                    
-            Expression leftExpr = exprTranslator.translateExpr(((ExprUnary)expr.left).sub, environment);    
-            
-            List<Expression>                existentialBdVarExprs   = new ArrayList<>();               
-            List<VariableDeclaration>  existentialBdVars       = new ArrayList<>();
-            List<Sort> leftExprSorts = AlloyUtils.getExprSorts(((ExprUnary)expr.left).sub);
-            
-            switch(op)
-            {
-                case GT:{  
-                    if(arity == 1)
-                    {
-                        existentialBdVars = exprTranslator.getBdVars(leftExprSorts.get(0), n+1);
-                    }
-                    else
-                    {
-                        existentialBdVars = exprTranslator.getBdTupleVars(leftExprSorts, arity, n+1);
-                    }
-
-                    for(VariableDeclaration bdVar : existentialBdVars)
-                    {
-                        existentialBdVarExprs.add(bdVar.getVariable());
-                    }        
-
-                    Expression distElementsExpr = TranslatorUtils.makeDistinct(existentialBdVarExprs);
-
-                    exprTranslator.translator.existentialBdVars.addAll(existentialBdVars);        
-                    if(exprTranslator.translator.auxExpr != null)
-                    {
-                        exprTranslator.translator.auxExpr = BinaryExpression.Op.AND.make(exprTranslator.translator.auxExpr, distElementsExpr);
-                    }
-                    else
-                    {
-                        exprTranslator.translator.auxExpr = distElementsExpr;
-                    }
-     
-                    Expression  rightExpr;
-
-                    if(existentialBdVarExprs.size() > 0)
-                    {
-                        rightExpr = exprTranslator.mkUnaryRelationOutOfAtomsOrTuples(existentialBdVarExprs);
-                    }
-                    else
-                    {
-                        rightExpr = exprTranslator.mkEmptyRelationOfSort(leftExprSorts);
-                    }
-                    
-                    // rightExpr + 1 <= leftExpr
-                    comparisonExpr = BinaryExpression.Op.SUBSET.make(rightExpr, leftExpr);
-                    comparisonExpr = BinaryExpression.Op.AND.make(comparisonExpr, exprTranslator.translator.auxExpr);
-                    
-                    if(!exprTranslator.translator.existentialBdVars.isEmpty())
-                    {
-                        comparisonExpr = QuantifiedExpression.Op.EXISTS.make(comparisonExpr, exprTranslator.translator.existentialBdVars);
-                    }                    
-                    break;
-                }
-                case LT:{
-                    if(arity == 1)
-                    {
-                        existentialBdVars = exprTranslator.getBdVars(leftExprSorts.get(0), n-1);
-                    }
-                    else
-                    {
-                        existentialBdVars = exprTranslator.getBdTupleVars(leftExprSorts, arity, n-1);
-                    }
-
-                    for(VariableDeclaration bdVar : existentialBdVars)
-                    {
-                        existentialBdVarExprs.add(bdVar.getVariable());
-                    }        
-                    
-                    // (distinct e1 e2 e3 ....)
-                    Expression distElementsExpr = TranslatorUtils.makeDistinct(existentialBdVarExprs);
-
-                    exprTranslator.translator.existentialBdVars.addAll(existentialBdVars);        
-                    if(exprTranslator.translator.auxExpr != null)
-                    {
-                        exprTranslator.translator.auxExpr = BinaryExpression.Op.AND.make(exprTranslator.translator.auxExpr, distElementsExpr);
-                    }
-                    else
-                    {
-                        exprTranslator.translator.auxExpr = distElementsExpr;
-                    }
-     
-                    Expression  rightExpr;
-
-                    if(existentialBdVarExprs.size() > 0)
-                    {
-                        rightExpr = exprTranslator.mkUnaryRelationOutOfAtomsOrTuples(existentialBdVarExprs);
-                    }
-                    else
-                    {
-                        rightExpr = exprTranslator.mkEmptyRelationOfSort(leftExprSorts);
-                    }
-                    
-                    // leftExpr <= rightExpr-1
-                    comparisonExpr = BinaryExpression.Op.SUBSET.make(leftExpr, rightExpr);
-                    comparisonExpr = BinaryExpression.Op.AND.make(comparisonExpr, exprTranslator.translator.auxExpr);
-                    
-                    if(!exprTranslator.translator.existentialBdVars.isEmpty())
-                    {
-                        comparisonExpr = QuantifiedExpression.Op.EXISTS.make(comparisonExpr, exprTranslator.translator.existentialBdVars);
-                    } 
-                    break;
-                }
-                case GTE:{
-                    if(arity == 1)
-                    {
-                        existentialBdVars = exprTranslator.getBdVars(leftExprSorts.get(0), n);
-                    }
-                    else
-                    {
-                        existentialBdVars = exprTranslator.getBdTupleVars(leftExprSorts, arity, n);
-                    }
-
-                    for(VariableDeclaration bdVar : existentialBdVars)
-                    {
-                        existentialBdVarExprs.add(bdVar.getVariable());
-                    }        
-                    
-                    // (distinct e1 e2 e3 ....)
-                    Expression distElementsExpr = TranslatorUtils.makeDistinct(existentialBdVarExprs);
-
-                    exprTranslator.translator.existentialBdVars.addAll(existentialBdVars);        
-                    if(exprTranslator.translator.auxExpr != null)
-                    {
-                        exprTranslator.translator.auxExpr = BinaryExpression.Op.AND.make(exprTranslator.translator.auxExpr, distElementsExpr);
-                    }
-                    else
-                    {
-                        exprTranslator.translator.auxExpr = distElementsExpr;
-                    }
-     
-                    Expression  rightExpr;
-
-                    if(existentialBdVarExprs.size() > 0)
-                    {
-                        rightExpr = exprTranslator.mkUnaryRelationOutOfAtomsOrTuples(existentialBdVarExprs);
-                    }
-                    else
-                    {
-                        rightExpr = exprTranslator.mkEmptyRelationOfSort(leftExprSorts);
-                    }
-                    
-                    // rightExpr <= leftExpr
-                    comparisonExpr = BinaryExpression.Op.SUBSET.make(rightExpr, leftExpr);
-                    comparisonExpr = BinaryExpression.Op.AND.make(comparisonExpr, exprTranslator.translator.auxExpr);
-                    
-                    if(!exprTranslator.translator.existentialBdVars.isEmpty())
-                    {
-                        comparisonExpr = QuantifiedExpression.Op.EXISTS.make(comparisonExpr, exprTranslator.translator.existentialBdVars);
-                    }
-                    break;
-                }
-                case LTE:{
-                    if(arity == 1)
-                    {
-                        existentialBdVars = exprTranslator.getBdVars(leftExprSorts.get(0), n);
-                    }
-                    else
-                    {
-                        existentialBdVars = exprTranslator.getBdTupleVars(leftExprSorts, arity, n);
-                    }
-
-                    for(VariableDeclaration bdVar : existentialBdVars)
-                    {
-                        existentialBdVarExprs.add(bdVar.getVariable());
-                    }        
-                    
-                    // (distinct e1 e2 e3 ....)
-                    Expression distElementsExpr = TranslatorUtils.makeDistinct(existentialBdVarExprs);
-
-                    exprTranslator.translator.existentialBdVars.addAll(existentialBdVars);        
-                    if(exprTranslator.translator.auxExpr != null)
-                    {
-                        exprTranslator.translator.auxExpr = BinaryExpression.Op.AND.make(exprTranslator.translator.auxExpr, distElementsExpr);
-                    }
-                    else
-                    {
-                        exprTranslator.translator.auxExpr = distElementsExpr;
-                    }
-     
-                    Expression  rightExpr;
-
-                    if(existentialBdVarExprs.size() > 0)
-                    {
-                        rightExpr = exprTranslator.mkUnaryRelationOutOfAtomsOrTuples(existentialBdVarExprs);
-                    }
-                    else
-                    {
-                        rightExpr = exprTranslator.mkEmptyRelationOfSort(leftExprSorts);
-                    }
-                    
-                    // rightExpr <= leftExpr
-                    comparisonExpr = BinaryExpression.Op.SUBSET.make(leftExpr, rightExpr);
-                    comparisonExpr = BinaryExpression.Op.AND.make(comparisonExpr, exprTranslator.translator.auxExpr);
-                    
-                    if(!exprTranslator.translator.existentialBdVars.isEmpty())
-                    {
-                        comparisonExpr = QuantifiedExpression.Op.EXISTS.make(comparisonExpr, exprTranslator.translator.existentialBdVars);
-                    }
-                    break;                    
-                }                
-                default:break;
-            }  
-        }
-        else if((expr.right instanceof ExprUnary) && ((ExprUnary)expr.right).op == ExprUnary.Op.CARDINALITY && 
-                (expr.left instanceof ExprConstant)) 
+        if (isCardinality(expr))
         {
-            int n               = ((ExprConstant)expr.left).num;  
-            int arity           = ((ExprUnary)expr.right).sub.type().arity();                                    
-            Expression rightExpr = exprTranslator.translateExpr(((ExprUnary)expr.right).sub, environment);    
-            
-            List<Expression>                existentialBdVarExprs   = new ArrayList<>();               
-            List<VariableDeclaration>  existentialBdVars       = new ArrayList<>();
-            List<Sort> rightExprSorts = AlloyUtils.getExprSorts(((ExprUnary)expr.right).sub);
-            
-            switch(op)
-            {
-                case GT:{  
-                    if(arity == 1)
-                    {
-                        existentialBdVars = exprTranslator.getBdVars(rightExprSorts.get(0), n+1);
-                    }
-                    else
-                    {
-                        existentialBdVars = exprTranslator.getBdTupleVars(rightExprSorts, arity, n+1);
-                    }
-
-                    for(VariableDeclaration bdVar : existentialBdVars)
-                    {
-                        existentialBdVarExprs.add(bdVar.getVariable());
-                    }        
-
-                    Expression distElementsExpr = TranslatorUtils.makeDistinct(existentialBdVarExprs);
-
-                    exprTranslator.translator.existentialBdVars.addAll(existentialBdVars);        
-                    if(exprTranslator.translator.auxExpr != null)
-                    {
-                        exprTranslator.translator.auxExpr = BinaryExpression.Op.AND.make(exprTranslator.translator.auxExpr, distElementsExpr);
-                    }
-                    else
-                    {
-                        exprTranslator.translator.auxExpr = distElementsExpr;
-                    }
-     
-                    Expression  leftExpr;
-
-                    if(existentialBdVarExprs.size() > 0)
-                    {
-                        leftExpr = exprTranslator.mkUnaryRelationOutOfAtomsOrTuples(existentialBdVarExprs);
-                    }
-                    else
-                    {
-                        leftExpr = exprTranslator.mkEmptyRelationOfSort(rightExprSorts);
-                    }
-                    
-                    // rightExpr + 1 <= leftExpr
-                    comparisonExpr = BinaryExpression.Op.SUBSET.make(rightExpr, leftExpr);
-                    comparisonExpr = BinaryExpression.Op.AND.make(comparisonExpr, exprTranslator.translator.auxExpr);
-                    
-                    if(!exprTranslator.translator.existentialBdVars.isEmpty())
-                    {
-                        comparisonExpr = QuantifiedExpression.Op.EXISTS.make(comparisonExpr, exprTranslator.translator.existentialBdVars);
-                    }                    
-                    break;
-                }
-                case LT:{
-                    if(arity == 1)
-                    {
-                        existentialBdVars = exprTranslator.getBdVars(rightExprSorts.get(0), n-1);
-                    }
-                    else
-                    {
-                        existentialBdVars = exprTranslator.getBdTupleVars(rightExprSorts, arity, n-1);
-                    }
-
-                    for(VariableDeclaration bdVar : existentialBdVars)
-                    {
-                        existentialBdVarExprs.add(bdVar.getVariable());
-                    }        
-                    
-                    // (distinct e1 e2 e3 ....)
-                    Expression distElementsExpr = TranslatorUtils.makeDistinct(existentialBdVarExprs);
-
-                    exprTranslator.translator.existentialBdVars.addAll(existentialBdVars);        
-                    if(exprTranslator.translator.auxExpr != null)
-                    {
-                        exprTranslator.translator.auxExpr = BinaryExpression.Op.AND.make(exprTranslator.translator.auxExpr, distElementsExpr);
-                    }
-                    else
-                    {
-                        exprTranslator.translator.auxExpr = distElementsExpr;
-                    }
-     
-                    Expression  leftExpr;
-
-                    if(existentialBdVarExprs.size() > 0)
-                    {
-                        leftExpr = exprTranslator.mkUnaryRelationOutOfAtomsOrTuples(existentialBdVarExprs);
-                    }
-                    else
-                    {
-                        leftExpr = exprTranslator.mkEmptyRelationOfSort(rightExprSorts);
-                    }
-                    
-                    // leftExpr <= rightExpr-1
-                    comparisonExpr = BinaryExpression.Op.SUBSET.make(rightExpr, leftExpr);
-                    comparisonExpr = BinaryExpression.Op.AND.make(comparisonExpr, exprTranslator.translator.auxExpr);
-                    
-                    if(!exprTranslator.translator.existentialBdVars.isEmpty())
-                    {
-                        comparisonExpr = QuantifiedExpression.Op.EXISTS.make(comparisonExpr, exprTranslator.translator.existentialBdVars);
-                    } 
-                    break;
-                }
-                case GTE:{
-                    if(arity == 1)
-                    {
-                        existentialBdVars = exprTranslator.getBdVars(rightExprSorts.get(0), n);
-                    }
-                    else
-                    {
-                        existentialBdVars = exprTranslator.getBdTupleVars(rightExprSorts, arity, n);
-                    }
-
-                    for(VariableDeclaration bdVar : existentialBdVars)
-                    {
-                        existentialBdVarExprs.add(bdVar.getVariable());
-                    }        
-                    
-                    // (distinct e1 e2 e3 ....)
-                    Expression distElementsExpr = TranslatorUtils.makeDistinct(existentialBdVarExprs);
-
-                    exprTranslator.translator.existentialBdVars.addAll(existentialBdVars);        
-                    if(exprTranslator.translator.auxExpr != null)
-                    {
-                        exprTranslator.translator.auxExpr = BinaryExpression.Op.AND.make(exprTranslator.translator.auxExpr, distElementsExpr);
-                    }
-                    else
-                    {
-                        exprTranslator.translator.auxExpr = distElementsExpr;
-                    }
-     
-                    Expression  leftExpr;
-
-                    if(existentialBdVarExprs.size() > 0)
-                    {
-                        leftExpr = exprTranslator.mkUnaryRelationOutOfAtomsOrTuples(existentialBdVarExprs);
-                    }
-                    else
-                    {
-                        leftExpr = exprTranslator.mkEmptyRelationOfSort(rightExprSorts);
-                    }
-                    
-                    // rightExpr <= leftExpr
-                    comparisonExpr = BinaryExpression.Op.SUBSET.make(rightExpr, leftExpr);
-                    comparisonExpr = BinaryExpression.Op.AND.make(comparisonExpr, exprTranslator.translator.auxExpr);
-                    
-                    if(!exprTranslator.translator.existentialBdVars.isEmpty())
-                    {
-                        comparisonExpr = QuantifiedExpression.Op.EXISTS.make(comparisonExpr, exprTranslator.translator.existentialBdVars);
-                    }
-                    break;
-                }
-                case LTE:{
-                    if(arity == 1)
-                    {
-                        existentialBdVars = exprTranslator.getBdVars(rightExprSorts.get(0), n);
-                    }
-                    else
-                    {
-                        existentialBdVars = exprTranslator.getBdTupleVars(rightExprSorts, arity, n);
-                    }
-
-                    for(VariableDeclaration bdVar : existentialBdVars)
-                    {
-                        existentialBdVarExprs.add(bdVar.getVariable());
-                    }        
-                    
-                    // (distinct e1 e2 e3 ....)
-                    Expression distElementsExpr = TranslatorUtils.makeDistinct(existentialBdVarExprs);
-
-                    exprTranslator.translator.existentialBdVars.addAll(existentialBdVars);        
-                    if(exprTranslator.translator.auxExpr != null)
-                    {
-                        exprTranslator.translator.auxExpr = BinaryExpression.Op.AND.make(exprTranslator.translator.auxExpr, distElementsExpr);
-                    }
-                    else
-                    {
-                        exprTranslator.translator.auxExpr = distElementsExpr;
-                    }
-     
-                    Expression  leftExpr;
-
-                    if(existentialBdVarExprs.size() > 0)
-                    {
-                        leftExpr = exprTranslator.mkUnaryRelationOutOfAtomsOrTuples(existentialBdVarExprs);
-                    }
-                    else
-                    {
-                        leftExpr = exprTranslator.mkEmptyRelationOfSort(rightExprSorts);
-                    }
-                    
-                    // leftExpr <= rightExpr 
-                    comparisonExpr = BinaryExpression.Op.SUBSET.make(leftExpr, rightExpr);
-                    comparisonExpr = BinaryExpression.Op.AND.make(comparisonExpr, exprTranslator.translator.auxExpr);
-                    
-                    if(!exprTranslator.translator.existentialBdVars.isEmpty())
-                    {
-                        comparisonExpr = QuantifiedExpression.Op.EXISTS.make(comparisonExpr, exprTranslator.translator.existentialBdVars);
-                    }
-                    break;                    
-                }                
-                default:break;
-            }  
+            return translateCardinality(expr, op, environment);
         }
-        else 
-        {
-            Expression leftExpr     = exprTranslator.translateExpr(expr.left, environment);
-            Expression rightExpr    = exprTranslator.translateExpr(expr.right, environment);
-
-
-            comparisonExpr =  getComparison(op, leftExpr, rightExpr);
-        }
-
-        //ToDo: review the purpose of these 2 lines.
-        exprTranslator.translator.auxExpr = null;
-        exprTranslator.translator.existentialBdVars.clear();
-        return comparisonExpr;     
+        Expression leftExpr     = translateSet(expr.left, environment);
+        Expression rightExpr    = translateSet(expr.right, environment);
+        return getComparison(op, leftExpr, rightExpr);
     }
-    
+
+    // A op B holds iff A = {x} and B = {y} and x op y
     private Expression getComparison(BinaryExpression.Op op, Expression left, Expression right)
     {
+        translator.translateIntegerAssertions();
         VariableDeclaration x = new VariableDeclaration("__x__", AbstractTranslator.uninterpretedInt, null);
         VariableDeclaration y = new VariableDeclaration("__y__", AbstractTranslator.uninterpretedInt, null);
         Expression xTuple     = new MultiArityExpression(MultiArityExpression.Op.MKTUPLE, x.getVariable());
@@ -1791,324 +501,50 @@ public class ExprBinaryTranslator
 
         Expression comparison = op.make(xValue, yValue);
         Expression and2 = BinaryExpression.Op.AND.make(and1, comparison);
-        Expression exists = QuantifiedExpression.Op.EXISTS.make(and2, Arrays.asList(x, y));
-
-        //ToDo: remove these 2 lines
-//        Assertion assertion = new Assertion(left + " " + op + " " + right , exists);
-//        exprTranslator.translator.smtProgram.addAssertion(assertion);
-        return exists;
-    }
-    
-    private Expression translateEqComparison(ExprBinary expr, BinaryExpression.Op op, Environment environment)
-    {
-
-        if(   (expr.left instanceof ExprUnary &&
-                ((ExprUnary) expr.left).op == ExprUnary.Op.CARDINALITY) ||
-                (expr.right instanceof ExprUnary &&
-                ((ExprUnary) expr.right).op == ExprUnary.Op.CARDINALITY)
-            )
-        {
-            return translateCardinality(expr, op, environment);
-        }
-
-
-        Expression left     = exprTranslator.translateExpr(expr.left, environment);
-        Expression right    = exprTranslator.translateExpr(expr.right, environment);
-
-        if(left instanceof Variable &&
-                (!(((Variable)left).getDeclaration().getSort() instanceof SetSort)))
-        {
-            left = AlloyUtils.mkSingletonOutOfTupleOrAtom((Variable) left);
-        }
-        else if(left instanceof MultiArityExpression &&
-                ((MultiArityExpression)left).getOp() == MultiArityExpression.Op.MKTUPLE)
-        {
-            left = AlloyUtils.mkSingletonOutOfTuple((MultiArityExpression)left);
-        }
-        if(right instanceof Variable &&
-                (!(((Variable)right).getDeclaration().getSort() instanceof SetSort)))
-        {
-            right = AlloyUtils.mkSingletonOutOfTupleOrAtom((Variable) right);
-        }
-        else if(right instanceof MultiArityExpression &&
-                ((MultiArityExpression)right).getOp() == MultiArityExpression.Op.MKTUPLE)
-        {
-            right = AlloyUtils.mkSingletonOutOfTuple((MultiArityExpression)right);
-        }
-
-        if(left.getSort().equals(AbstractTranslator.setOfIntSortTuple))
-        {
-            left = exprTranslator.translator.handleIntConstant(left);
-        }
-
-        if(right.getSort().equals(AbstractTranslator.setOfIntSortTuple))
-        {
-            right = exprTranslator.translator.handleIntConstant(right);
-        }
-
-
-
-        Expression finalExpr = BinaryExpression.Op.EQ.make(left, right);
-
-
-        if(!exprTranslator.translator.existentialBdVars.isEmpty())
-        {
-            if(exprTranslator.translator.auxExpr != null)
-            {
-                finalExpr = BinaryExpression.Op.AND.make(finalExpr, exprTranslator.translator.auxExpr);
-                exprTranslator.translator.auxExpr = null;
-            }
-            finalExpr = QuantifiedExpression.Op.EXISTS.make(finalExpr, exprTranslator.translator.existentialBdVars);
-        }                
-        return finalExpr;        
+        return QuantifiedExpression.Op.EXISTS.make(and2, Arrays.asList(x, y));
     }
 
-    private Expression translateCardinality(ExprBinary expr, BinaryExpression.Op op , Environment environment)
+    private Expression translateEqComparison(ExprBinary expr, Environment environment)
     {
-        // CVC4 doesn't support comparison  between 2 cardinality expressions
-        if
-            (   expr.left instanceof ExprUnary &&
-                ((ExprUnary) expr.left).op == ExprUnary.Op.CARDINALITY &&
-                expr.right instanceof ExprUnary &&
-                ((ExprUnary) expr.right).op == ExprUnary.Op.CARDINALITY
-            )
+        if (isCardinality(expr))
         {
-            throw new UnsupportedOperationException("CVC4 doesn't support comparision between 2 cardinality expressions.");
+            return translateCardinality(expr, BinaryExpression.Op.EQ, environment);
         }
-
-        if
-            (
-                (expr.left instanceof ExprUnary &&
-                ((ExprUnary) expr.left).op == ExprUnary.Op.CARDINALITY &&
-                (!(expr.right instanceof ExprConstant &&
-                        ((ExprConstant) expr.right).op == ExprConstant.Op.NUMBER))) ||
-                (expr.right instanceof ExprUnary &&
-                ((ExprUnary) expr.right).op == ExprUnary.Op.CARDINALITY &&
-                (!(expr.left instanceof ExprConstant &&
-                        ((ExprConstant) expr.left).op == ExprConstant.Op.NUMBER)))
-            )
+        Environment both    = environment.withPolarity(Environment.Polarity.BOTH);
+        Expression left     = exprTranslator.translateExpr(expr.left, both);
+        Expression right    = exprTranslator.translateExpr(expr.right, both);
+        if (left.getSort() == AbstractTranslator.boolSort)
         {
-            throw new UnsupportedOperationException("CVC4 only supports cardinality with constant numbers");
+            return BinaryExpression.Op.EQ.make(left, right);
         }
-
-
-        // translate cardinality differently
-        if
-            (   (expr.left instanceof ExprUnary &&
-                ((ExprUnary) expr.left).op == ExprUnary.Op.CARDINALITY)
-            )
+        left = normalizeSet(left);
+        right = normalizeSet(right);
+        // {a} = {b} is a = b
+        if (left instanceof UnaryExpression && ((UnaryExpression) left).getOP() == UnaryExpression.Op.SINGLETON &&
+            right instanceof UnaryExpression && ((UnaryExpression) right).getOP() == UnaryExpression.Op.SINGLETON)
         {
-            int         n           = ((ExprConstant)expr.right).num;
-            Expression  equality = translateEqCardComparison((ExprUnary) expr.left, n, op, environment);
-            return equality;
+            return BinaryExpression.Op.EQ.make(((UnaryExpression) left).getExpression(), ((UnaryExpression) right).getExpression());
         }
-
-        if
-            (   (expr.right instanceof ExprUnary &&
-                ((ExprUnary) expr.right).op == ExprUnary.Op.CARDINALITY)
-            )
-        {
-            int         n           = ((ExprConstant)expr.left).num;
-            Expression  equality = translateEqCardComparison((ExprUnary) expr.right, n, op, environment);
-            return equality;
-        }
-
-        throw new UnsupportedOperationException();
+        return BinaryExpression.Op.EQ.make(left, right);
     }
 
-    private Expression translateEqCardComparison(ExprUnary expr, int n, BinaryExpression.Op op ,Environment environment)
+    private Expression normalizeSet(Expression expression)
     {
-        Expression expression = exprTranslator.translateExpr(expr.sub, environment);
-        if(n == 0)
+        expression = ExprTranslator.toSet(expression);
+        if (expression.getSort().equals(AbstractTranslator.setOfIntSortTuple))
         {
-            // the set expression is empty
-            Expression empty = UnaryExpression.Op.EMPTYSET.make(expression.getSort());
-            Expression equal = BinaryExpression.Op.EQ.make(expression, empty);
-            return equal;
+            expression = translator.handleIntConstant(expression);
         }
-        int arity = expr.sub.type().arity();
-        List<Expression> variables = new ArrayList<>();
-        List<VariableDeclaration> declarations;
-        List<Sort> exprSorts = AlloyUtils.getExprSorts(expr.sub);
-        
-        if(arity == 1)
-        {
-            declarations = exprTranslator.getBdVars(exprSorts.get(0), n);
-        }
-        else
-        {
-            declarations = exprTranslator.getBdTupleVars(exprSorts, arity, n);
-        }
-        
-        for(VariableDeclaration declaration : declarations)
-        {
-            variables.add(declaration.getVariable());
-        }
-
-        Expression distinct;
-
-        if(variables.size() == 1)
-        {
-            // distinct operator needs at least 2 arguments
-            distinct = BoolConstant.True;
-        }
-        else
-        {
-            distinct = MultiArityExpression.Op.DISTINCT.make(variables);
-        }
-        
-        //ToDo: review the need of existentialBdVars in AlloyTranslator
-        exprTranslator.translator.existentialBdVars.addAll(declarations);
-
-        if(exprTranslator.translator.auxExpr != null)
-        {
-            exprTranslator.translator.auxExpr = BinaryExpression.Op.AND.make(exprTranslator.translator.auxExpr, distinct);
-        }
-        else
-        {
-            exprTranslator.translator.auxExpr = distinct;
-        }
-        
-        Expression  distElementSetExpr = exprTranslator.mkUnaryRelationOutOfAtomsOrTuples(variables);
-        Expression  right   = distElementSetExpr;
-        
-        switch (op)
-        {
-            case EQ :
-            {
-                Expression eqExpr = BinaryExpression.Op.EQ.make(expression, right);
-                
-                if(exprTranslator.translator.auxExpr != null)
-                {
-                    eqExpr = BinaryExpression.Op.AND.make(eqExpr, exprTranslator.translator.auxExpr);
-                    exprTranslator.translator.auxExpr = null;
-                }
-                if(!exprTranslator.translator.existentialBdVars.isEmpty())
-                {
-                    eqExpr = QuantifiedExpression.Op.EXISTS.make(eqExpr, declarations);
-                    exprTranslator.translator.existentialBdVars.clear();
-                }
-                return eqExpr;
-            }
-            default:
-                throw new UnsupportedOperationException();
-        }
+        return expression;
     }
 
     private Expression translateSetOperation(ExprBinary expr, BinaryExpression.Op op, Environment environment)
     {
-        Expression left     = exprTranslator.translateExpr(expr.left, environment);
-        Expression right    = exprTranslator.translateExpr(expr.right, environment);
-
-        if(left instanceof Variable &&
-                (!(((Variable)left).getDeclaration().getSort() instanceof SetSort)))
-        {
-            left = AlloyUtils.mkSingletonOutOfTupleOrAtom((Variable) left);
-        }
-        else if(left instanceof MultiArityExpression &&
-                ((MultiArityExpression)left).getOp() == MultiArityExpression.Op.MKTUPLE)
-        {
-            left = AlloyUtils.mkSingletonOutOfTuple((MultiArityExpression)left);
-        }
-        if(right instanceof Variable &&
-                (!(((Variable)right).getDeclaration().getSort() instanceof SetSort)))
-        {
-            right = AlloyUtils.mkSingletonOutOfTupleOrAtom((Variable) right);
-        }
-        else if(right instanceof MultiArityExpression &&
-                ((MultiArityExpression)right).getOp() == MultiArityExpression.Op.MKTUPLE)
-        {
-            right = AlloyUtils.mkSingletonOutOfTuple((MultiArityExpression)right);
-        } 
-
-        BinaryExpression operation = op.make(left, right);
-        return operation;
-    }
-    
-    private Expression translateSubsetOperation(ExprBinary expr, BinaryExpression.Op op, Environment environment)
-    {
-        Expression left     = exprTranslator.translateExpr(expr.left, environment);
-        Expression right    = exprTranslator.translateExpr(expr.right, environment);
-
-        if(left instanceof Variable &&
-                (!(((Variable)left).getDeclaration().getSort() instanceof SetSort)))
-        {
-            left = AlloyUtils.mkSingletonOutOfTupleOrAtom((Variable) left);
-        }
-        else if(left instanceof MultiArityExpression &&
-                ((MultiArityExpression)left).getOp() == MultiArityExpression.Op.MKTUPLE)
-        {
-            left = AlloyUtils.mkSingletonOutOfTuple((MultiArityExpression)left);
-        }
-        if(right instanceof Variable &&
-                (!(((Variable)right).getDeclaration().getSort() instanceof SetSort)))
-        {
-            right = AlloyUtils.mkSingletonOutOfTupleOrAtom((Variable) right);
-        }
-        else if(right instanceof MultiArityExpression &&
-                ((MultiArityExpression)right).getOp() == MultiArityExpression.Op.MKTUPLE)
-        {
-            right = AlloyUtils.mkSingletonOutOfTuple((MultiArityExpression)right);
-        }
-
-        if(left.getSort().equals(AbstractTranslator.setOfIntSortTuple))
-        {
-            left = exprTranslator.translator.handleIntConstant(left);
-        }
-
-        if(right.getSort().equals(AbstractTranslator.setOfIntSortTuple))
-        {
-            right = exprTranslator.translator.handleIntConstant(right);
-        }
-                
-        Expression finalExpr = BinaryExpression.Op.SUBSET.make(left, right);
-        
-        if(op == null)
-        {
-            finalExpr = UnaryExpression.Op.NOT.make(finalExpr);
-        }
-        if(!exprTranslator.translator.existentialBdVars.isEmpty())
-        {
-            if(exprTranslator.translator.auxExpr != null)
-            {
-                finalExpr = BinaryExpression.Op.AND.make(finalExpr, exprTranslator.translator.auxExpr);
-                exprTranslator.translator.auxExpr = null;
-            }
-            finalExpr = QuantifiedExpression.Op.EXISTS.make(finalExpr, exprTranslator.translator.existentialBdVars);
-            exprTranslator.translator.existentialBdVars.clear();
-        }                
-        return finalExpr;                 
+        Expression left     = translateSet(expr.left, environment);
+        Expression right    = translateSet(expr.right, environment);
+        return op.make(left, right);
     }
 
-    private Expression translateJoin(ExprBinary expr, Environment environment)
-    {
-        Expression          left    = exprTranslator.translateExpr(expr.left, environment);
-        Expression          right   = exprTranslator.translateExpr(expr.right, environment);
-
-        if(left instanceof Variable &&
-                (!(((Variable)left).getDeclaration().getSort() instanceof SetSort)))
-        {
-            left = AlloyUtils.mkSingletonOutOfTupleOrAtom((Variable) left);
-        }
-        else if(left instanceof MultiArityExpression &&
-                ((MultiArityExpression)left).getOp() == MultiArityExpression.Op.MKTUPLE)
-        {
-            left = AlloyUtils.mkSingletonOutOfTuple((MultiArityExpression)left);
-        }
-        if(right instanceof Variable &&
-                (!(((Variable)right).getDeclaration().getSort() instanceof SetSort)))
-        {
-            right = AlloyUtils.mkSingletonOutOfTupleOrAtom((Variable) right);
-        }
-        else if(right instanceof MultiArityExpression &&
-                ((MultiArityExpression)right).getOp() == MultiArityExpression.Op.MKTUPLE)
-        {
-            right = AlloyUtils.mkSingletonOutOfTuple((MultiArityExpression)right);
-        }        
-        BinaryExpression    join    = BinaryExpression.Op.JOIN.make(left, right);
-        return join;
-    }
-    
     public Expression mkTupleSelectExpr(Expression tupleExpr, int index)
     {
         return BinaryExpression.Op.TUPSEL.make(IntConstant.getInstance(index), tupleExpr);
