@@ -258,6 +258,22 @@ public class Cvc5Task implements WorkerEngine.WorkerTask
         return commandResult;
     }
 
+    // link destinations handled by SimpleGUI.doVisualize
+    // open the file in an editor tab
+    private static final String OPEN_FILE = "OPEN: ";
+    // open the instance in the visualizer
+    private static final String OPEN_INSTANCE = "XML: ";
+
+    /**
+     * Writes the message followed by the path of a generated file as a clickable link.
+     */
+    private void callbackFile(String message, String path, String destination)
+    {
+        callbackPlain(message);
+        callbackLink(path, destination + path);
+        callbackPlain("\n");
+    }
+
     private void callbackLink(String log, String link)
     {
         workerCallback.callback(new Object[]{"link", log, link});
@@ -306,7 +322,7 @@ public class Cvc5Task implements WorkerEngine.WorkerTask
 
         writeModelToAlloyXmlFile(translation, model, xmlFilePath, originalFileName, command, alloyFiles);
 
-        callbackBold("Generated alloy instance file: " + xmlFilePath +"\n");
+        callbackFile("Generated alloy instance file: ", xmlFilePath, OPEN_INSTANCE);
 
         String  satResult           = "sat";
 
@@ -695,8 +711,8 @@ public class Cvc5Task implements WorkerEngine.WorkerTask
         // output the mapping
         translation.getMapper().writeToJson(jsonFile.getPath());
 
-        callbackPlain("\nGenerated a smt2 file: " + smtFile.getAbsolutePath() +"\n");
-        callbackPlain("\nGenerated a mapping file: " + jsonFile.getAbsolutePath() +"\n");
+        callbackFile("Generated a smt2 file: ", smtFile.getAbsolutePath(), OPEN_FILE);
+        callbackFile("Generated a mapping file: ", jsonFile.getAbsolutePath(), OPEN_FILE);
 
         return translation;
     }

@@ -23,6 +23,13 @@ The solver is chosen in the Options menu with **Relational solver** (Kodkod or c
   `forall`/`exists`, and `set.filter` for comprehensions and the quantifiers `one` and `lone`),
   `forall/exists`, or the bounded set quantifiers `set.all`/`set.some` of cvc5.
 
+## Generated files
+
+When cvc5 executes a command, the message panel lists the files it generates, as links:
+the SMT-LIB script of all the commands and the mapping from signatures and fields to SMT
+symbols (`.mapping.json`) open in an editor tab, and the instance file (`.smt.xml`) opens in
+the visualizer.
+
 ## Translation from the command line
 
 ```
